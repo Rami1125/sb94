@@ -15,7 +15,7 @@ const WHATSAPP_LOG_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_YOUR
 // URL of a separate Apps Script for sending emails (REPLACE WITH YOUR ACTUAL SCRIPT ID)
 // You'll need another separate Apps Script project deployed as a Web App specifically for sending emails.
 // IMPORTANT: THIS SHOULD BE THE URL OF THE APPS SCRIPT YOU WILL CREATE FOR DAILY REPORTS!
-const EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_YOUR_DAILY_REPORT_EMAIL_SCRIPT_ID_HERE/exec';
+const EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxiS3wXwXCyh8xM1EdTiwXy0T-UyBRQgfrnRRis531lTxmgtJIGawfsPeetX5nVJW3V/exec';
 
 let allOrders = []; // Array containing all loaded orders
 let currentEditingOrder = null; // Variable for the order currently being edited
