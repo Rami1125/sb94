@@ -10,7 +10,7 @@ const SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxiS3wXwXCyh
 
 // URL of a separate Apps Script for WhatsApp message logging (REPLACE WITH YOUR ACTUAL SCRIPT ID)
 // You'll need a separate Apps Script project deployed as a Web App specifically for logging WhatsApp messages.
-const WHATSAPP_LOG_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_YOUR_WHATSAPP_SCRIPT_ID_HERE/exec';
+const WHATSAPP_LOG_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxiS3wXwXCyh8xM1EdTiwXy0T-UyBRQgfrnRRis531lTxmgtJIGawfsPeetX5nVJW3V/exec';
 
 // URL of a separate Apps Script for sending emails (REPLACE WITH YOUR ACTUAL SCRIPT ID)
 // You'll need another separate Apps Script project deployed as a Web App specifically for sending emails.
