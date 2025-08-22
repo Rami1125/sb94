@@ -1,21 +1,21 @@
 // URL of your Google Apps Script acting as the API
-// REPLACE THIS URL with YOUR OWN deployed Google Apps Script Web App URL for the main data operations.
-// To get this URL:
-// 1. Go to your Google Sheet linked to the Apps Script.
-// 2. Open the Apps Script editor (Extensions > Apps Script).
-// 3. Deploy the script as a Web App (Deploy > New deployment > Type: Web app).
-// 4. Ensure "Execute as:" is "Me" and "Who has access:" is "Anyone".
-// 5. Copy the Web app URL and paste it here.
+// ⚠️ חייבים להחליף את זה ב-URL האמיתי של יישום האינטרנט של ה-Google Apps Script שלך עבור פעולות הנתונים הראשיות.
+// כדי לקבל את ה-URL הזה:
+// 1. עבור לגיליון ה-Google Sheet שלך המקושר ל-Apps Script.
+// 2. פתח את עורך ה-Apps Script (תוספים > Apps Script).
+// 3. פרוס את הסקריפט כיישום אינטרנט (פריסה > פריסה חדשה > סוג: יישום אינטרנט).
+// 4. ודא ש"הפעל כ:" הוא "אני" ו"למי יש גישה:" הוא "כל אחד".
+// 5. העתק את ה-URL של יישום האינטרנט והדבק אותו כאן.
 const SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxiS3wXwXCyh8xM1EdTiwXy0T-UyBRQgfrnRRis531lTxmgtJIGawfsPeetX5nVJW3V/exec';
 
-// URL of a separate Apps Script for WhatsApp message logging (REPLACE WITH YOUR ACTUAL SCRIPT ID)
-// You'll need a separate Apps Script project deployed as a Web App specifically for logging WhatsApp messages.
+// URL של סקריפט Apps Script נפרד לרישום הודעות WhatsApp (⚠️ החלף ב-ID האמיתי של הסקריפט שלך)
+// תצטרך פרויקט Apps Script נפרד שפרוס כיישום אינטרנט במיוחד לרישום הודעות WhatsApp.
 const WHATSAPP_LOG_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxiS3wXwXCyh8xM1EdTiwXy0T-UyBRQgfrnRRis531lTxmgtJIGawfsPeetX5nVJW3V/exec';
 
-// URL of a separate Apps Script for sending emails (REPLACE WITH YOUR ACTUAL SCRIPT ID)
-// You'll need another separate Apps Script project deployed as a Web App specifically for sending emails.
-// IMPORTANT: THIS SHOULD BE THE URL OF THE APPS SCRIPT YOU WILL CREATE FOR DAILY REPORTS!
-const EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxiS3wXwXCyh8xM1EdTiwXy0T-UyBRQgfrnRRis531lTxmgtJIGawfsPeetX5nVJW3V/exec';
+// URL של סקריפט Apps Script נפרד לשליחת מיילים (⚠️ החלף ב-ID האמיתי של הסקריפט שלך)
+// תצטרך פרויקט Apps Script נפרד נוסף שפרוס כיישום אינטרנט במיוחד לשליחת מיילים.
+// חשוב: זה צריך להיות ה-URL של ה-Apps Script שיצרת עבור הדוחות היומיים!
+const EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxiS3wXwXCyh8xM1EdTiwXy0T-UyBRQgfrnRRis531lTxmgtJIGawfsPeetX5nVJW3V/exec'; // 🚨🚨🚨 חובה לעדכן!!!
 
 let allOrders = []; // Array containing all loaded orders
 let currentEditingOrder = null; // Variable for the order currently being edited
@@ -1041,7 +1041,7 @@ ${order['הערות'] ? `הערות: ${order['הערות']}\n` : ''}
 
     const whatsappUrl = `https://wa.me/${order['טלפון לקוח']}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
-    showAlert('נפתח WhatsApp לשיתוף פרטי הזמנה.', 'info');
+    showAlert('נפתח WhatsApp לשליחת הודעה.', 'info');
     logWhatsAppMessage(order['תעודה'], message);
 }
 
@@ -1661,13 +1661,13 @@ async function sendDailyReportEmailManual() {
     showAlert('שולח דוח יומי למייל...', 'info');
     
     // The Apps Script will fetch and process the data itself, so we just send a trigger action.
-    // IMPORTANT: Make sure 'your_email@example.com' is replaced with a real email for testing,
-    // and that EMAIL_SCRIPT_URL is correctly configured.
+    // ⚠️ חשוב: ודא שכתובת המייל מוחלפת בכתובת מייל אמיתית לבדיקה,
+    // ושה-EMAIL_SCRIPT_URL מוגדר כראוי בראש הקובץ!
     const response = await fetchData(
         'sendDailyReport', 
-        { recipientEmail: 'your_email@example.com' }, // Replace with your actual email for testing
+        { recipientEmail: 'your.actual.email@example.com' }, // 🚨🚨🚨 החלף בכתובת המייל האמיתית שלך לבדיקה!!!
         0, 
-        EMAIL_SCRIPT_URL // Use the dedicated email script URL
+        EMAIL_SCRIPT_URL // משתמש ב-URL של סקריפט המייל שהוגדר בראש הקובץ.
     );
 
     if (response.success) {
