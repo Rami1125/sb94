@@ -14,7 +14,8 @@ const WHATSAPP_LOG_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_YOUR
 
 // URL of a separate Apps Script for sending emails (REPLACE WITH YOUR ACTUAL SCRIPT ID)
 // You'll need another separate Apps Script project deployed as a Web App specifically for sending emails.
-const EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_YOUR_EMAIL_SCRIPT_ID_HERE/exec';
+// IMPORTANT: THIS SHOULD BE THE URL OF THE APPS SCRIPT YOU WILL CREATE FOR DAILY REPORTS!
+const EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_YOUR_DAILY_REPORT_EMAIL_SCRIPT_ID_HERE/exec';
 
 let allOrders = []; // Array containing all loaded orders
 let currentEditingOrder = null; // Variable for the order currently being edited
@@ -100,10 +101,11 @@ function showAlert(message, type = 'info') {
 }
 
 // --- API Communication Function (Exponential Backoff) ---
-async function fetchData(action, params = {}, retries = 0) {
+// Added a new optional parameter 'scriptUrl' to allow targeting different Apps Scripts
+async function fetchData(action, params = {}, retries = 0, scriptUrl = SCRIPT_WEB_APP_URL) {
     showLoader();
     const urlParams = new URLSearchParams({ action, ...params });
-    const url = `${SCRIPT_WEB_APP_URL}?${urlParams.toString()}`;
+    const url = `${scriptUrl}?${urlParams.toString()}`; // Use provided scriptUrl
     console.log(`[fetchData] Request URL: ${url}`);
     try {
         const response = await fetch(url);
@@ -123,7 +125,7 @@ async function fetchData(action, params = {}, retries = 0) {
             if (retries < 5) {
                 console.warn(`[fetchData] Service invoked too many times, retrying in ${delay}ms... (Attempt ${retries + 1})`);
                 await new Promise(resolve => setTimeout(resolve, delay));
-                return fetchData(action, params, retries + 1);
+                return fetchData(action, params, retries + 1, scriptUrl); // Pass scriptUrl on retry
             } else {
                 showAlert('השרת עמוס מדי, אנא נסה שוב מאוחר יותר.', 'error');
                 return { success: false, message: 'Service too busy' };
@@ -270,6 +272,17 @@ async function loadOrders() {
         showAlert(response.message || 'שגיאה בטעינת הזמנות.', 'error');
     }
 }
+
+/**
+ * Refreshes all data in the application by reloading orders.
+ * This function is now explicitly defined and globally accessible.
+ */
+async function refreshData() {
+    showAlert('מרענן נתונים...', 'info');
+    await loadOrders();
+    showAlert('הנתונים רועננו בהצלחה!', 'success');
+}
+
 
 // --- Dashboard Updates ---
 function updateDashboard() {
@@ -1178,8 +1191,8 @@ function showContainerHistory(containerNumber) {
                 <td class="p-3">${order['שם לקוח'] || ''}</td>
                 <td class="p-3">${order['כתובת'] || ''}</td>
                 <td class="p-3">${order['סוג פעולה'] || ''}</td>
-                <td class="p-3">${formatDate(order['תאריך הזמנה'])}</td>
-                <td class="p-3">${order['תאריך סגירה'] ? formatDate(order['תאריך סגירה']) : (order['תאריך סיום צפוי'] ? `${formatDate(order['תאריך סיום צפוי'])} (צפוי)` : 'אין')}</td>
+                <td class="p-3">${formatDate(startDate)}</td>
+                <td class="p-3">${endDate ? formatDate(endDate) : (order['תאריך סיום צפוי'] ? `${formatDate(order['תאריך סיום צפוי'])} (צפוי)` : 'אין')}</td>
                 <td class="p-3">${durationDays}</td>
             `;
         });
@@ -1556,7 +1569,7 @@ function drawReportsCharts(orders) {
 
     if (reportsChartDistribution) reportsChartDistribution.destroy();
     const chartDistributionCtx = document.getElementById('chart-reports-action-distribution').getContext('2d');
-    reportsChartDistribution = new Chart(chartDistributionCtx, {
+    charts.reportsChartDistribution = new Chart(chartDistributionCtx, {
         type: 'doughnut',
         data: {
             labels: distributionLabels,
@@ -1640,31 +1653,40 @@ function resetReportFilters() {
     filterReports();
 }
 
-async function sendReportsByEmail() {
-    showAlert('שולח דוח למייל...', 'info');
-    const startDate = document.getElementById('report-start-date').value;
-    const endDate = document.getElementById('report-end-date').value;
-
-    // Ensure you have an Apps Script deployed for sending emails
-    // This script would receive the data and send the email
+/**
+ * Manually triggers the sending of the daily report email.
+ * This function is now explicitly defined and globally accessible.
+ */
+async function sendDailyReportEmailManual() {
+    showAlert('שולח דוח יומי למייל...', 'info');
+    
+    // The Apps Script will fetch and process the data itself, so we just send a trigger action.
+    // IMPORTANT: Make sure 'your_email@example.com' is replaced with a real email for testing,
+    // and that EMAIL_SCRIPT_URL is correctly configured.
     const response = await fetchData(
-        'sendReportByEmail', 
-        { 
-            startDate: startDate, 
-            endDate: endDate,
-            // You might want to pass filteredReportOrders data directly or let the server fetch it again
-            // For simplicity, passing only dates and let the server decide what report to generate
-        },
-        0, // retries
+        'sendDailyReport', 
+        { recipientEmail: 'your_email@example.com' }, // Replace with your actual email for testing
+        0, 
         EMAIL_SCRIPT_URL // Use the dedicated email script URL
     );
 
     if (response.success) {
-        showAlert('דוח נשלח בהצלחה למייל!', 'success');
+        showAlert('דוח יומי נשלח בהצלחה למייל!', 'success');
     } else {
-        showAlert(response.message || 'שגיאה בשליחת הדוח למייל.', 'error');
+        showAlert(response.message || 'שגיאה בשליחת הדוח היומי למייל.', 'error');
     }
 }
+
+/**
+ * Placeholder for sending reports by email from the reports page.
+ * You might want to implement a more specific report email functionality here.
+ */
+async function sendReportsByEmail() {
+    showAlert('פונקציית שליחת דוחות במייל עדיין בפיתוח...', 'info');
+    // Implement logic to gather current report data and send it via Apps Script
+    // This could be a more dynamic report based on the current filters in the reports section.
+}
+
 
 // --- Customer Analysis Page Functions ---
 let customerAnalysisChart = null; // Chart for customer activity
