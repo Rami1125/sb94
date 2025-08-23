@@ -5,20 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>מערכת CRM מתקדמת לניהול שכירות מכולות</title>
     
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js for charts -->
+    <!-- Chart.js CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <!-- Font Awesome for icons -->
+    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Rubik font -->
+    <!-- Google Fonts - Rubik -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Leaflet CSS for maps -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     
-    <!-- Custom CSS -->
+    <!-- Custom Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="text-base">
@@ -153,70 +153,73 @@
         </div>
     </div>
 
-    <!-- Container History Modal -->
-    <div id="container-history-modal" class="modal-overlay">
-        <div class="modal-content w-full max-w-3xl max-h-[90vh] flex flex-col p-6">
-            <div class="flex items-center justify-between pb-5 border-b border-[var(--color-border)] mb-4">
-                <h2 class="text-2xl font-bold text-[var(--color-primary)]">היסטוריית מכולה: <span id="history-container-number"></span></h2>
-                <button onclick="closeModal('container-history-modal')" class="text-3xl text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-colors">&times;</button>
-            </div>
-            <div class="overflow-y-auto">
-                <table class="w-full text-right">
-                    <thead>
-                        <tr>
-                            <th class="p-3">תעודה</th>
-                            <th class="p-3">שם לקוח</th>
-                            <th class="p-3">כתובת</th>
-                            <th class="p-3">סוג פעולה</th>
-                            <th class="p-3">תאריך התחלה</th>
-                            <th class="p-3">תאריך סיום (צפוי/בפועל)</th>
-                            <th class="p-3">משך שהייה (ימים)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="container-history-table-body">
-                        <!-- History will be populated here -->
-                    </tbody>
-                </table>
-                <div id="no-container-history" class="text-center text-gray-500 mt-6 hidden text-lg">אין היסטוריה זמינה למכולה זו.</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Customer History Modal (OLD - REPLACED BY customer-analysis-details-modal for unified experience) -->
-    <!-- Retaining this for now to avoid breaking existing calls, but logic should move to customer-analysis-details-modal -->
-    <div id="customer-history-modal" class="modal-overlay">
+    <!-- Container History/Details Modal (Updated for advanced analysis) -->
+    <div id="container-details-modal" class="modal-overlay">
         <div class="modal-content w-full max-w-4xl max-h-[90vh] flex flex-col p-6">
             <div class="flex items-center justify-between pb-5 border-b border-[var(--color-border)] mb-4">
-                <h2 class="text-2xl font-bold text-[var(--color-primary)]">היסטוריית הזמנות ללקוח: <span id="history-customer-name"></span></h2>
-                <button onclick="closeModal('customer-history-modal')" class="text-3xl text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-colors">&times;</button>
+                <h2 class="text-2xl font-bold text-[var(--color-primary)]">פרטי והיסטוריית מכולה: <span id="details-container-number"></span></h2>
+                <button onclick="closeModal('container-details-modal')" class="text-3xl text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-colors">&times;</button>
             </div>
-            <div class="overflow-y-auto">
-                <table class="w-full text-right">
-                    <thead>
-                        <tr>
-                            <th class="p-3">תאריך הזמנה</th>
-                            <th class="p-3">תעודה</th>
-                            <th class="p-3">סוג פעולה</th>
-                            <th class="p-3">מכולה ירדה</th>
-                            <th class="p-3">מכולה עלתה</th>
-                            <th class="p-3">סטטוס</th>
-                            <th class="p-3">הערות</th>
-                        </tr>
-                    </thead>
-                    <tbody id="customer-history-table-body">
-                        <!-- History will be populated here -->
-                    </tbody>
-                </table>
-                <div id="no-customer-history" class="text-center text-gray-500 mt-6 hidden text-lg">אין היסטוריה זמינה ללקוח זה.</div>
+            <div class="flex-grow overflow-y-auto space-y-6">
+                <!-- Container KPIs -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="p-4 bg-[var(--color-background)] rounded-lg text-center shadow-inner">
+                        <p class="text-sm text-[var(--color-text-muted)]">סטטוס נוכחי</p>
+                        <p id="container-kpi-status" class="text-2xl font-bold text-[var(--color-primary)] mt-1">...</p>
+                    </div>
+                    <div class="p-4 bg-[var(--color-background)] rounded-lg text-center shadow-inner">
+                        <p class="text-sm text-[var(--color-text-muted)]">לקוח נוכחי</p>
+                        <p id="container-kpi-customer" class="text-2xl font-bold text-[var(--color-primary)] mt-1">...</p>
+                    </div>
+                    <div class="p-4 bg-[var(--color-background)] rounded-lg text-center shadow-inner">
+                        <p class="text-sm text-[var(--color-text-muted)]">ימים בשימוש (נוכחי)</p>
+                        <p id="container-kpi-days-in-use" class="text-2xl font-bold text-[var(--color-primary)] mt-1">...</p>
+                    </div>
+                    <div class="p-4 bg-[var(--color-background)] rounded-lg text-center shadow-inner">
+                        <p class="text-sm text-[var(--color-text-muted)]">סה"כ ימי שימוש מצטברים</p>
+                        <p id="container-kpi-total-usage-days" class="text-2xl font-bold text-[var(--color-primary)] mt-1">...</p>
+                    </div>
+                     <div class="p-4 bg-[var(--color-background)] rounded-lg text-center shadow-inner lg:col-span-2">
+                        <p class="text-sm text-[var(--color-text-muted)]">כמות פעמים בשימוש</p>
+                        <p id="container-kpi-total-uses" class="text-2xl font-bold text-[var(--color-primary)] mt-1">...</p>
+                    </div>
+                     <div class="p-4 bg-[var(--color-background)] rounded-lg text-center shadow-inner lg:col-span-2">
+                        <p class="text-sm text-[var(--color-text-muted)]">תאריך התפנות אחרון</p>
+                        <p id="container-kpi-last-available" class="text-2xl font-bold text-[var(--color-primary)] mt-1">...</p>
+                    </div>
+                </div>
+
+                <!-- Container Usage Chart -->
+                <div class="card p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-[var(--color-text-base)]">תפוסת מכולה לאורך זמן</h3>
+                    <div class="chart-container">
+                        <canvas id="chart-container-usage"></canvas>
+                    </div>
+                </div>
+
+                <!-- Container History Table -->
+                <h3 class="text-xl font-bold text-[var(--color-primary)] mb-3">היסטוריית הזמנות למכולה זו 📜</h3>
+                <div class="overflow-x-auto border border-[var(--color-border)] rounded-lg shadow-sm p-4">
+                    <table class="w-full text-right">
+                        <thead>
+                            <tr>
+                                <th class="p-3 cursor-pointer" onclick="sortTable('container-history-table-body', 0)">תאריך <i class="fas fa-sort"></i></th>
+                                <th class="p-3 cursor-pointer" onclick="sortTable('container-history-table-body', 1)">תעודה <i class="fas fa-sort"></i></th>
+                                <th class="p-3 cursor-pointer" onclick="sortTable('container-history-table-body', 2)">שם לקוח <i class="fas fa-sort"></i></th>
+                                <th class="p-3 cursor-pointer" onclick="sortTable('container-history-table-body', 3)">סוג פעולה <i class="fas fa-sort"></i></th>
+                                <th class="p-3 cursor-pointer" onclick="sortTable('container-history-table-body', 4)">משך שהייה (ימים) <i class="fas fa-sort"></i></th>
+                                <th class="p-3">פעולות</th>
+                            </tr>
+                        </thead>
+                        <tbody id="container-history-table-body">
+                            <!-- History will be populated here -->
+                        </tbody>
+                    </table>
+                    <div id="no-container-history" class="text-center text-gray-500 mt-6 hidden text-lg">אין היסטוריה זמינה למכולה זו.</div>
+                </div>
             </div>
-            <!-- New Share and Print Buttons -->
-            <div class="flex flex-col sm:flex-row justify-center gap-3 p-5 border-t border-[var(--color-border)] mt-4">
-                <button type="button" class="btn btn-primary" onclick="shareCustomerHistoryOnWhatsApp()" title="שתף היסטוריית לקוח בוואטסאפ">
-                    <i class="fab fa-whatsapp"></i> שתף
-                </button>
-                <button type="button" class="btn btn-secondary" onclick="printCustomerHistory()" title="הדפס היסטוריית לקוח">
-                    <i class="fas fa-print"></i> הדפס
-                </button>
+            <div class="flex justify-end gap-3 pt-4 border-t border-[var(--color-border)] mt-4">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('container-details-modal')">סגור</button>
             </div>
         </div>
     </div>
@@ -237,42 +240,101 @@
         </div>
     </div>
 
-    <!-- Customer Analysis Details Modal (NEW) -->
+    <!-- Customer Analysis Details Modal (NEW - with KPIs and Charts) -->
     <div id="customer-analysis-details-modal" class="modal-overlay">
         <div class="modal-content w-full max-w-6xl max-h-[90vh] flex flex-col p-6">
             <div class="flex items-center justify-between pb-5 border-b border-[var(--color-border)] mb-4">
-                <h2 class="text-2xl font-bold text-[var(--color-primary)]">היסטוריית הזמנות ללקוח: <span id="analysis-details-customer-name"></span></h2>
+                <h2 class="text-2xl font-bold text-[var(--color-primary)]">פרופיל לקוח: <span id="analysis-details-customer-name"></span></h2>
                 <button onclick="closeModal('customer-analysis-details-modal')" class="text-3xl text-[var(--color-text-muted)] hover:text-[var(--color-danger)] transition-colors">&times;</button>
             </div>
-            <div class="flex-grow flex flex-col md:flex-row gap-6 overflow-hidden">
-                <!-- Left Table: Downloads -->
-                <div class="flex-1 overflow-x-auto border border-[var(--color-border)] rounded-lg shadow-sm p-4">
-                    <h3 class="text-xl font-bold text-[var(--color-success)] mb-3">היסטוריית הורדות (הצבה) 📦⬇️</h3>
-                    <table class="w-full text-right">
-                        <thead>
-                            <tr><th class="p-2">תאריך</th><th class="p-2">תעודה</th><th class="p-2">מכולה</th><th class="p-2">סטטוס</th><th class="p-2">ימים</th><th class="p-2">פעולות</th></tr>
-                        </thead>
-                        <tbody id="analysis-downloads-table-body"></tbody>
-                    </table>
-                    <div id="no-downloads" class="text-center text-gray-500 mt-4 hidden">אין היסטוריית הורדות.</div>
+            <div class="flex-grow flex flex-col gap-6 overflow-hidden">
+                <!-- Customer KPIs -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="p-4 bg-[var(--color-background)] rounded-lg text-center shadow-inner">
+                        <p class="text-sm text-[var(--color-text-muted)]">מספר הזמנות כולל</p>
+                        <p id="customer-kpi-total-orders" class="text-2xl font-bold text-[var(--color-primary)] mt-1">0</p>
+                    </div>
+                    <div class="p-4 bg-[var(--color-background)] rounded-lg text-center shadow-inner">
+                        <p class="text-sm text-[var(--color-text-muted)]">הזמנות פתוחות כרגע</p>
+                        <p id="customer-kpi-open-orders" class="text-2xl font-bold text-[var(--color-success)] mt-1">0</p>
+                    </div>
+                    <div class="p-4 bg-[var(--color-background)] rounded-lg text-center shadow-inner">
+                        <p class="text-sm text-[var(--color-text-muted)]">הזמנות חורגות</p>
+                        <p id="customer-kpi-overdue-orders" class="text-2xl font-bold text-[var(--color-danger)] mt-1">0</p>
+                    </div>
+                     <div class="p-4 bg-[var(--color-background)] rounded-lg text-center shadow-inner">
+                        <p class="text-sm text-[var(--color-text-muted)]">תאריך הזמנה אחרונה</p>
+                        <p id="customer-kpi-last-order-date" class="text-2xl font-bold text-[var(--color-primary)] mt-1">N/A</p>
+                    </div>
                 </div>
 
-                <!-- Timeline -->
-                <div class="timeline-container relative flex-shrink-0 w-24 md:w-32 py-4">
-                    <div class="timeline-line"></div>
-                    <!-- Dynamically populated timeline events here -->
+                <!-- Customer Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="card p-6">
+                        <h3 class="text-xl font-semibold mb-4 text-[var(--color-text-base)]">פעילות חודשית</h3>
+                        <div class="chart-container">
+                            <canvas id="chart-customer-monthly-activity"></canvas>
+                        </div>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-xl font-semibold mb-4 text-[var(--color-text-base)]">התפלגות סוגי פעולות</h3>
+                        <div class="chart-container">
+                            <canvas id="chart-customer-action-distribution"></canvas>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Right Table: Uploads -->
-                <div class="flex-1 overflow-x-auto border border-[var(--color-border)] rounded-lg shadow-sm p-4">
-                    <h3 class="text-xl font-bold text-[var(--color-danger)] mb-3">היסטוריית העלאות (פינוי) ⬆️</h3>
-                    <table class="w-full text-right">
-                        <thead>
-                            <tr><th class="p-2">תאריך</th><th class="p-2">תעודה</th><th class="p-2">מכולה</th><th class="p-2">סטטוס</th><th class="p-2">ימים</th><th class="p-2">פעולות</th></tr>
-                        </thead>
-                        <tbody id="analysis-uploads-table-body"></tbody>
-                    </table>
-                    <div id="no-uploads" class="text-center text-gray-500 mt-4 hidden">אין היסטוריית העלאות.</div>
+                <!-- Customer Map History -->
+                <div class="card p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-[var(--color-text-base)]">היסטוריית מיקומים על המפה</h3>
+                    <div id="customer-mapid" style="height: 300px; width: 100%; border-radius: 0.75rem; border: 1px solid var(--color-border);"></div>
+                </div>
+
+                <!-- Customer Orders Table Summary -->
+                <div class="flex flex-col md:flex-row gap-6 overflow-hidden">
+                    <!-- Left Table: Downloads -->
+                    <div class="flex-1 overflow-x-auto border border-[var(--color-border)] rounded-lg shadow-sm p-4">
+                        <h3 class="text-xl font-bold text-[var(--color-success)] mb-3">היסטוריית הורדות (הצבה) 📦⬇️</h3>
+                        <table class="w-full text-right">
+                            <thead>
+                                <tr>
+                                    <th class="p-2 cursor-pointer" onclick="sortTable('analysis-downloads-table-body', 0)">תאריך <i class="fas fa-sort"></i></th>
+                                    <th class="p-2 cursor-pointer" onclick="sortTable('analysis-downloads-table-body', 1)">תעודה <i class="fas fa-sort"></i></th>
+                                    <th class="p-2 cursor-pointer" onclick="sortTable('analysis-downloads-table-body', 2)">מכולה <i class="fas fa-sort"></i></th>
+                                    <th class="p-2 cursor-pointer" onclick="sortTable('analysis-downloads-table-body', 3)">סטטוס <i class="fas fa-sort"></i></th>
+                                    <th class="p-2 cursor-pointer" onclick="sortTable('analysis-downloads-table-body', 4)">ימים <i class="fas fa-sort"></i></th>
+                                    <th class="p-2">פעולות</th>
+                                </tr>
+                            </thead>
+                            <tbody id="analysis-downloads-table-body"></tbody>
+                        </table>
+                        <div id="no-downloads" class="text-center text-gray-500 mt-4 hidden">אין היסטוריית הורדות.</div>
+                    </div>
+
+                    <!-- Timeline -->
+                    <div class="timeline-container relative flex-shrink-0 w-24 md:w-32 py-4">
+                        <div class="timeline-line"></div>
+                        <!-- Dynamically populated timeline events here -->
+                    </div>
+
+                    <!-- Right Table: Uploads -->
+                    <div class="flex-1 overflow-x-auto border border-[var(--color-border)] rounded-lg shadow-sm p-4">
+                        <h3 class="text-xl font-bold text-[var(--color-danger)] mb-3">היסטוריית העלאות (פינוי) ⬆️</h3>
+                        <table class="w-full text-right">
+                            <thead>
+                                <tr>
+                                    <th class="p-2 cursor-pointer" onclick="sortTable('analysis-uploads-table-body', 0)">תאריך <i class="fas fa-sort"></i></th>
+                                    <th class="p-2 cursor-pointer" onclick="sortTable('analysis-uploads-table-body', 1)">תעודה <i class="fas fa-sort"></i></th>
+                                    <th class="p-2 cursor-pointer" onclick="sortTable('analysis-uploads-table-body', 2)">מכולה <i class="fas fa-sort"></i></th>
+                                    <th class="p-2 cursor-pointer" onclick="sortTable('analysis-uploads-table-body', 3)">סטטוס <i class="fas fa-sort"></i></th>
+                                    <th class="p-2 cursor-pointer" onclick="sortTable('analysis-uploads-table-body', 4)">ימים <i class="fas fa-sort"></i></th>
+                                    <th class="p-2">פעולות</th>
+                                </tr>
+                            </thead>
+                            <tbody id="analysis-uploads-table-body"></tbody>
+                        </table>
+                        <div id="no-uploads" class="text-center text-gray-500 mt-4 hidden">אין היסטוריית העלאות.</div>
+                    </div>
                 </div>
             </div>
             <div class="flex justify-end gap-3 pt-4 border-t border-[var(--color-border)] mt-4">
@@ -344,10 +406,6 @@
                     </button>
                     <button class="btn btn-secondary" onclick="refreshData()">
                         <i class="fas fa-sync-alt"></i> רענן נתונים
-                    </button>
-                    <!-- NEW: Button for Manual Daily Report Email -->
-                    <button class="btn btn-primary" onclick="sendDailyReportEmailManual()">
-                        <i class="fas fa-envelope-open-text"></i> שלח דוח יומי (בדיקה)
                     </button>
                 </div>
 
@@ -452,14 +510,14 @@
                         <table id="orders-table" class="w-full text-right table-auto main-table-responsive">
                             <thead class="bg-[var(--color-background)] border-b-2 border-[var(--color-border)] sticky top-0 z-10">
                                 <tr>
-                                    <th class="p-3">תאריך</th>
-                                    <th class="p-3">תעודה</th>
-                                    <th class="p-3">לקוח</th>
-                                    <th class="p-3">כתובת</th>
-                                    <th class="p-3">סוג פעולה</th>
-                                    <th class="p-3">ימים שעברו</th>
-                                    <th class="p-3">מכולות</th>
-                                    <th class="p-3">סטטוס</th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('orders-table', 0)">תאריך <i class="fas fa-sort"></i></th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('orders-table', 1)">תעודה <i class="fas fa-sort"></i></th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('orders-table', 2)">לקוח <i class="fas fa-sort"></i></th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('orders-table', 3)">כתובת <i class="fas fa-sort"></i></th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('orders-table', 4)">סוג פעולה <i class="fas fa-sort"></i></th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('orders-table', 5)">ימים שעברו <i class="fas fa-sort"></i></th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('orders-table', 6)">מכולות <i class="fas fa-sort"></i></th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('orders-table', 7)">סטטוס <i class="fas fa-sort"></i></th>
                                     <th class="p-3">פעולות</th>
                                 </tr>
                             </thead>
@@ -484,7 +542,14 @@
                         <h3 class="text-xl font-bold mb-4 text-[var(--color-danger)]">מכולות בשימוש</h3>
                         <div class="overflow-x-auto max-h-96 rounded-lg border border-[var(--color-border)]">
                             <table id="containers-in-use-table" class="w-full text-right table-auto">
-                                <thead class="bg-[var(--color-background)] sticky top-0 z-10"><tr><th class="p-3">מספר</th><th class="p-3">לקוח</th><th class="p-3">תאריך</th><th class="p-3">מידע</th></tr></thead>
+                                <thead class="bg-[var(--color-background)] sticky top-0 z-10">
+                                    <tr>
+                                        <th class="p-3 cursor-pointer" onclick="sortTable('containers-in-use-table', 0)">מספר <i class="fas fa-sort"></i></th>
+                                        <th class="p-3 cursor-pointer" onclick="sortTable('containers-in-use-table', 1)">לקוח <i class="fas fa-sort"></i></th>
+                                        <th class="p-3 cursor-pointer" onclick="sortTable('containers-in-use-table', 2)">תאריך <i class="fas fa-sort"></i></th>
+                                        <th class="p-3">מידע</th>
+                                    </tr>
+                                </thead>
                                 <tbody></tbody>
                             </table>
                         </div>
@@ -493,7 +558,12 @@
                         <h3 class="text-xl font-bold mb-4 text-[var(--color-success)]">מכולות פנויות</h3>
                         <div class="overflow-x-auto max-h-96 rounded-lg border border-[var(--color-border)]">
                             <table id="containers-available-table" class="w-full text-right table-auto">
-                                <thead class="bg-[var(--color-background)] sticky top-0 z-10"><tr><th class="p-3">מספר</th><th class="p-3">תאריך התפנות</th></tr></thead>
+                                <thead class="bg-[var(--color-background)] sticky top-0 z-10">
+                                    <tr>
+                                        <th class="p-3 cursor-pointer" onclick="sortTable('containers-available-table', 0)">מספר <i class="fas fa-sort"></i></th>
+                                        <th class="p-3 cursor-pointer" onclick="sortTable('containers-available-table', 1)">תאריך התפנות <i class="fas fa-sort"></i></th>
+                                    </tr>
+                                </thead>
                                 <tbody></tbody>
                             </table>
                         </div>
@@ -527,88 +597,7 @@
                     <h2 class="text-3xl font-bold mb-3 text-[var(--color-text-base)]">לוח התראות WhatsApp 💬</h2>
                     <p class="text-lg text-[var(--color-text-muted)]">שלח הודעות מובנות ללקוחות על חריגות, סטטוס הזמנות והודעות חשובות נוספות.</p>
                 </div>
-                      <!-- קטע בתוך whatsapp-alerts-page -->
-<div id="whatsapp-alerts-page" class="page-content hidden p-6 animate-fade-in" dir="rtl">
-    <h2 class="text-2xl font-bold mb-6 text-[var(--color-primary)]">התראות ווטסאפ ללקוחות 💬</h2>
-    
-    <!-- 💡 חדש! אזור לשעון עצר וכפתור שליחת התראות אוטומטיות -->
-    <div id="automated-alerts-status-container" class="automated-alerts-status-container bg-red-100 text-red-700 mb-6 text-center">
-        <!-- התוכן של הטיימר והסטטוס יתעדכן דינמית ע"י JavaScript -->
-        <i class="fas fa-hourglass-half ml-2"></i> התראות אוטומטיות יישלחו בעוד: <span id="automated-alerts-timer" class="font-bold text-red-700">00:00:00</span>
-    </div>
 
-    <div class="flex flex-wrap gap-4 justify-center mb-6">
-        <button id="send-all-overdue-alerts-btn" class="btn bg-[var(--color-danger)] text-white hover:bg-[var(--color-danger-dark)] transition-colors py-2 px-4 rounded-lg shadow-md">
-            <i class="fas fa-exclamation-triangle ml-2"></i> שלח התראות ידניות לכל הלקוחות החורגים
-        </button>
-        <!-- כפתורים נוספים לפי קטגוריות, לדוגמה: -->
-        <!-- <button id="send-welcome-messages-btn" class="btn bg-blue-500 text-white hover:bg-blue-600 transition-colors py-2 px-4 rounded-lg shadow-md">
-            <i class="fas fa-hand-sparkles ml-2"></i> שלח הודעות ברכה לחדשים
-        </button> -->
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <!-- פרטי לקוח -->
-        <div class="card p-5 bg-[var(--color-surface)] shadow-md rounded-lg">
-            <h3 class="text-lg font-semibold mb-3 text-[var(--color-primary)]">פרטי לקוח</h3>
-            <div class="mb-4">
-                <label for="whatsapp-customer-name" class="block text-sm font-medium text-[var(--color-text-muted)]">שם לקוח</label>
-                <input type="text" id="whatsapp-customer-name" class="mt-1 block w-full p-2 border rounded-md shadow-sm bg-[var(--color-background)] border-[var(--color-border)] text-[var(--color-text-base)]" readonly>
-            </div>
-            <div class="mb-4">
-                <label for="whatsapp-phone-number" class="block text-sm font-medium text-[var(--color-text-muted)]">מספר טלפון</label>
-                <input type="text" id="whatsapp-phone-number" class="mt-1 block w-full p-2 border rounded-md shadow-sm bg-[var(--color-background)] border-[var(--color-border)] text-[var(--color-text-base)]" readonly>
-            </div>
-            <div class="mb-4">
-                <label for="whatsapp-address" class="block text-sm font-medium text-[var(--color-text-muted)]">כתובת</label>
-                <input type="text" id="whatsapp-address" class="mt-1 block w-full p-2 border rounded-md shadow-sm bg-[var(--color-background)] border-[var(--color-border)] text-[var(--color-text-base)]" readonly>
-            </div>
-            <p class="text-xs text-[var(--color-text-muted)]">מזהה הזמנה: <span id="details-order-id" class="font-semibold"></span></p>
-        </div>
-
-        <!-- בחירת תבנית הודעה -->
-        <div class="card p-5 bg-[var(--color-surface)] shadow-md rounded-lg col-span-1 md:col-span-2">
-            <h3 class="text-lg font-semibold mb-3 text-[var(--color-primary)]">תוכן הודעת WhatsApp</h3>
-            <div class="mb-4">
-                <label for="message-template-select" class="block text-sm font-medium text-[var(--color-text-muted)]">בחר תבנית הודעה</label>
-                <select id="message-template-select" onchange="loadWhatsAppTemplate()" class="mt-1 block w-full p-2 border rounded-md shadow-sm bg-[var(--color-background)] border-[var(--color-border)] text-[var(--color-text-base)]">
-                    <option value="">בחר תבנית...</option>
-                </select>
-            </div>
-            <div class="mb-4">
-                <label for="whatsapp-message-input" class="block text-sm font-medium text-[var(--color-text-muted)]">הודעה</label>
-                <textarea id="whatsapp-message-input" rows="7" class="mt-1 block w-full p-2 border rounded-md shadow-sm bg-[var(--color-background)] border-[var(--color-border)] text-[var(--color-text-base)]"></textarea>
-            </div>
-            <div class="flex justify-end gap-3">
-                <button onclick="clearWhatsAppMessage()" class="btn bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors py-2 px-4 rounded-lg shadow-md">נקה</button>
-                <button onclick="sendWhatsAppMessage()" class="btn bg-green-500 text-white hover:bg-green-600 transition-colors py-2 px-4 rounded-lg shadow-md">
-                    <i class="fab fa-whatsapp ml-2"></i> שלח
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <div class="bg-[var(--color-surface)] p-6 rounded-lg shadow-md">
-        <h3 class="text-xl font-bold mb-4 text-[var(--color-primary)]">הזמנות הדורשות טיפול</h3>
-        <p id="no-alerts-needed" class="text-center text-[var(--color-text-muted)] py-4 hidden">כל הכבוד! אין הזמנות הדורשות טיפול כרגע.</p>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-[var(--color-border)] text-right" dir="rtl">
-                <thead>
-                    <tr>
-                        <th class="px-3 py-3 bg-[var(--color-background)] text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">תעודה</th>
-                        <th class="px-3 py-3 bg-[var(--color-background)] text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">לקוח</th>
-                        <th class="px-3 py-3 bg-[var(--color-background)] text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">סטטוס</th>
-                        <th class="px-3 py-3 bg-[var(--color-background)] text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">ימים שעברו</th>
-                        <th class="px-3 py-3 bg-[var(--color-background)] text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">פעולות</th>
-                    </tr>
-                </thead>
-                <tbody id="alerts-table-body" class="bg-[var(--color-surface)] divide-y divide-[var(--color-border)]">
-                    <!-- Alerts will be rendered here -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
                 <div class="card p-8 space-y-5 max-w-2xl mx-auto mb-8">
                     <h3 class="text-2xl font-bold mb-4 text-[var(--color-primary)]">שליחת הודעת WhatsApp</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -653,10 +642,10 @@
                         <table class="w-full text-right table-auto">
                             <thead class="bg-[var(--color-background)] border-b-2 border-[var(--color-border)] sticky top-0 z-10">
                                 <tr>
-                                    <th class="p-3">תעודה</th>
-                                    <th class="p-3">לקוח</th>
-                                    <th class="p-3">סטטוס</th>
-                                    <th class="p-3">ימים</th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('alerts-table-body', 0)">תעודה <i class="fas fa-sort"></i></th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('alerts-table-body', 1)">לקוח <i class="fas fa-sort"></i></th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('alerts-table-body', 2)">סטטוס <i class="fas fa-sort"></i></th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('alerts-table-body', 3)">ימים <i class="fas fa-sort"></i></th>
                                     <th class="p-3">פעולות</th>
                                 </tr>
                             </thead>
@@ -731,12 +720,12 @@
                         <table id="reports-orders-table" class="w-full text-right table-auto main-table-responsive">
                             <thead class="bg-[var(--color-background)] border-b-2 border-[var(--color-border)] sticky top-0 z-10">
                                 <tr>
-                                    <th class="p-3">תאריך</th>
-                                    <th class="p-3">תעודה</th>
-                                    <th class="p-3">לקוח</th>
-                                    <th class="p-3">סוג פעולה</th>
-                                    <th class="p-3">מכולות</th>
-                                    <th class="p-3">סטטוס</th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('reports-orders-table', 0)">תאריך <i class="fas fa-sort"></i></th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('reports-orders-table', 1)">תעודה <i class="fas fa-sort"></i></th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('reports-orders-table', 2)">לקוח <i class="fas fa-sort"></i></th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('reports-orders-table', 3)">סוג פעולה <i class="fas fa-sort"></i></th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('reports-orders-table', 4)">מכולות <i class="fas fa-sort"></i></th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('reports-orders-table', 5)">סטטוס <i class="fas fa-sort"></i></th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -772,10 +761,10 @@
                         <table id="customer-analysis-table" class="w-full text-right table-auto">
                             <thead class="bg-[var(--color-background)] border-b-2 border-[var(--color-border)] sticky top-0 z-10">
                                 <tr>
-                                    <th class="p-3">שם לקוח</th>
-                                    <th class="p-3">כתובת אחרונה</th>
-                                    <th class="p-3">טלפון</th>
-                                    <th class="p-3">סה"כ הזמנות</th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('customer-analysis-table', 0)">שם לקוח <i class="fas fa-sort"></i></th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('customer-analysis-table', 1)">כתובת אחרונה <i class="fas fa-sort"></i></th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('customer-analysis-table', 2)">טלפון <i class="fas fa-sort"></i></th>
+                                    <th class="p-3 cursor-pointer" onclick="sortTable('customer-analysis-table', 3)">סה"כ הזמנות <i class="fas fa-sort"></i></th>
                                     <th class="p-3">פעולות</th>
                                 </tr>
                             </thead>
@@ -798,7 +787,6 @@
 
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
 <!-- Custom JavaScript -->
 <script src="script.js"></script>
 
