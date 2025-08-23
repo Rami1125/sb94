@@ -10,7 +10,7 @@ const SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxiS3wXwXCyh
 
 // URL של סקריפט Apps Script נפרד לרישום הודעות WhatsApp (⚠️ החלף ב-ID האמיתי של הסקריפט שלך)
 // תצטרך פרויקט Apps Script נפרד שפרוס כיישום אינטרנט במיוחד לרישום הודעות WhatsApp.
-const WHATSAPP_LOG_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyocmflqE_jv0QP__ggyr9A6qB31SBwbUb76bmbZhRHCIpDkl6SxRBplOmb2Cdaah11/exec';
+const WHATSAPP_LOG_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyocmflqE_jv0QP__ggyr9A6qB31SBwbUb76bmbZhRHCIpDkl6SxRBplOmb2Cdaah11/execc';
 
 // URL של סקריפט Apps Script נפרד לשליחת מיילים (⚠️ החלף ב-ID האמיתי של הסקריפט שלך)
 // תצטרך פרויקט Apps Script נפרד נוסף שפרוס כיישום אינטרנט במיוחד לשליחת מיילים.
