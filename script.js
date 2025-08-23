@@ -6,7 +6,7 @@
 // 3. פרוס את הסקריפט כיישום אינטרנט (פריסה > פריסה חדשה > סוג: יישום אינטרנט).
 // 4. ודא ש"הפעל כ:" הוא "אני" ו"למי יש גישה:" הוא "כל אחד".
 // 5. העתק את ה-URL של יישום האינטרנט והדבק אותו כאן.
-const SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyocmflqE_jv0QP__ggyr9A6qB31SBwbUb76bmbZhRHCIpDkl6SxRBplOmb2Cdaah11/exec';
+const SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxiS3wXwXCyh8xM1EdTiwXy0T-UyBRQgfrnRRis531lTxmgtJIGawfsPeetX5nVJW3V/exec';
 
 // URL של סקריפט Apps Script נפרד לרישום הודעות WhatsApp (⚠️ החלף ב-ID האמיתי של הסקריפט שלך)
 // תצטרך פרויקט Apps Script נפרד שפרוס כיישום אינטרנט במיוחד לרישום הודעות WhatsApp.
