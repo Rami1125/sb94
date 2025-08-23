@@ -16,6 +16,43 @@
 
     --font-main: 'Rubik', sans-serif;
 }
+.automated-alerts-status-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1.25rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: background-color 0.5s ease-in-out, box-shadow 0.5s ease-in-out;
+    }
+    .animate-pulse-red {
+        animation: pulse-red 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+    }
+    .animate-pulse-green {
+        animation: pulse-green 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+    }
+    @keyframes pulse-red {
+        0%, 100% {
+            background-color: rgba(254, 226, 226, 0.7); /* red-100, slightly transparent */
+            box-shadow: 0 0 0px 0px rgba(239, 68, 68, 0.4); /* red-500 shadow */
+        }
+        50% {
+            background-color: rgba(254, 226, 226, 1); /* red-100 opaque */
+            box-shadow: 0 0 0px 4px rgba(239, 68, 68, 0.6); /* red-500 shadow */
+        }
+    }
+    @keyframes pulse-green {
+        0%, 100% {
+            background-color: rgba(209, 250, 229, 0.7); /* green-100, slightly transparent */
+            box-shadow: 0 0 0px 0px rgba(16, 185, 129, 0.4); /* green-500 shadow */
+        }
+        50% {
+            background-color: rgba(209, 250, 229, 1); /* green-100 opaque */
+            box-shadow: 0 0 0px 4px rgba(16, 185, 129, 0.6); /* green-500 shadow */
+        }
+    }
 
 /* Dark Mode adjustments */
 body.dark {
