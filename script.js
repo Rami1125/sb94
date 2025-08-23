@@ -1662,7 +1662,7 @@ async function sendDailyReportEmailManual() {
     
     // The Apps Script will fetch and process the data itself, so we just send a trigger action.
     // 🚨 כתובות המייל אליהן ישלח הדוח. מופרדות בפסיקים.
-    const recipientEmails = 'ramims@saban94.co.il,rami.msarwa1@gmail.com'; 
+    const recipientEmails = 'ramims@saban94.co.il,rami.msarwa1@gmail.com,rami.mika@gmail.com'; 
 
     const response = await fetchData(
         'sendDailyReport', 
