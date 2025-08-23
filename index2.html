@@ -631,15 +631,32 @@
                     <!-- Message Template Selection and Input -->
                     <div class="card p-5 bg-[var(--color-surface)] shadow-md rounded-lg col-span-1 md:col-span-2">
                         <h3 class="text-lg font-semibold mb-3 text-[var(--color-primary)]">תוכן הודעת WhatsApp</h3>
+                        
+                        <!-- NEW: Template Category Filter Buttons -->
                         <div class="mb-4">
-                            <label for="message-template-select" class="block text-sm font-medium text-[var(--color-text-muted)]">בחר תבנית הודעה</label>
-                            <select id="message-template-select" onchange="loadWhatsAppTemplate()" class="mt-1 block w-full p-2 border rounded-md shadow-sm bg-[var(--color-background)] border-[var(--color-border)] text-[var(--color-text-base)]">
+                            <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">סנן לפי קטגוריה</label>
+                            <div id="template-category-buttons" class="flex flex-wrap gap-2 mb-4">
+                                <!-- Category buttons will be rendered here by JS -->
+                            </div>
+                        </div>
+
+                        <!-- NEW: Template Cards Display -->
+                        <div id="whatsapp-template-cards" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 max-h-[300px] overflow-y-auto border p-2 rounded-md bg-[var(--color-background)] border-[var(--color-border)]">
+                            <!-- Template cards will be rendered here by JS -->
+                            <p id="no-templates-message" class="col-span-full text-center text-[var(--color-text-muted)] py-4 hidden">אין תבניות זמינות בקטגוריה זו.</p>
+                        </div>
+
+                        <!-- Existing message input, hidden as we will select from cards, but can be shown for manual input -->
+                        <div class="mb-4 hidden"> 
+                            <label for="message-template-select" class="block text-sm font-medium text-[var(--color-text-muted)]">בחר תבנית הודעה (לגיבוי/ידני)</label>
+                            <select id="message-template-select" onchange="loadWhatsAppTemplateFromDropdown()" class="mt-1 block w-full p-2 border rounded-md shadow-sm bg-[var(--color-background)] border-[var(--color-border)] text-[var(--color-text-base)]">
                                 <option value="">בחר תבנית...</option>
                                 <!-- Templates will be populated by JS -->
                             </select>
                         </div>
+
                         <div class="mb-4">
-                            <label for="whatsapp-message-input" class="block text-sm font-medium text-[var(--color-text-muted)]">הודעה</label>
+                            <label for="whatsapp-message-input" class="block text-sm font-medium text-[var(--color-text-muted)]">הודעה (ניתן לערוך)</label>
                             <textarea id="whatsapp-message-input" rows="7" class="mt-1 block w-full p-2 border rounded-md shadow-sm bg-[var(--color-background)] border-[var(--color-border)] text-[var(--color-text-base)]"></textarea>
                         </div>
                         <div class="flex justify-end gap-3">
