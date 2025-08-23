@@ -10,11 +10,12 @@ const SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxiS3wXwXCyh
 
 // URL של סקריפט Apps Script נפרד לרישום הודעות WhatsApp (⚠️ החלף ב-ID האמיתי של הסקריפט שלך)
 // תצטרך פרויקט Apps Script נפרד שפרוס כיישום אינטרנט במיוחד לרישום הודעות WhatsApp.
-const WHATSAPP_LOG_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxiS3wXwXCyh8xM1EdTiwXy0T-UyBRQgfrnRRis531lTxmgtJIGawfsPeetX5nVJW3V/exec';
+// שלבים דומים ל-SCRIPT_WEB_APP_URL
+const WHATSAPP_LOG_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_YOUR_WHATSAPP_SCRIPT_ID_HERE/exec'; // 🚨🚨🚨 חובה לעדכן!!!
 
-// URL של סקריפט Apps Script נפרד לשליחת מיילים (⚠️ החלף ב-ID האמיתי של הסקריפט שלך)
-// תצטרך פרויקט Apps Script נפרד נוסף שפרוס כיישום אינטרנט במיוחד לשליחת מיילים.
-// חשוב: זה צריך להיות ה-URL של ה-Apps Script שיצרת עבור הדוחות היומיים!
+// URL של סקריפט Apps Script נפרד לשליחת מיילים (⚠️ חובה להחליף ב-URL האמיתי של הסקריפט שלך!)
+// זהו ה-URL הספציפי לפרויקט ה-Google Apps Script שיצרת עבור הדוחות היומיים ושמכיל את הפונקציה sendDailyReport.
+// שלבים דומים ל-SCRIPT_WEB_APP_URL.
 const EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwt9ogMVJRtN91dJVrCHm7ZT6zrbAXTFLP79sTpn_xsMAlxGL8-p6uW74eXKtZs0_ge/exec'; // 🚨🚨🚨 חובה לעדכן!!!
 
 let allOrders = []; // Array containing all loaded orders
@@ -1661,19 +1662,14 @@ async function sendDailyReportEmailManual() {
     showAlert('שולח דוח יומי למייל...', 'info');
     
     // The Apps Script will fetch and process the data itself, so we just send a trigger action.
-    // ⚠️ חשוב: ודא שכתובת המייל מוחלפת בכתובת מייל אמיתית לבדיקה,
-    // ושה-EMAIL_SCRIPT_URL מוגדר כראוי בראש הקובץ!
-async function sendDailyReportEmailManual() {
-    showAlert('שולח דוח יומי למייל...', 'info');
-    
-    // 🚨🚨🚨 החלף בכתובות המייל האמיתיות שלך לבדיקה, מופרדות בפסיקים!!!
+    // 🚨 כתובות המייל אליהן ישלח הדוח. מופרדות בפסיקים.
     const recipientEmails = 'ramims@saban94.co.il,rami.msarwa1@gmail.com'; 
 
     const response = await fetchData(
         'sendDailyReport', 
-        { recipientEmails: recipientEmails }, // העברת הפרמטר recipientEmails
+        { recipientEmails: recipientEmails }, // מעביר את רשימת כתובות המייל לסקריפט ה-Apps Script
         0, 
-        EMAIL_SCRIPT_URL
+        EMAIL_SCRIPT_URL // משתמש ב-URL של סקריפט המייל שהוגדר בראש הקובץ.
     );
 
     if (response.success) {
@@ -1734,7 +1730,7 @@ function populateCustomerAnalysisTable() {
     ).sort();
 
     if (filteredCustomers.length === 0) {
-        document.getElementById('no-customer-analysis').classList.remove('hidden');
+        document.getElementById('no-customer-analysis').classList.add('hidden');
     } else {
         filteredCustomers.forEach(customerName => {
             const summary = customerSummaries[customerName];
@@ -1798,7 +1794,7 @@ function printCustomerSummary(customerName) {
             <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${formatDate(order['תאריך הזמנה'])}</td>
             <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${order['תעודה'] || ''}</td>
             <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${order['סוג פעולה'] || ''}</td>
-            <td style="padding: 8px; border: 1px solid #ddd; text-align: right;"><span style="color: ${order._effectiveStatus === 'חורג' ? '#D64545' : (order._effectiveStatus === 'פתוח' ? '#2E8B57' : '#607D8B')};">${order._effectiveStatus || ''}</span></td>
+            <td style="padding: 8px; border: 1px solid #ddd; background-color: ${order._effectiveStatus === 'חורג' ? '#FDE8E8' : (order._effectiveStatus === 'פתוח' ? '#E8FDE8' : '#F0F0F0')}; text-align: right;"><span style="color: ${order._effectiveStatus === 'חורג' ? '#D64545' : (order._effectiveStatus === 'פתוח' ? '#2E8B57' : '#607D8B')};">${order._effectiveStatus || ''}</span></td>
             <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${order['מספר מכולה ירדה'] || 'N/A'}</td>
             <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${order['מספר מכולה עלתה'] || 'N/A'}</td>
         </tr>
@@ -2059,7 +2055,7 @@ function drawCharts() {
     });
 
     // Chart: Action Type Distribution (Bar Chart - Vertical)
-    const actionTypeCounts = allOrders.reduce((acc, order) => {
+    const actionTypeCounts = allOrders.reduce((acc, order => {
         const type = order['סוג פעולה'];
         if (type) {
             acc[type] = (acc[type] || 0) + 1;
