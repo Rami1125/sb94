@@ -15,7 +15,7 @@ const WHATSAPP_LOG_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxiS3wX
 // URL של סקריפט Apps Script נפרד לשליחת מיילים (⚠️ החלף ב-ID האמיתי של הסקריפט שלך)
 // תצטרך פרויקט Apps Script נפרד נוסף שפרוס כיישום אינטרנט במיוחד לשליחת מיילים.
 // חשוב: זה צריך להיות ה-URL של ה-Apps Script שיצרת עבור הדוחות היומיים!
-const EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxiS3wXwXCyh8xM1EdTiwXy0T-UyBRQgfrnRRis531lTxmgtJIGawfsPeetX5nVJW3V/exec'; // 🚨🚨🚨 חובה לעדכן!!!
+const EMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5tIOIoIKgL1QrT-8Rx5WpsA_Amu4_vMRnPs6lyD61iBNCggmuXrwcDzqf-pa_TNZ_/exec'; // 🚨🚨🚨 חובה לעדכן!!!
 
 let allOrders = []; // Array containing all loaded orders
 let currentEditingOrder = null; // Variable for the order currently being edited
