@@ -1663,11 +1663,17 @@ async function sendDailyReportEmailManual() {
     // The Apps Script will fetch and process the data itself, so we just send a trigger action.
     // ⚠️ חשוב: ודא שכתובת המייל מוחלפת בכתובת מייל אמיתית לבדיקה,
     // ושה-EMAIL_SCRIPT_URL מוגדר כראוי בראש הקובץ!
+async function sendDailyReportEmailManual() {
+    showAlert('שולח דוח יומי למייל...', 'info');
+    
+    // 🚨🚨🚨 החלף בכתובות המייל האמיתיות שלך לבדיקה, מופרדות בפסיקים!!!
+    const recipientEmails = 'ramims@saban94.co.il,rami.msarwa1@gmail.com'; 
+
     const response = await fetchData(
         'sendDailyReport', 
-        { recipientEmail: 'your.actual.email@example.com' }, // 🚨🚨🚨 החלף בכתובת המייל האמיתית שלך לבדיקה!!!
+        { recipientEmails: recipientEmails }, // העברת הפרמטר recipientEmails
         0, 
-        EMAIL_SCRIPT_URL // משתמש ב-URL של סקריפט המייל שהוגדר בראש הקובץ.
+        EMAIL_SCRIPT_URL
     );
 
     if (response.success) {
