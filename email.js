@@ -5,7 +5,6 @@
 const SPREADSHEET_ID = '1TPwAP0h05IyzvusybJv3zMKSOKpFNUS9jZtEK5pSgps';
 const SHEET_NAME = 'מעקב';
 const DEFAULT_RECIPIENT_EMAILS = "ramims@saban94.co.il,rami.msarwa1@gmail.com";
-const OVERDUE_THRESHOLD_DAYS = 10;
 const EMAIL_SUBJECT = "דוח יומי - מערכת CRM מכולות";
 
 /**
@@ -21,15 +20,17 @@ function sendDailyReport() {
     return;
   }
 
-  const data = sheet.getDataRange().getDisplayValues();
+  // קוראים את כל הנתונים מהגיליון כדי לאפשר חישובים גמישים
+  const dataRange = sheet.getDataRange();
+  const values = dataRange.getDisplayValues();
 
-  if (data.length <= 1) {
+  if (values.length <= 1) {
     Logger.log("No data available to create a report.");
     return;
   }
 
-  const headers = data[0];
-  const allOrders = data.slice(1).map(row => {
+  const headers = values[0];
+  const allOrders = values.slice(1).map(row => {
     let order = {};
     headers.forEach((header, index) => {
       // הסרת רווחים מיותרים מכל הערכים כדי למנוע בעיות התאמה
@@ -43,7 +44,7 @@ function sendDailyReport() {
   yesterday.setDate(today.getDate() - 1);
   const yesterdayString = Utilities.formatDate(yesterday, "GMT+2", "dd/MM/yyyy");
 
-  // פילוח הנתונים לפי סטאטוס, תוך שימוש בפונקציה חדשה לחישוב ימים
+  // פילוח הנתונים לקבוצות השונות
   const openOrders = allOrders.filter(order => order['סטטוס'] === 'פתוח' && order['לקוח'] && order['לקוח'].trim() !== '');
   const overdueOrders = allOrders.filter(order => order['סטטוס'] === 'חורג' && order['לקוח'] && order['לקוח'].trim() !== '');
   const newOrders = allOrders.filter(order => {
@@ -51,7 +52,7 @@ function sendDailyReport() {
     return orderDate && Utilities.formatDate(new Date(orderDate), "GMT+2", "dd/MM/yyyy") === yesterdayString;
   });
 
-  // חישובים
+  // חישובים מדויקים על בסיס נתוני המכולות
   const totalOpenContainers = openOrders.reduce((sum, order) => sum + parseInt(order['מספר מכולות'] || 0), 0);
   const totalOverdueContainers = overdueOrders.reduce((sum, order) => sum + parseInt(order['מספר מכולות'] || 0), 0);
   const totalUsedContainers = totalOpenContainers + totalOverdueContainers;
