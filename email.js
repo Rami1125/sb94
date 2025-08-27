@@ -32,7 +32,8 @@ function sendDailyReport() {
   const allOrders = data.slice(1).map(row => {
     let order = {};
     headers.forEach((header, index) => {
-      order[header] = row[index];
+      // הסרת רווחים מיותרים מכל הערכים כדי למנוע בעיות התאמה
+      order[header] = row[index] ? String(row[index]).trim() : '';
     });
     return order;
   });
@@ -42,7 +43,7 @@ function sendDailyReport() {
   yesterday.setDate(today.getDate() - 1);
   const yesterdayString = Utilities.formatDate(yesterday, "GMT+2", "dd/MM/yyyy");
 
-  // פילוח הנתונים לפי סטאטוס
+  // פילוח הנתונים לפי סטאטוס, תוך שימוש בפונקציה חדשה לחישוב ימים
   const openOrders = allOrders.filter(order => order['סטטוס'] === 'פתוח' && order['לקוח'] && order['לקוח'].trim() !== '');
   const overdueOrders = allOrders.filter(order => order['סטטוס'] === 'חורג' && order['לקוח'] && order['לקוח'].trim() !== '');
   const newOrders = allOrders.filter(order => {
@@ -55,7 +56,7 @@ function sendDailyReport() {
   const totalOverdueContainers = overdueOrders.reduce((sum, order) => sum + parseInt(order['מספר מכולות'] || 0), 0);
   const totalUsedContainers = totalOpenContainers + totalOverdueContainers;
 
-  // יצירת תוכן ה-HTML של הדוח
+  // יצירת תוכן ה-HTML של הדוח באמצעות הפונקציה המעוצבת
   const htmlBody = generateReportHtml(
     totalUsedContainers,
     totalOpenContainers,
@@ -69,7 +70,7 @@ function sendDailyReport() {
     MailApp.sendEmail({
       to: DEFAULT_RECIPIENT_EMAILS,
       subject: EMAIL_SUBJECT,
-      htmlBody: htmlBody
+      htmlBody: htmlBody // כאן אנו מוסרים את ה-HTML המעוצב
     });
     Logger.log("Daily report sent successfully to: " + DEFAULT_RECIPIENT_EMAILS);
   } catch (e) {
@@ -133,6 +134,7 @@ function createHtmlTable(orders, title, className) {
   return tableHtml;
 }
 
+
 /**
  * פונקציה שמרכזת את יצירת כל גוף המייל כ-HTML.
  * @param {number} totalUsedContainers
@@ -156,126 +158,144 @@ function generateReportHtml(totalUsedContainers, totalOpenContainers, totalOverd
     <head>
       <meta charset="UTF-8">
       <style>
-        body { 
-          font-family: Arial, sans-serif; 
-          direction: rtl; 
-          text-align: right; 
-          background-color: #f0f0f0; 
-          margin: 0; 
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap');
+        body {
+          font-family: 'Heebo', sans-serif;
+          direction: rtl;
+          text-align: right;
+          background-color: #f4f6f9;
+          margin: 0;
           padding: 20px;
         }
         .container {
           max-width: 800px;
           margin: 0 auto;
           background-color: #ffffff;
-          border-radius: 10px;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-          padding: 20px;
+          border-radius: 12px;
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+          padding: 30px;
+          border: 1px solid #e0e0e0;
         }
-        h1, h2, h3 { 
-          color: #1a73e8; 
-          border-bottom: 2px solid #1a73e8; 
-          padding-bottom: 5px;
+        h1, h2, h3 {
+          font-weight: 700;
+          color: #004d99;
+          border-bottom: 3px solid #004d99;
+          padding-bottom: 8px;
           text-align: center;
         }
         .summary-box {
-          background-color: #e8f0fe;
-          border: 1px solid #1a73e8;
-          border-radius: 8px;
-          padding: 15px;
-          margin-bottom: 20px;
+          background: linear-gradient(135deg, #e6f2ff, #cce6ff);
+          border: 1px solid #b3d9ff;
+          border-radius: 10px;
+          padding: 20px;
+          margin-bottom: 30px;
           text-align: center;
           font-weight: bold;
-          color: #1a73e8;
+          color: #003366;
         }
         .summary-flex {
             display: flex;
             flex-wrap: wrap;
             justify-content: space-around;
+            gap: 15px;
         }
         .summary-item {
-            background-color: #d1e2ff;
-            border-radius: 5px;
-            padding: 10px;
-            margin: 5px;
-            min-width: 200px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+            min-width: 180px;
             text-align: center;
+            transition: transform 0.3s ease;
         }
-        table { 
-          width: 100%; 
-          border-collapse: collapse; 
-          margin-top: 20px; 
-          table-layout: fixed; /* שינוי כדי למנוע טבלאות חורגות */
+        .summary-item:hover {
+            transform: translateY(-5px);
         }
-        th, td { 
-          border: 1px solid #ddd; 
-          padding: 8px; 
-          text-align: right; 
-          word-wrap: break-word; /* מונע גלישת טקסט מחוץ לתא */
+        .summary-item p {
+            margin: 0;
+            line-height: 1.5;
         }
-        th { 
-          background-color: #f2f2f2; 
-          color: #333;
+        .summary-item .value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-top: 5px;
         }
-        .open-table h3 { color: #1a73e8; }
-        .open-table th { background-color: #c7e0ff; }
-        
-        .overdue-table h3 { color: #d93025; }
-        .overdue-table th { background-color: #f4cccc; }
-        .overdue-table { background-color: #fff8f8; } /* רקע אדום עדין */
-
-        .new-orders-table h3 { color: #1e8e3e; }
-        .new-orders-table th { background-color: #d7f5e1; }
-
+        .value.used { color: #004d99; }
+        .value.open { color: #10a359; }
+        .value.overdue { color: #d93025; }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 25px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 12px;
+            text-align: right;
+            word-wrap: break-word;
+        }
+        th {
+            background-color: #e6f2ff;
+            color: #004d99;
+            font-weight: 700;
+        }
+        .open-table th { background-color: #e6f2ff; }
+        .overdue-table th { background-color: #ffcccc; color: #d93025;}
+        .new-orders-table th { background-color: #dff0d8; color: #10a359; }
         .table-container {
-          border: 1px solid #ccc;
+            margin-bottom: 30px;
+            background-color: #fafafa;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .info-box {
+          background-color: #fff3cd;
+          color: #856404;
+          border: 1px solid #ffeeba;
           border-radius: 8px;
           padding: 15px;
-          margin-bottom: 20px;
+          text-align: center;
+          margin-top: 15px;
         }
       </style>
     </head>
     <body>
       <div class="container">
         <h1>דוח יומי למערכת ניהול מכולות</h1>
-        <p style="text-align: center;">שלום,</p>
-        <p style="text-align: center;">זהו דוח עדכון יומי מקיף מיום <b>${todayDate}</b>. הדוח כולל נתוני מכולות בשימוש, הזמנות פתוחות וחורגות, וכן סיכום הזמנות חדשות.</p>
+        <p style="text-align: center; color: #555;">שלום,</p>
+        <p style="text-align: center; color: #555;">זהו דוח עדכון יומי מקיף מיום <b>${todayDate}</b>. הדוח כולל נתוני מכולות בשימוש, הזמנות פתוחות וחורגות, וכן סיכום הזמנות חדשות.</p>
         
         <h2>סיכום נתונים</h2>
         <div class="summary-box">
-            <div class="summary-flex">
-                <div class="summary-item">
-                    <p>סה"כ מכולות בשימוש:</p>
-                    <p style="font-size: 24px; color: #1a73e8;"><b>${totalUsedContainers}</b></p>
-                </div>
-                <div class="summary-item">
-                    <p>מכולות בהזמנות פתוחות:</p>
-                    <p style="font-size: 24px; color: #1e8e3e;"><b>${totalOpenContainers}</b></p>
-                </div>
-                <div class="summary-item">
-                    <p>מכולות בהזמנות חורגות:</p>
-                    <p style="font-size: 24px; color: #d93025;"><b>${totalOverdueContainers}</b></p>
-                </div>
+          <div class="summary-flex">
+            <div class="summary-item">
+              <p>סה"כ מכולות בשימוש:</p>
+              <p class="value used"><b>${totalUsedContainers}</b></p>
             </div>
+            <div class="summary-item">
+              <p>מכולות בהזמנות פתוחות:</p>
+              <p class="value open"><b>${totalOpenContainers}</b></p>
+            </div>
+            <div class="summary-item">
+              <p>מכולות בהזמנות חורגות:</p>
+              <p class="value overdue"><b>${totalOverdueContainers}</b></p>
+            </div>
+          </div>
         </div>
-
+    
         ${newOrdersTable}
         ${openTable}
         ${overdueTable}
-
-        <p style="text-align: center;">בברכה,</p>
-        <p style="text-align: center;">צוות המכולות</p>
+    
+        <p style="text-align: center; color: #555; margin-top: 30px;">בברכה,</p>
+        <p style="text-align: center; color: #555; margin-bottom: 0;">צוות המכולות</p>
       </div>
     </body>
     </html>
   `;
-}
-
-/**
- * פונקציה זו יכולה לשמש כטריגר מבוסס זמן.
- * היא מפעילה את הפונקציה הראשית לשליחת הדוח.
- */
-function sendDailyReportViaTrigger() {
-  Logger.log("טריגר יומי מופעל. שולח דוח...");
-  sendDailyReport();
 }
