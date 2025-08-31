@@ -3,1080 +3,566 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>לוח התראות WhatsApp 💬</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Chart.js for charts (if needed for context, though not directly used on this page for now) -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Leaflet for maps (if needed for context, though not directly used on this page for now) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <!-- Google Fonts - Rubik for Hebrew support -->
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>מערכת CRM מתקדמת לניהול שכירות מכולות</title>
     
+    <!-- External Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
     <style>
+        /* Global Variables from eco.html */
         :root {
-            /* Calm Neutral Harmony Palette */
-            --color-primary: #2e8b57; /* Sea Green - main accent */
-            --color-primary-dark: #287a4d;
-            --color-secondary: #607d8b; /* Blue Gray - secondary accent */
-            --color-secondary-dark: #526b78;
-            --color-accent: #4a90e2; /* A slightly brighter blue for interactive elements */
-            --color-info: #3498db;   /* Standard blue for info */
-            --color-success: #28a745; /* Green for success */
-            --color-warning: #ffc107; /* Yellow for warning */
-            --color-danger: #dc3545; /* Red for danger */
-            --color-danger-dark: #c82333;
-
-            /* Neutral Tones for Backgrounds and Text */
-            --color-background: #f8f9fa; /* Light background */
-            --color-surface: #ffffff;    /* Card backgrounds, lighter surfaces */
-            --color-border: #e0e0e0;     /* Light gray for borders */
-            --color-text-base: #333333;  /* Dark gray for main text */
-            --color-text-muted: #6c757d; /* Lighter gray for secondary text */
-
-            /* Dark Mode Overrides (for smooth transition) */
-            --dark-color-background: #1a202c;
-            --dark-color-surface: #2d3748;
-            --dark-color-border: #4a5568;
-            --dark-color-text-base: #e2e8f0;
-            --dark-color-text-muted: #a0aec0;
-        }
-
-        body {
-            font-family: 'Rubik', sans-serif;
-            background-color: var(--color-background);
-            color: var(--color-text-base);
-            transition: background-color 0.3s ease, color 0.3s ease;
-            margin: 0;
-            overflow-x: hidden; /* Prevent horizontal scrolling */
+            --color-background: #E6F0E6; /* Light green-white */
+            --color-surface: #FFFFFF;
+            --color-primary: #2E8B57; /* Sea Green */
+            --color-primary-light: #4CAF50; /* Brighter Green */
+            --color-secondary: #A8D8B9; /* Lighter Green */
+            --color-accent: #2196F3; /* Bright Blue for accent */
+            --color-text-base: #2F4F4F; /* Dark Slate Gray */
+            --color-text-muted: #607D8B; /* Blue-Grey */
+            --color-border: #CFD8DC; /* Light Blue-Grey */
+            --color-danger: #D64545; /* Red (for errors/overdue) */
+            --color-warning: #FFC107; /* Amber (for warnings) */
+            --color-success: #4CAF50; /* Green (for success) */
+            --color-info: #2196F3; /* Blue (for info) */
+            --font-main: 'Rubik', sans-serif;
         }
 
         body.dark {
-            background-color: var(--dark-color-background);
-            color: var(--dark-color-text-base);
+            --color-background: #1A3E4A;
+            --color-surface: #294F5E;
+            --color-primary: #5AB27F;
+            --color-primary-light: #7ED093;
+            --color-secondary: #4A7A89;
+            --color-accent: #64B5F6;
+            --color-text-base: #E0F2F7;
+            --color-text-muted: #9BB8C5;
+            --color-border: #3A6B7C;
+            --color-danger: #F44336;
+            --color-warning: #FFD54F;
+            --color-success: #66BB6A;
+            --color-info: #42A5F5;
         }
-
-        /* Dark mode transitions */
-        body.dark .card {
-            background-color: var(--dark-color-surface);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.12);
-        }
-        body.dark .border { border-color: var(--dark-color-border); }
-        body.dark .text-gray-700 { color: var(--dark-color-text-base); }
-        body.dark .text-gray-500 { color: var(--dark-color-text-muted); }
-        body.dark .bg-gray-200 { background-color: var(--dark-color-border); }
-        body.dark .hover\:bg-gray-300:hover { background-color: var(--dark-color-surface); }
-        body.dark input, body.dark textarea, body.dark select {
-            background-color: var(--dark-color-background);
-            border-color: var(--dark-color-border);
-            color: var(--dark-color-text-base);
-        }
-        body.dark table th, body.dark table td { border-color: var(--dark-color-border); }
-        body.dark table thead th { background-color: var(--dark-color-surface); }
-        body.dark .status-פתוח { background-color: rgba(40, 167, 69, 0.2); color: var(--color-success); }
-        body.dark .status-חורג { background-color: rgba(220, 53, 69, 0.2); color: var(--color-danger); }
-        body.dark .status-סגור { background-color: rgba(108, 117, 125, 0.2); color: var(--color-text-muted); }
-
-        /* General styles */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1.5rem;
-        }
-
-        .card {
-            background-color: var(--color-surface);
-            border-radius: 0.75rem; /* Rounded corners for cards */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transition: background-color 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-        }
-
-        .btn-primary {
-            background-color: var(--color-primary);
-            color: white;
-        }
-        .btn-primary:hover {
-            background-color: var(--color-primary-dark);
-        }
-
-        .btn-danger {
-            background-color: var(--color-danger);
-            color: white;
-        }
-        .btn-danger:hover {
-            background-color: var(--color-danger-dark);
-        }
-
-        .action-icon-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 0.375rem;
-            transition: background-color 0.2s ease;
-        }
-        .action-icon-btn:hover {
-            background-color: var(--color-border);
-        }
-        body.dark .action-icon-btn:hover {
-            background-color: var(--dark-color-border);
-        }
-
-        /* Status badges */
-        .status-פתוח {
-            background-color: rgba(40, 167, 69, 0.1);
-            color: var(--color-success);
-            padding: 0.25rem 0.6rem;
-            border-radius: 0.375rem;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-        .status-חורג {
-            background-color: rgba(220, 53, 69, 0.1);
-            color: var(--color-danger);
-            padding: 0.25rem 0.6rem;
-            border-radius: 0.375rem;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-        .status-סגור {
-            background-color: rgba(108, 117, 125, 0.1);
-            color: var(--color-text-muted);
-            padding: 0.25rem 0.6rem;
-            border-radius: 0.375rem;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        /* Animated timer and lightbulb indicators */
-        .automated-alerts-status-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.75rem 1.25rem;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            font-weight: 500;
-            transition: background-color 0.5s ease-in-out, box-shadow 0.5s ease-in-out;
-            gap: 0.5rem; /* Space between icon and text */
-        }
-        .animate-pulse-red {
-            animation: pulse-red 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
-        }
-        .animate-pulse-green {
-            animation: pulse-green 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
-        }
-        @keyframes pulse-red {
-            0%, 100% {
-                background-color: rgba(254, 226, 226, 0.7); /* red-100, slightly transparent */
-                box-shadow: 0 0 0px 0px rgba(239, 68, 68, 0.4); /* red-500 shadow */
-            }
-            50% {
-                background-color: rgba(254, 226, 226, 1); /* red-100 opaque */
-                box-shadow: 0 0 0px 4px rgba(239, 68, 68, 0.6); /* red-500 shadow */
-            }
-        }
-        @keyframes pulse-green {
-            0%, 100% {
-                background-color: rgba(209, 250, 229, 0.7); /* green-100, slightly transparent */
-                box-shadow: 0 0 0px 0px rgba(16, 185, 129, 0.4); /* green-500 shadow */
-            }
-            50% {
-                background-color: rgba(209, 250, 229, 1); /* green-100 opaque */
-                box-shadow: 0 0 0px 4px rgba(16, 185, 129, 0.6); /* green-500 shadow */
-            }
-        }
-
-        /* WhatsApp Status Lightbulb Indicator */
-        .whatsapp-status-indicator {
-            position: relative;
-            cursor: help;
-        }
-        .whatsapp-status-indicator .whatsapp-status-tooltip {
-            visibility: hidden;
-            opacity: 0;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-            position: absolute;
-            background-color: rgba(0, 0, 0, 0.85);
-            color: white;
-            padding: 0.5rem 0.75rem;
-            border-radius: 0.375rem;
-            font-size: 0.75rem;
-            white-space: nowrap;
-            z-index: 10;
-            bottom: 100%; /* Position above the icon */
-            left: 50%;
-            transform: translateX(-50%) translateY(-0.5rem); /* Adjust vertical position */
-            pointer-events: none; /* Allows click-through */
-        }
-        .whatsapp-status-indicator:hover .whatsapp-status-tooltip,
-        .whatsapp-status-indicator:focus-within .whatsapp-status-tooltip {
-            visibility: visible;
-            opacity: 1;
-            transform: translateX(-50%) translateY(-1rem); /* Slight move up on hover */
-        }
-        /* Mobile/Touch support for tooltip */
+        
+        /* General Styling */
+        body { font-family: var(--font-main); background-color: var(--color-background); color: var(--color-text-base); transition: background-color 0.4s, color 0.4s; line-height: 1.6; }
+        .btn { padding: 0.85rem 1.8rem; border-radius: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.35s; display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; border: 1px solid transparent; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .btn-primary { background-color: var(--color-primary); color: white; background-image: linear-gradient(to right, var(--color-primary), var(--color-primary-light)); box-shadow: 0 6px 20px -5px color-mix(in srgb, var(--color-primary) 40%, transparent); }
+        .btn-primary:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 10px 30px -8px color-mix(in srgb, var(--color-primary) 60%, transparent); }
+        .btn-secondary { background-color: var(--color-surface); color: var(--color-text-base); border-color: var(--color-border); box-shadow: 0 4px 10px rgba(0,0,0,0.04); }
+        .btn-secondary:hover { background-color: var(--color-background); border-color: var(--color-primary-light); color: var(--color-primary); transform: translateY(-2px); }
+        .card { background-color: var(--color-surface); border-radius: 1.25rem; border: 1px solid var(--color-border); box-shadow: 0 6px 20px rgba(0,0,0,0.06); transition: all 0.4s; }
+        .card:hover:not(.non-interactive) { transform: translateY(-6px); box-shadow: 0 12px 35px rgba(0,0,0,0.12); }
+        .modal-overlay { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; padding: 1rem; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.4s; }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal-content { background-color: var(--color-surface); border-radius: 1.5rem; box-shadow: 0 15px 45px rgba(0,0,0,0.25); border: 1px solid var(--color-border); transform: scale(0.9); transition: transform 0.4s; }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        input, select, textarea { background-color: var(--color-background); border: 1px solid var(--color-border); border-radius: 0.8rem; transition: all 0.25s; padding: 0.75rem 1rem; width: 100%; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 25%, transparent); }
+        .status-פתוח { color: var(--color-success); font-weight: 700; }
+        .status-סגור { color: var(--color-text-muted); }
+        .status-חורג { color: var(--color-danger); font-weight: 700; }
+        .overdue-text-blinking { animation: text-pulse-red 1.8s infinite alternate; font-weight: 700; }
+        @keyframes text-pulse-red { from { color: var(--color-danger); } to { color: #FF0000; text-shadow: 0 0 8px rgba(255, 0, 0, 0.8); } }
+        .eco-background-header span { font-size: 2.5rem; animation: float 6s ease-in-out infinite; display:inline-block; }
+        .eco-background-header span:nth-child(2) { animation-delay: 1s; }
+        .eco-background-header span:nth-child(3) { animation-delay: 2s; }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-8px); } 100% { transform: translateY(0px); } }
+        .chart-container { position: relative; width: 100%; height: 350px; }
+        
+        /* Responsive Table */
         @media (max-width: 768px) {
-            .whatsapp-status-indicator .whatsapp-status-tooltip {
-                display: none; /* Hide by default on small screens */
-            }
-            .whatsapp-status-indicator.active .whatsapp-status-tooltip {
-                display: block; /* Show on active/tap */
-                visibility: visible;
-                opacity: 1;
-                transform: translateX(-50%) translateY(-1rem);
-            }
+            .main-table-responsive thead { display: none; }
+            .main-table-responsive tr { display: block; border: 1px solid var(--color-border); margin-bottom: 0.5rem; border-radius: 0.75rem; padding: 0.75rem; }
+            .main-table-responsive td { display: block; border: none; position: relative; padding-left: 50% !important; text-align: left; padding-top: 0.5rem; padding-bottom: 0.5rem; }
+            .main-table-responsive td:before { content: attr(data-label); font-weight: 600; color: var(--color-text-muted); position: absolute; top: 50%; transform: translateY(-50%); left: 6px; width: 45%; padding-right: 10px; white-space: nowrap; text-align: right; }
         }
-
-        .animate-pulse-red-lightbulb {
-            animation: pulse-red-lightbulb 1.5s infinite;
-        }
-        .animate-pulse-green-lightbulb {
-            animation: pulse-green-lightbulb 1.5s infinite;
-        }
-
-        @keyframes pulse-red-lightbulb {
-            0%, 100% { color: var(--color-danger); opacity: 0.7; }
-            50% { color: var(--color-danger); opacity: 1; }
-        }
-        @keyframes pulse-green-lightbulb {
-            0%, 100% { color: var(--color-success); opacity: 0.7; }
-            50% { color: var(--color-success); opacity: 1; }
-        }
-        body.dark .animate-pulse-red-lightbulb {
-             animation: pulse-red-lightbulb-dark 1.5s infinite;
-        }
-        body.dark .animate-pulse-green-lightbulb {
-            animation: pulse-green-lightbulb-dark 1.5s infinite;
-        }
-        @keyframes pulse-red-lightbulb-dark {
-            0%, 100% { color: #f87171; opacity: 0.7; } /* Red-400 equivalent for dark mode */
-            50% { color: #ef4444; opacity: 1; } /* Red-500 equivalent for dark mode */
-        }
-        @keyframes pulse-green-lightbulb-dark {
-            0%, 100% { color: #86efac; opacity: 0.7; } /* Green-300 equivalent for dark mode */
-            50% { color: #4ade80; opacity: 1; } /* Green-400 equivalent for dark mode */
-        }
-
-        /* Layout for alert buttons */
-        .alert-action-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.75rem; /* Space between buttons */
-            justify-content: flex-start; /* Align to start */
-        }
-        .alert-action-buttons .btn {
-            min-width: 120px; /* Minimum width for buttons */
-            padding: 0.6rem 1rem;
-            font-size: 0.9rem;
-        }
-
-        /* Generic table styling */
-        .table-responsive {
-            overflow-x: auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: right;
-        }
-        table th, table td {
-            padding: 0.75rem 0.5rem;
-            border-bottom: 1px solid var(--color-border);
-        }
-        table thead th {
-            background-color: var(--color-background);
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--color-text-muted);
-            text-transform: uppercase;
-        }
-        body.dark table thead th {
-            background-color: var(--dark-color-surface);
-        }
-
-        /* Modal specific styling (simplified for this standalone page) */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-            z-index: 1000;
-        }
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        .modal-content {
-            background-color: var(--color-surface);
-            padding: 2rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-            width: 90%;
-            max-width: 500px;
-            transform: translateY(-20px);
-            opacity: 0;
-            transition: transform 0.3s ease, opacity 0.3s ease;
-            position: relative;
-        }
-        .modal-overlay.active .modal-content {
-            transform: translateY(0);
-            opacity: 1;
-        }
-        .modal-close-btn {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            color: var(--color-text-muted);
-            cursor: pointer;
-        }
-        .modal-close-btn:hover {
-            color: var(--color-primary);
-        }
-
-        /* Loader */
-        #loader-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            transition: opacity 0.3s ease;
-        }
-        body.dark #loader-overlay {
-            background-color: rgba(0, 0, 0, 0.6);
-        }
-        .loader {
-            border: 8px solid #f3f3f3;
-            border-top: 8px solid var(--color-primary);
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            animation: spin 2s linear infinite;
-        }
-        body.dark .loader {
-             border: 8px solid #2d3748;
-             border-top: 8px solid var(--color-primary);
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Alert container */
-        #alert-container {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            z-index: 5000;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            max-width: 90%;
-            width: 300px;
-        }
+        #customer-analysis-map { height: 300px; width: 100%; border-radius: 0.75rem; border: 1px solid var(--color-border); }
+        .kanban-column { min-height: 300px; }
+        .kanban-column.drag-over { background-color: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+        .action-icon-btn { background: none; border: none; cursor: pointer; font-size: 1.4rem; padding: 0.4rem; margin: 0 0.2rem; transition: transform 0.25s, color 0.25s; border-radius: 50%; }
+        .action-icon-btn:hover { transform: scale(1.3); background-color: rgba(0,0,0,0.05); }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
-    <!-- Loader Overlay -->
-    <div id="loader-overlay" class="fixed inset-0 flex items-center justify-center bg-gray-200 bg-opacity-75 z-50 transition-opacity opacity-0 pointer-events-none">
-        <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
-    </div>
+<body class="text-base">
 
-    <!-- Alert Container -->
-    <div id="alert-container" class="z-50"></div>
+    <!-- Loader & Alert Placeholders -->
+    <div id="loader-overlay" class="fixed inset-0 bg-gray-500 bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-[1000] opacity-0 pointer-events-none"><div class="w-20 h-20 border-8 border-t-8 border-gray-200 border-t-[var(--color-primary)] rounded-full animate-spin"></div></div>
+    <div id="alert-container" class="fixed bottom-6 left-6 z-[1100] space-y-4"></div>
 
-    <div class="container mx-auto p-6 lg:p-8">
-        <header class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <i class="fab fa-whatsapp text-green-500"></i> לוח התראות WhatsApp
-            </h1>
-            <button id="theme-toggle" class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-                <i class="fas fa-sun"></i>
-            </button>
+    <!-- All Modals -->
+    <div id="order-modal" class="modal-overlay"> <div class="modal-content w-full max-w-2xl max-h-[90vh] flex flex-col p-6"><div class="flex items-center justify-between pb-5 border-b mb-4"><h2 id="modal-title" class="text-2xl font-bold text-[var(--color-primary)]"></h2><button onclick="closeModal('order-modal')" class="text-3xl text-[var(--color-text-muted)] hover:text-[var(--color-danger)]">&times;</button></div><form id="order-form" class="space-y-5 overflow-y-auto"></form></div></div>
+    <div id="delete-confirm-modal" class="modal-overlay"><div class="modal-content w-full max-w-md p-6"><h2 class="text-xl font-bold mb-4">אישור מחיקה</h2><p class="mb-6">האם למחוק את הזמנה <span id="delete-order-id" class="font-bold"></span>?</p><div class="flex justify-end gap-3"><button type="button" class="btn btn-secondary" onclick="closeModal('delete-confirm-modal')">ביטול</button><button type="button" class="btn bg-[var(--color-danger)] text-white" id="confirm-delete-btn">מחק</button></div></div></div>
+    <div id="close-order-modal" class="modal-overlay"><div class="modal-content w-full max-w-md p-6"><h2 class="text-xl font-bold mb-4">סגירת הזמנה <span id="close-order-id-display"></span></h2><p class="mb-4">האם לסגור הזמנה זו?</p><div><label for="close-order-notes" class="block text-sm mb-1">הערות סגירה</label><textarea id="close-order-notes" rows="3"></textarea></div><div class="flex justify-end gap-3 mt-6"><button type="button" class="btn btn-secondary" onclick="closeModal('close-order-modal')">ביטול</button><button type="button" class="btn btn-primary" id="confirm-close-order-btn">אשר סגירה</button></div></div></div>
+    <div id="customer-analysis-details-modal" class="modal-overlay"><div class="modal-content w-full max-w-6xl max-h-[90vh] flex flex-col p-6"><div class="flex items-center justify-between pb-5 border-b mb-4"><h2 class="text-2xl font-bold text-[var(--color-primary)]">פרופיל לקוח: <span id="analysis-details-customer-name"></span></h2><button onclick="closeModal('customer-analysis-details-modal')" class="text-3xl text-[var(--color-text-muted)] hover:text-[var(--color-danger)]">&times;</button></div><div class="flex-grow overflow-y-auto space-y-6"><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="customer-kpi-container"></div><div class="grid grid-cols-1 lg:grid-cols-5 gap-6"><div class="lg:col-span-3 card p-4"><h3 class="text-lg font-semibold mb-2">מפת פעילות</h3><div id="customer-analysis-map"></div></div><div class="lg:col-span-2 card p-4"><h3 class="text-lg font-semibold mb-2">התפלגות פעולות</h3><div class="chart-container" style="height: 280px;"><canvas id="customer-action-distribution-chart"></canvas></div></div></div><div class="card p-4"><h3 class="text-lg font-semibold mb-2">פעילות חודשית</h3><div class="chart-container" style="height: 250px;"><canvas id="customer-monthly-activity-chart"></canvas></div></div><div class="card p-4"><h3 class="text-lg font-semibold mb-2">היסטוריית הזמנות</h3><div class="overflow-x-auto max-h-96"><table class="w-full text-right" id="customer-analysis-orders-table"></table></div></div></div></div></div>
+
+    <!-- Main Page Structure -->
+    <div class="min-h-screen flex flex-col">
+        <header class="p-6 text-center border-b border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm relative">
+             <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-2"><img src="https://i.postimg.cc/J7JGQYcT/image.jpg" alt="Company Logo" class="h-16 rounded-lg shadow-md border"><h1 class="text-3xl md:text-4xl font-bold text-[var(--color-primary)] mt-2 md:mt-0">מערכת CRM לניהול מכולות</h1></div>
+            <p class="text-lg text-[var(--color-text-muted)] mb-4">ניהול קל ויעיל של כל הזמנות המכולות</p>
+            <button id="theme-toggle" class="absolute top-5 left-5 text-2xl p-3 rounded-full hover:bg-[var(--color-border)]"><i class="fas fa-sun"></i></button>
         </header>
+        
+        <nav class="flex justify-center p-4"><div class="card flex gap-3 p-3 shadow-lg flex-wrap justify-center">
+            <button id="nav-dashboard" class="nav-tab-btn active" onclick="showPage('dashboard')"><i class="fas fa-chart-pie mr-2"></i>לוח מחוונים</button>
+            <button id="nav-container-inventory" class="nav-tab-btn" onclick="showPage('container-inventory')"><i class="fas fa-boxes-stacked mr-2"></i>מלאי מכולות</button>
+            <button id="nav-treatment-board" class="nav-tab-btn" onclick="showPage('treatment-board')"><i class="fas fa-clipboard-list mr-2"></i>לוח טיפול</button>
+            <button id="nav-whatsapp-alerts" class="nav-tab-btn" onclick="showPage('whatsapp-alerts')"><i class="fab fa-whatsapp mr-2"></i>התראות</button>
+            <button id="nav-reports" class="nav-tab-btn" onclick="showPage('reports')"><i class="fas fa-chart-line mr-2"></i>דוחות</button>
+            <button id="nav-customer-analysis" class="nav-tab-btn" onclick="showPage('customer-analysis')"><i class="fas fa-user-chart mr-2"></i>ניתוח לקוחות</button>
+        </div></nav>
 
-        <main>
-            <div id="whatsapp-alerts-page" class="page-content p-6 animate-fade-in">
-                <h2 class="text-2xl font-bold mb-6 text-[var(--color-primary)]">התראות ווטסאפ ללקוחות 💬</h2>
-                
-                <!-- 💡 אזור לשעון עצר וכפתור שליחת התראות אוטומטיות -->
-                <div id="automated-alerts-status-container" class="automated-alerts-status-container bg-red-100 text-red-700 mb-6 text-center">
-                    <i class="fas fa-hourglass-half ml-2"></i> התראות אוטומטיות יישלחו בעוד: <span id="automated-alerts-timer" class="font-bold text-red-700">00:00:00</span>
-                </div>
-
-                <div class="flex flex-wrap gap-4 justify-center mb-6">
-                    <button id="send-all-overdue-alerts-btn" class="btn bg-[var(--color-danger)] text-white hover:bg-[var(--color-danger-dark)] transition-colors py-2 px-4 rounded-lg shadow-md">
-                        <i class="fas fa-exclamation-triangle ml-2"></i> שלח התראות ידניות לכל הלקוחות החורגים
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    <!-- פרטי לקוח -->
-                    <div class="card p-5 bg-[var(--color-surface)] shadow-md rounded-lg">
-                        <h3 class="text-lg font-semibold mb-3 text-[var(--color-primary)]">פרטי לקוח</h3>
-                        <div class="mb-4">
-                            <label for="whatsapp-customer-name" class="block text-sm font-medium text-[var(--color-text-muted)]">שם לקוח</label>
-                            <input type="text" id="whatsapp-customer-name" class="mt-1 block w-full p-2 border rounded-md shadow-sm bg-[var(--color-background)] border-[var(--color-border)] text-[var(--color-text-base)]" readonly>
-                        </div>
-                        <div class="mb-4">
-                            <label for="whatsapp-phone-number" class="block text-sm font-medium text-[var(--color-text-muted)]">מספר טלפון</label>
-                            <input type="text" id="whatsapp-phone-number" class="mt-1 block w-full p-2 border rounded-md shadow-sm bg-[var(--color-background)] border-[var(--color-border)] text-[var(--color-text-base)]" readonly>
-                        </div>
-                        <div class="mb-4">
-                            <label for="whatsapp-address" class="block text-sm font-medium text-[var(--color-text-muted)]">כתובת</label>
-                            <input type="text" id="whatsapp-address" class="mt-1 block w-full p-2 border rounded-md shadow-sm bg-[var(--color-background)] border-[var(--color-border)] text-[var(--color-text-base)]" readonly>
-                        </div>
-                        <p class="text-xs text-[var(--color-text-muted)]">מזהה הזמנה: <span id="details-order-id" class="font-semibold"></span></p>
-                    </div>
-
-                    <!-- בחירת תבנית הודעה -->
-                    <div class="card p-5 bg-[var(--color-surface)] shadow-md rounded-lg col-span-1 md:col-span-2">
-                        <h3 class="text-lg font-semibold mb-3 text-[var(--color-primary)]">תוכן הודעת WhatsApp</h3>
-                        <div class="mb-4">
-                            <label for="message-template-select" class="block text-sm font-medium text-[var(--color-text-muted)]">בחר תבנית הודעה</label>
-                            <select id="message-template-select" class="mt-1 block w-full p-2 border rounded-md shadow-sm bg-[var(--color-background)] border-[var(--color-border)] text-[var(--color-text-base)]" onchange="loadWhatsAppTemplate()">
-                                <option value="">בחר תבנית...</option>
-                            </select>
-                        </div>
-                        <div class="mb-4">
-                            <label for="whatsapp-message-input" class="block text-sm font-medium text-[var(--color-text-muted)]">הודעה</label>
-                            <textarea id="whatsapp-message-input" rows="7" class="mt-1 block w-full p-2 border rounded-md shadow-sm bg-[var(--color-background)] border-[var(--color-border)] text-[var(--color-text-base)]"></textarea>
-                        </div>
-                        <div class="flex justify-end gap-3">
-                            <button onclick="clearWhatsAppMessage()" class="btn bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors py-2 px-4 rounded-lg shadow-md">נקה</button>
-                            <button onclick="sendWhatsAppMessage()" class="btn bg-green-500 text-white hover:bg-green-600 transition-colors py-2 px-4 rounded-lg shadow-md">
-                                <i class="fab fa-whatsapp ml-2"></i> שלח
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card bg-[var(--color-surface)] p-6 rounded-lg shadow-md">
-                    <h3 class="text-xl font-bold mb-4 text-[var(--color-primary)]">הזמנות הדורשות טיפול</h3>
-                    <p id="no-alerts-needed" class="text-center text-[var(--color-text-muted)] py-4 hidden">כל הכבוד! אין הזמנות הדורשות טיפול כרגע.</p>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-[var(--color-border)] text-right" dir="rtl">
-                            <thead>
-                                <tr>
-                                    <th class="px-3 py-3 bg-[var(--color-background)] text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">תעודה</th>
-                                    <th class="px-3 py-3 bg-[var(--color-background)] text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">לקוח</th>
-                                    <th class="px-3 py-3 bg-[var(--color-background)] text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">סטטוס</th>
-                                    <th class="px-3 py-3 bg-[var(--color-background)] text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">ימים שעברו</th>
-                                    <th class="px-3 py-3 bg-[var(--color-background)] text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">פעולות</th>
-                                </tr>
-                            </thead>
-                            <tbody id="alerts-table-body" class="bg-[var(--color-surface)] divide-y divide-[var(--color-border)]">
-                                <!-- Alerts will be rendered here -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+        <main class="flex-grow p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+            <section id="dashboard-page" class="page-content space-y-10"></section>
+            <section id="container-inventory-page" class="page-content hidden space-y-8"></section>
+            <section id="treatment-board-page" class="page-content hidden space-y-8"></section>
+            <section id="whatsapp-alerts-page" class="page-content hidden space-y-8"></section>
+            <section id="reports-page" class="page-content hidden space-y-8"></section>
+            <section id="customer-analysis-page" class="page-content hidden space-y-8"></section>
         </main>
     </div>
 
-    <script>
-        // URL of your Google Apps Script acting as the API for main CRM data
-        // ⚠️ חייבים להחליף את זה ב-URL האמיתי של יישום האינטרנט של ה-Google Apps Script הראשי שלך.
-        const SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxiS3wXwXCyh8xM1EdTiwXy0T-UyBRQgfrnRRis531lTxmgtJIGawfsPeetX5nVJW3V/exec'; 
+<script>
+    // --- CONFIGURATION & STATE---
+    const SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxiS3wXwXCyh8xM1EdTiwXy0T-UyBRQgfrnRRis531lTxmgtJIGawfsPeetX5nVJW3V/exec';
+    const OVERDUE_THRESHOLD_DAYS = 10;
+    const WHATSAPP_NUMBER = '972508860896';
+    let allOrders = [];
+    let charts = {}; 
+    let currentPage = 'dashboard';
+    
+    // --- UTILITY FUNCTIONS ---
+    const openModal = (id) => document.getElementById(id).classList.add('active');
+    const closeModal = (id) => document.getElementById(id).classList.remove('active');
+    const showLoader = () => document.getElementById('loader-overlay').classList.remove('opacity-0', 'pointer-events-none');
+    const hideLoader = () => document.getElementById('loader-overlay').classList.add('opacity-0', 'pointer-events-none');
+    const formatDate = (dateInput) => dateInput ? new Date(dateInput).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+    const escapeHTML = (str) => String(str).replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag));
 
-        // URL של סקריפט Apps Script נפרד לרישום הודעות WhatsApp וניהול תבניות
-        // 🚨🚨🚨 חובה לעדכן! זהו ה-URL של פריסת יישום האינטרנט של סקריפט ה-WhatsApp החדש שיצרת!
-        const WHATSAPP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzP0wjHzQrvo0pzSigKuJX25xvqIck8IQGXildOp-BEOqaT5Yvf9odw4_OeP4y9dyEzrQ/exec'; 
+    function showAlert(message, type = 'info') {
+        const container = document.getElementById('alert-container');
+        const alertItem = document.createElement('div');
+        const themes = {
+            success: { bg: 'bg-green-100', border: 'border-green-500', text: 'text-green-800', icon: 'fa-check-circle' },
+            error: { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', icon: 'fa-times-circle' },
+            warning: { bg: 'bg-yellow-100', border: 'border-yellow-500', text: 'text-yellow-800', icon: 'fa-exclamation-triangle' },
+            info: { bg: 'bg-blue-100', border: 'border-blue-500', text: 'text-blue-800', icon: 'fa-info-circle' }
+        };
+        const theme = themes[type] || themes.info;
+        alertItem.className = `p-4 rounded-lg border-l-4 shadow-lg flex items-center gap-3 transform translate-x-full opacity-0 transition-all duration-500 ease-out ${theme.bg} ${theme.border} ${theme.text}`;
+        alertItem.innerHTML = `<i class="fas ${theme.icon}"></i><p>${message}</p>`;
+        container.prepend(alertItem);
+        setTimeout(() => { alertItem.style.transform = 'translateX(0)'; alertItem.style.opacity = '1'; }, 100);
+        setTimeout(() => { alertItem.style.transform = 'translateX(100%)'; alertItem.style.opacity = '0'; setTimeout(() => alertItem.remove(), 500); }, 5000);
+    }
 
-        // 💡 חדש! הגדרת שעת הטריגר האוטומטי (שעה בפורמט 24 שעות)
-        const AUTOMATED_TRIGGER_HOUR = 8; // 08:00 בבוקר
-        const AUTOMATED_TRIGGER_MINUTE = 0; // 00 דקות
+    // --- THEME ---
+    const toggleTheme = () => {
+        document.body.classList.toggle('dark');
+        localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+        document.querySelector('#theme-toggle i').className = document.body.classList.contains('dark') ? 'fas fa-moon' : 'fas fa-sun';
+        showPage(currentPage);
+    };
 
-        let allOrders = []; // Array containing all loaded orders (simplified for this standalone page)
-        let whatsappTemplates = []; // יטען מה-Apps Script
-        let whatsappLogSummary = {}; // לאחסון סיכום יומן WhatsApp
-        let timerIntervalId = null; // לשמירת ID של שעון העצר
-        const OVERDUE_THRESHOLD_DAYS = 10; // מספר הימים מעבר לתאריך הזמנה להיחשב 'חורג'
-
-
-        // --- Theme Toggle Functions ---
-        function toggleTheme() {
-            const isDarkMode = document.body.classList.toggle('dark');
-            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-            document.querySelector('#theme-toggle i').className = isDarkMode ? 'fas fa-moon' : 'fas fa-sun';
+    const initializeTheme = () => {
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.body.classList.add('dark');
+            document.querySelector('#theme-toggle i').className = 'fas fa-moon';
         }
+        document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+    };
 
-        function initializeTheme() {
-            const savedTheme = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-                document.body.classList.add('dark');
-                document.querySelector('#theme-toggle i').className = 'fas fa-moon';
-            }
-            document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
-        }
-
-        // --- Alert Notification Function ---
-        function showAlert(message, type = 'info') {
-            const container = document.getElementById('alert-container');
-            const alertItem = document.createElement('div');
-            let bgColor, icon, textColor, borderColor;
-            switch(type) {
-                case 'success': bgColor = 'bg-green-50'; borderColor = 'border-green-500'; textColor = 'text-green-700'; icon = 'fa-check-circle'; break;
-                case 'error': bgColor = 'bg-red-50'; borderColor = 'border-red-500'; textColor = 'text-red-700'; icon = 'fa-times-circle'; break;
-                case 'warning': bgColor = 'bg-yellow-50'; borderColor = 'border-yellow-500'; textColor = 'text-yellow-700'; icon = 'fa-exclamation-triangle'; break;
-                default: bgColor = 'bg-blue-50'; borderColor = 'border-blue-500'; textColor = 'text-blue-700'; icon = 'fa-info-circle'; break;
-            }
-            alertItem.className = `p-4 rounded-lg border-l-4 shadow-md flex items-center gap-3 transform translate-x-full opacity-0 transition-all duration-500 ease-out ${bgColor} ${borderColor} ${textColor}`;
-            alertItem.innerHTML = `<i class="fas ${icon}"></i><p>${message}</p>`;
-            container.prepend(alertItem);
-            
-            setTimeout(() => {
-                alertItem.style.transform = 'translateX(0)';
-                alertItem.style.opacity = '1';
-            }, 100);
-
-            setTimeout(() => {
-                alertItem.style.transform = 'translateX(100%)';
-                alertItem.style.opacity = '0';
-                setTimeout(() => alertItem.remove(), 500);
-            }, 5000);
-        }
-
-        // --- API Communication Function (Exponential Backoff) ---
-        // Simplified fetchData for this standalone page, only for WHATSAPP_SCRIPT_URL
-        async function fetchData(action, params = {}, retries = 0) {
-            showLoader();
-            const urlParams = new URLSearchParams({ action, ...params });
-            const url = `${WHATSAPP_SCRIPT_URL}?${urlParams.toString()}`;
-            console.log(`[fetchData] Request URL: ${url}`);
-            try {
-                const response = await fetch(url);
-                console.log(`[fetchData] Response status: ${response.status}`);
-                const data = await response.json();
-                console.log(`[fetchData] Response data:`, data);
-
-                if (!response.ok) {
-                    const errorMessage = data.message || `שגיאת שרת HTTP: ${response.status}`;
-                    showAlert(errorMessage, 'error');
-                    console.error("[fetchData] HTTP error:", errorMessage, data);
-                    return { success: false, message: errorMessage };
-                }
-
-                if (!data.success && data.message && data.message.includes('Service invoked too many times')) {
-                    const delay = Math.pow(2, retries) * 1000;
-                    if (retries < 5) {
-                        console.warn(`[fetchData] Service invoked too many times, retrying in ${delay}ms... (Attempt ${retries + 1})`);
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                        return fetchData(action, params, retries + 1); 
-                    } else {
-                        showAlert('השרת עמוס מדי, אנא נסה שוב מאוחר יותר.', 'error');
-                        return { success: false, message: 'Service too busy' };
-                    }
-                } else if (!data.success) {
-                    showAlert(data.message || 'פעולה נכשלה בשרת.', 'error');
-                    console.error("[fetchData] Server-side operation failed:", data.message, data);
-                    return data;
-                }
-
-                return data;
-            } catch (error) {
-                showAlert('שגיאת תקשורת: לא ניתן להתחבר לשרת.', 'error');
-                console.error("[fetchData] Network or parsing error:", error);
-                return { success: false, message: error.message };
-            } finally {
-                hideLoader();
-            }
-        }
+    // --- API & DATA ---
+    async function fetchData(action, params = {}) {
+        showLoader();
+        const url = new URL(SCRIPT_WEB_APP_URL);
+        url.searchParams.append('action', action);
+        Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, String(value)));
         
-        // --- Loader Functions ---
-        function showLoader() { document.getElementById('loader-overlay').classList.remove('opacity-0', 'pointer-events-none'); }
-        function hideLoader() { document.getElementById('loader-overlay').classList.add('opacity-0', 'pointer-events-none'); }
-
-        // --- WhatsApp Logging and Sending ---
-        async function logWhatsAppMessage(orderDocId, customerName, phoneNumber, message, messageType, status = 'נשלח ידנית', sendType = 'ידני') { 
-            if (!WHATSAPP_SCRIPT_URL || WHATSAPP_SCRIPT_URL.includes('YOUR_NEW_WHATSAPP_SCRIPT_WEB_APP_URL_HERE')) {
-                console.warn("WHATSAPP_SCRIPT_URL אינו מוגדר או מכיל placeholder. לא ניתן לתעד הודעות WhatsApp.");
-                return;
+        try {
+            const response = await fetch(url, { method: 'GET', redirect: 'follow' });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+             if (!data.success) { 
+                throw new Error(data.message || 'Server operation failed');
             }
-            const params = {
-                orderDocId: orderDocId,
-                customerName: customerName,
-                phoneNumber: phoneNumber,
-                message: message,
-                messageType: messageType,
-                status: status,
-                sendType: sendType 
-            };
-            console.log("[logWhatsAppMessage] Sending log request with params:", params); // DEBUG
-            const response = await fetchData('logMessage', params, 0, WHATSAPP_SCRIPT_URL);
-            if (response.success) {
-                console.log("[logWhatsAppMessage] WhatsApp message logged successfully.");
-                whatsappLogSummary[`${orderDocId}_${phoneNumber}`] = { 
-                    'תאריך ושעה': new Date().toLocaleString('he-IL'), 
-                    'סטטוס': status, 
-                    'סוג שליחה': sendType 
-                };
-                // Re-render relevant parts to update lightbulb status
-                renderAlertsTable(); // Update alerts table with new status
-            } else {
-                console.error("[logWhatsAppMessage] Failed to log WhatsApp message:", response.message);
-            }
+            return data.data;
+        } catch (error) {
+            showAlert(`שגיאת תקשורת: ${error.message}`, 'error');
+            throw error;
+        } finally {
+            hideLoader();
         }
+    }
 
-        function sendWhatsAppMessage() {
-            const customerName = document.getElementById('whatsapp-customer-name').value;
-            const phoneNumber = document.getElementById('whatsapp-phone-number').value;
-            const message = document.getElementById('whatsapp-message-input').value;
-            const orderDocId = document.getElementById('details-order-id').textContent;
-            const messageType = document.getElementById('message-template-select').value || 'ידני'; 
-
-            if (!phoneNumber) {
-                showAlert('אנא בחר לקוח עם מספר טלפון או הזן מספר.', 'warning');
-                return;
-            }
-            if (!message.trim()) {
-                showAlert('ההודעה ריקה. אנא כתוב הודעה או בחר תבנית.', 'warning');
-                return;
-            }
-
-            console.log("DEBUG: sendWhatsAppMessage - Customer Name:", customerName);
-            console.log("DEBUG: sendWhatsAppMessage - Phone Number:", phoneNumber);
-            console.log("DEBUG: sendWhatsAppMessage - Order Doc ID:", orderDocId);
-            console.log("DEBUG: sendWhatsAppMessage - Message Type:", messageType);
-
-
-            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-            window.open(whatsappUrl, '_blank');
-            
-            showAlert('פותח WhatsApp לשליחת הודעה...', 'info');
-            logWhatsAppMessage(orderDocId, customerName, phoneNumber, message, messageType, 'נשלח ידנית (נפתח חלון)', 'ידני');
-        }
-
-        // --- WhatsApp Status Indicator Logic ---
-        async function fetchWhatsAppLogSummary() {
-            if (!WHATSAPP_SCRIPT_URL || WHATSAPP_SCRIPT_URL.includes('YOUR_NEW_WHATSAPP_SCRIPT_WEB_APP_URL_HERE')) {
-                console.warn("WHATSAPP_SCRIPT_URL אינו מוגדר. לא ניתן לטעון סיכום יומן WhatsApp.");
-                return;
-            }
-            console.log("[fetchWhatsAppLogSummary] Fetching log summary from:", WHATSAPP_SCRIPT_URL); // DEBUG
-            const response = await fetchData('getWhatsAppLogSummary', {}, 0, WHATSAPP_SCRIPT_URL);
-            if (response.success && response.data) {
-                whatsappLogSummary = response.data;
-                console.log("[fetchWhatsAppLogSummary] WhatsApp Log Summary loaded:", whatsappLogSummary); // DEBUG
-            } else {
-                console.error("[fetchWhatsAppLogSummary] Failed to load WhatsApp Log Summary:", response.message); // DEBUG
-                whatsappLogSummary = {}; 
-            }
-        }
-
-        function getWhatsAppStatusHtml(orderDocId, customerPhoneNumber) {
-            if (!orderDocId || !customerPhoneNumber) {
-                return ''; 
-            }
-            const key = `${orderDocId}_${customerPhoneNumber}`;
-            const logEntry = whatsappLogSummary[key];
-
-            let iconClass = 'far fa-lightbulb'; 
-            let statusText = 'לא נשלח';
-            let blinkClass = 'animate-pulse-red-lightbulb'; 
-            let textColor = 'text-red-500';
-
-            if (logEntry && logEntry['סטטוס'] && logEntry['סטטוס'].includes('נשלח')) { 
-                iconClass = 'fas fa-lightbulb'; 
-                statusText = `נשלח: ${logEntry['תאריך ושעה']} (${logEntry['סוג שליחה']})`;
-                blinkClass = 'animate-pulse-green-lightbulb'; 
-                textColor = 'text-green-500';
-            }
-
-            return `
-                <span class="whatsapp-status-indicator relative inline-flex items-center group">
-                    <i class="${iconClass} text-xl ${textColor} ${blinkClass}"></i>
-                    <span class="whatsapp-status-tooltip absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2 text-xs text-white bg-gray-800 rounded-md shadow-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap">
-                        ${statusText}
-                    </span>
-                </span>
-            `;
-        }
-        
-        // --- Data Loading and Processing (Simplified for this page) ---
-        async function loadOrders() {
-            // For this standalone page, we only need basic order data to get overdue customers
-            // In the full app, this would fetch all orders from SCRIPT_WEB_APP_URL
-            console.log("[loadOrders] Fetching overdue customers for WhatsApp alerts...");
-            const response = await fetchData('getOverdueCustomers', {}, 0, WHATSAPP_SCRIPT_URL); // Use WhatsApp script to get overdue list
-            if (response.success && response.data) {
-                // response.data here contains sheetRows of overdue orders
-                // We need to fetch full order details for these sheetRows.
-                // For a real standalone app, 'getOverdueCustomers' in Apps Script should return more details.
-                // For now, let's mock it or assume 'allOrders' contains enough.
-                
-                // For a simplified standalone, we'll fetch full data for *all* orders from the main script.
-                // If the main script is not available, we can't fully populate.
-                // To keep this truly standalone and functional for WhatsApp,
-                // the `getOverdueCustomers` in Apps Script should return *some* order details,
-                // or we need to pass a simpler 'list' action to the *main* Apps Script.
-                
-                // For this exercise, let's assume allOrders will be populated with relevant data if SCRIPT_WEB_APP_URL works.
-                // If SCRIPT_WEB_APP_URL isn't set, `getOverdueCustomers` from WHATSAPP_SCRIPT_URL *must* return enough data.
-                
-                // Let's make `getOverdueCustomers` in the Apps Script return more data.
-                // For now, we'll filter from a hypothetical 'allOrders' if available.
-                
-                // To make this truly work standalone, the Apps Script's `getOverdueCustomers` needs to return
-                // the full order objects, not just sheetRows. I'll make a note in the Apps Script for this.
-                
-                // **Temporary Mock/Simplified Logic for this standalone page:**
-                // Assume allOrders is available if we were integrated.
-                // If not, we'd need a separate call to main SCRIPT_WEB_APP_URL or `getOverdueCustomers`
-                // in WHATSAPP_SCRIPT_URL would need to return full order objects.
-                
-                // For now, if running truly standalone without the main script, allOrders would be empty.
-                // Let's assume for this standalone test, we *can* call the main SCRIPT_WEB_APP_URL
-                // to get basic order list needed for template generation if specific order is selected.
-                
-                const mainOrdersResponse = await fetch(`${SCRIPT_WEB_APP_URL}?action=list&status=all`); // Assuming main script is available
-                if (mainOrdersResponse.ok) {
-                    const mainOrdersData = await mainOrdersResponse.json();
-                    if (mainOrdersData.success) {
-                        allOrders = mainOrdersData.data.map(order => {
-                            const orderDate = new Date(order['תאריך הזמנה']);
-                            const today = new Date();
-                            const daysPassed = Math.floor((today - orderDate) / (1000 * 60 * 60 * 24));
-                            order._daysPassedCalculated = daysPassed;
-
-                            if (order['סטטוס'] === 'סגור') {
-                                order._effectiveStatus = 'סגור';
-                            } else if (daysPassed >= OVERDUE_THRESHOLD_DAYS) {
-                                order._effectiveStatus = 'חורג';
-                            } else {
-                                order._effectiveStatus = 'פתוח';
-                            }
-                            order.sheetRow = parseInt(order.sheetRow);
-                            return order;
-                        });
-                        console.log("All orders loaded from main script (for template context):", allOrders);
-                    } else {
-                         console.error("Failed to load all orders from main script:", mainOrdersData.message);
-                    }
-                } else {
-                    console.error("Failed to fetch from main SCRIPT_WEB_APP_URL (status " + mainOrdersResponse.status + ")");
-                }
-
-
-                await fetchWhatsAppLogSummary(); // Load log summary for lightbulbs
-                await loadWhatsAppTemplatesFromScript(); // Load templates
-                renderAlertsTable(); // Render table of orders needing alerts
-                startAutomatedAlertsTimer(); // Start timer
-            } else {
-                showAlert(response.message || 'שגיאה בטעינת הזמנות חורגות.', 'error');
-            }
-        }
-
-
-        // --- WhatsApp Alerts Page Functions ---
-        async function loadWhatsAppTemplatesFromScript() {
-            if (!WHATSAPP_SCRIPT_URL || WHATSAPP_SCRIPT_URL.includes('YOUR_NEW_WHATSAPP_SCRIPT_WEB_APP_URL_HERE')) {
-                showAlert("WHATSAPP_SCRIPT_URL אינו מוגדר. לא ניתן לטעון תבניות WhatsApp.", "error");
-                return;
-            }
-            console.log("[loadWhatsAppTemplatesFromScript] Fetching templates from:", WHATSAPP_SCRIPT_URL); // DEBUG
-            const response = await fetchData('getWhatsAppTemplates', {}, 0, WHATSAPP_SCRIPT_URL); // Using standalone fetchData
-            if (response.success && response.data) {
-                whatsappTemplates = response.data.map(t => ({
-                    name: t['שם תבנית'],
-                    templateNameInScript: t['שם תבנית'], 
-                    category: t['קטגוריה'],
-                    messageContent: t['תוכן הודעה'], 
-                    linkUrl: t['קישור URL'],
-                    imageUrl: t['קישור תמונה']
-                }));
-                console.log("[loadWhatsAppTemplatesFromScript] Templates loaded:", whatsappTemplates); // DEBUG
-                populateWhatsAppTemplates();
-            } else {
-                showAlert(response.message || 'שגיאה בטעינת תבניות WhatsApp מהשרת.', 'error');
-                whatsappTemplates = [];
-            }
-        }
-
-        function populateWhatsAppTemplates() {
-            const select = document.getElementById('message-template-select');
-            select.innerHTML = '<option value="">בחר תבנית...</option>';
-            if (whatsappTemplates.length === 0) {
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = 'אין תבניות זמינות';
-                select.appendChild(option);
-                console.warn("[populateWhatsAppTemplates] No templates available to populate."); // DEBUG
-                return;
-            }
-            whatsappTemplates.forEach((template, index) => {
-                const option = document.createElement('option');
-                option.value = template.name; 
-                option.textContent = template.name;
-                select.appendChild(option);
+    async function loadOrders() {
+        try {
+            const rawOrders = await fetchData('list', { status: 'all' });
+            allOrders = rawOrders.map(order => {
+                const orderDate = new Date(order['תאריך הזמנה']);
+                const daysPassed = Math.floor((new Date() - orderDate) / (1000 * 60 * 60 * 24));
+                order._daysPassedCalculated = daysPassed;
+                order._effectiveStatus = order['סטטוס'] === 'סגור' ? 'סגור' : (daysPassed >= OVERDUE_THRESHOLD_DAYS ? 'חורג' : 'פתוח');
+                order.sheetRow = parseInt(order.sheetRow);
+                return order;
             });
-            console.log("[populateWhatsAppTemplates] Dropdown populated with templates."); // DEBUG
+            showPage(currentPage);
+        } catch (error) {
+            document.getElementById('dashboard-page').innerHTML = `<div class="card p-8 text-center text-red-600"><h2>שגיאה חמורה בטעינת הנתונים</h2><p>${error.message}</p><button class="btn btn-primary mt-4" onclick="location.reload()">רענן עמוד</button></div>`;
         }
+    }
+    
+    // --- PAGE NAVIGATION & RENDERING ---
+    function showPage(pageId) {
+        currentPage = pageId;
+        document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+        document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
+        
+        const pageContainer = document.getElementById(`${pageId}-page`);
+        pageContainer.innerHTML = ''; // Clear previous content
+        pageContainer.classList.remove('hidden');
+        document.getElementById(`nav-${pageId}`).classList.add('active');
+        
+        const renderFunctions = {
+            'dashboard': renderDashboard,
+            'container-inventory': renderContainerInventory,
+            'treatment-board': renderTreatmentBoard,
+            'whatsapp-alerts': renderWhatsappAlerts,
+            'reports': renderReports,
+            'customer-analysis': renderCustomerAnalysis,
+        };
+        if (renderFunctions[pageId]) renderFunctions[pageId]();
+    }
+    
+    // --- PAGE: DASHBOARD ---
+    function renderDashboard() {
+        const page = document.getElementById('dashboard-page');
+        const openOrders = allOrders.filter(o => o._effectiveStatus === 'פתוח').length;
+        const overdueOrders = allOrders.filter(o => o._effectiveStatus === 'חורג').length;
+        const containersInUse = new Set(allOrders.filter(o => o._effectiveStatus !== 'סגור').flatMap(o => String(o['מספר מכולה ירדה'] || '').split(',').map(c => c.trim()).filter(Boolean))).size;
+        const activeCustomers = new Set(allOrders.filter(o => o._effectiveStatus !== 'סגור').map(o => o['שם לקוח'])).size;
 
-        async function loadWhatsAppTemplate(sheetRow = null) {
-            const select = document.getElementById('message-template-select');
-            const messageInput = document.getElementById('whatsapp-message-input');
-            const selectedTemplateName = select.value; 
+        page.innerHTML = `
+            <div class="text-center"><div class="eco-background-header"><span>🌱</span><span>🌍</span><span>🌳</span></div><h2 class="text-3xl font-bold mb-3">סקירה כללית 📊</h2></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="card p-6"><p class="font-semibold text-lg">הזמנות פתוחות</p><p class="text-4xl font-bold text-[var(--color-success)] mt-2">${openOrders}</p></div>
+                <div class="card p-6"><p class="font-semibold text-lg">הזמנות חורגות</p><p class="text-4xl font-bold text-[var(--color-danger)] mt-2">${overdueOrders}</p></div>
+                <div class="card p-6"><p class="font-semibold text-lg">מכולות בשימוש</p><p class="text-4xl font-bold text-[var(--color-primary)] mt-2">${containersInUse}</p></div>
+                <div class="card p-6"><p class="font-semibold text-lg">לקוחות פעילים</p><p class="text-4xl font-bold text-[var(--color-primary)] mt-2">${activeCustomers}</p></div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="card p-6"><h3 class="text-xl font-semibold mb-4">מכולות בשימוש לפי לקוח (Top 7)</h3><div class="chart-container"><canvas id="chart-containers-by-customer"></canvas></div></div>
+                <div class="card p-6"><h3 class="text-xl font-semibold mb-4">התפלגות לפי סטטוס</h3><div class="chart-container"><canvas id="chart-status-pie"></canvas></div></div>
+            </div>
+            <div class="card p-6"><h2 class="text-2xl font-bold mb-6">רשימת הזמנות 📋</h2><div class="overflow-x-auto rounded-lg border"><table id="orders-table" class="w-full text-right table-auto main-table-responsive"></table></div></div>
+        `;
+        renderOrdersTable(allOrders);
+        drawDashboardCharts();
+    }
 
-            if (selectedTemplateName === "" || !WHATSAPP_SCRIPT_URL || WHATSAPP_SCRIPT_URL.includes('YOUR_NEW_WHATSAPP_SCRIPT_WEB_APP_URL_HERE')) {
-                messageInput.value = "";
-                if (!WHATSAPP_SCRIPT_URL || WHATSAPP_SCRIPT_URL.includes('YOUR_NEW_WHATSAPP_SCRIPT_WEB_APP_URL_HERE')) {
-                    showAlert('כתובת ה-URL של סקריפט ה-WhatsApp אינה מוגדרת או שגויה. לא ניתן לטעון תבניות.', 'error');
+    function renderOrdersTable(orders) {
+        const table = document.getElementById('orders-table');
+        if (!table) return;
+        let tableHTML = `<thead><tr>
+            <th class="p-3">תאריך</th><th class="p-3">לקוח</th><th class="p-3">פעולה</th><th class="p-3">ימים</th><th class="p-3">סטטוס</th><th class="p-3">פעולות</th>
+        </tr></thead><tbody>`;
+        if (orders.length === 0) {
+            tableHTML += `<tr><td colspan="6" class="text-center p-4">אין הזמנות להצגה</td></tr>`;
+        } else {
+            orders.sort((a,b) => new Date(b['תאריך הזמנה']) - new Date(a['תאריך הזמנה'])).forEach(order => {
+                tableHTML += `<tr class="border-t hover:bg-[var(--color-background)]">
+                    <td class="p-3" data-label="תאריך">${formatDate(order['תאריך הזמנה'])}</td>
+                    <td class="p-3 font-semibold cursor-pointer hover:text-[var(--color-primary)]" data-label="לקוח" onclick="showCustomerAnalysisDetailsModal('${escapeHTML(order['שם לקוח'])}')">${escapeHTML(order['שם לקוח'])}</td>
+                    <td class="p-3" data-label="פעולה">${escapeHTML(order['סוג פעולה'] || '')}</td>
+                    <td class="p-3" data-label="ימים">${order._effectiveStatus === 'חורג' ? `<span class="overdue-text-blinking">${order._daysPassedCalculated}</span>` : order._daysPassedCalculated}</td>
+                    <td class="p-3" data-label="סטטוס"><span class="status-${order._effectiveStatus}">${order._effectiveStatus}</span></td>
+                    <td class="p-3 whitespace-nowrap" data-label="פעולות"><button class="action-icon-btn" onclick="printOrderDocument(${order.sheetRow})" title="הדפס"><i class="fas fa-print text-[var(--color-secondary)]"></i></button></td>
+                </tr>`;
+            });
+        }
+        table.innerHTML = tableHTML + '</tbody>';
+    }
+    
+    // --- PAGE: CONTAINER INVENTORY ---
+    function renderContainerInventory() {
+        const page = document.getElementById('container-inventory-page');
+        const containerStates = {};
+        allOrders.forEach(order => {
+            const containers = String(order['מספר מכולה ירדה'] || '').split(',').filter(Boolean);
+            containers.forEach(num => {
+                const cleanNum = num.trim();
+                if (!containerStates[cleanNum] || new Date(order['תאריך הזמנה']) > new Date(containerStates[cleanNum].date)) {
+                    containerStates[cleanNum] = { status: order._effectiveStatus, date: order['תאריך הזמנה'], customer: order['שם לקוח'] };
                 }
-                return;
-            }
-
-            const response = await fetchData(
-                'generateMessage', 
-                { templateName: selectedTemplateName, sheetRow: sheetRow || '' }, 
-                0, 
-                WHATSAPP_SCRIPT_URL // Use WHATSAPP_SCRIPT_URL explicitly
-            );
-
-            if (response.success) {
-                messageInput.value = response.messageContent;
-                document.getElementById('whatsapp-customer-name').value = response.customerName || '';
-                document.getElementById('whatsapp-phone-number').value = response.phoneNumber || '';
-                document.getElementById('details-order-id').textContent = response.orderDocId || '';
-            } else {
-                showAlert(response.message || 'שגיאה בטעינת תוכן התבנית.', 'error');
-                messageInput.value = "";
-            }
-        }
-
-        function clearWhatsAppMessage() {
-            document.getElementById('whatsapp-message-input').value = '';
-            document.getElementById('message-template-select').value = '';
-        }
-
-        async function openWhatsAppAlertsForOrder(sheetRow) {
-            const order = allOrders.find(o => o.sheetRow === sheetRow);
-            if (!order) {
-                showAlert('הזמנה לא נמצאה.', 'error');
-                return;
-            }
-            
-            // In a full app, this would show the whatsapp-alerts-page. Here it's already the page.
-            document.getElementById('whatsapp-customer-name').value = order['שם לקוח'] || '';
-            document.getElementById('whatsapp-phone-number').value = order['טלפון לקוח'] || '';
-            document.getElementById('whatsapp-address').value = order['כתובת'] || '';
-            document.getElementById('details-order-id').textContent = order['תעודה'] || '';
-
-            let templateNameInScript = '';
-            if (order._effectiveStatus === 'חורג') {
-                templateNameInScript = 'חריגה - תזכורת'; 
-            } else if (order._daysPassedCalculated >= (OVERDUE_THRESHOLD_DAYS - 2) && order._effectiveStatus === 'פתוח') { 
-                templateNameInScript = 'לפני חריגה - אזהרה'; 
-            } else {
-                templateNameInScript = 'הודעה כללית'; 
-            }
-            
-            const selectedTemplate = whatsappTemplates.find(t => t.name === templateNameInScript); 
-            if (selectedTemplate) {
-                document.getElementById('message-template-select').value = selectedTemplate.name; 
-            } else {
-                document.getElementById('message-template-select').value = '';
-            }
-            
-            await loadWhatsAppTemplate(sheetRow); 
-        }
-
-        async function renderAlertsTable() {
-            const alertsTableBody = document.getElementById('alerts-table-body');
-            alertsTableBody.innerHTML = '';
-            document.getElementById('no-alerts-needed').classList.add('hidden');
-
-            if (!WHATSAPP_SCRIPT_URL || WHATSAPP_SCRIPT_URL.includes('YOUR_NEW_WHATSAPP_SCRIPT_WEB_APP_URL_HERE')) {
-                showAlert("WHATSAPP_SCRIPT_URL אינו מוגדר. לא ניתן לטעון התראות WhatsApp.", "error");
-                return;
-            }
-            // Use the main SCRIPT_WEB_APP_URL to get all orders, then filter locally
-            // This is a simplification for a standalone page; in the full app, getOverdueCustomers is in WHATSAPP_SCRIPT_URL.
-            const allOrdersResponse = await fetch(`${SCRIPT_WEB_APP_URL}?action=list&status=all`); // Fetch ALL orders from main script
-            let ordersNeedingAlert = [];
-
-            if (allOrdersResponse.ok) {
-                const allOrdersData = await allOrdersResponse.json();
-                if (allOrdersData.success) {
-                    allOrders = allOrdersData.data.map(order => {
-                        const orderDate = new Date(order['תאריך הזמנה']);
-                        const today = new Date();
-                        const daysPassed = Math.floor((today - orderDate) / (1000 * 60 * 60 * 24));
-                        order._daysPassedCalculated = daysPassed;
-                        order._effectiveStatus = (order['סטטוס'] === 'סגור') ? 'סגור' : (daysPassed >= OVERDUE_THRESHOLD_DAYS ? 'חורג' : 'פתוח');
-                        order.sheetRow = parseInt(order.sheetRow);
-                        return order;
-                    });
-                    
-                    ordersNeedingAlert = allOrders.filter(order => 
-                        (order._effectiveStatus === 'חורג' || 
-                        (order._effectiveStatus === 'פתוח' && order._daysPassedCalculated >= (OVERDUE_THRESHOLD_DAYS - 2))) 
-                        && order['טלפון לקוח']
-                    );
-                    console.log("Orders needing alerts:", ordersNeedingAlert);
-
-                    if (ordersNeedingAlert.length === 0) {
-                        document.getElementById('no-alerts-needed').classList.remove('hidden');
-                    } else {
-                        ordersNeedingAlert.forEach(order => {
-                            const row = alertsTableBody.insertRow();
-                            row.className = 'border-b border-[var(--color-border)]';
-                            
-                            const whatsappStatusIndicator = getWhatsAppStatusHtml(order['תעודה'], order['טלפון לקוח']);
-
-                            row.innerHTML = `
-                                <td class="p-3 font-medium">${order['תעודה'] || ''}</td>
-                                <td class="p-3">${order['שם לקוח'] || ''}</td>
-                                <td class="p-3"><span class="status-${(order._effectiveStatus || '').replace(/[/ ]/g, '-').toLowerCase()}">${order._effectiveStatus || ''}</span></td>
-                                <td class="p-3">${order._daysPassedCalculated || ''}</td>
-                                <td class="p-3 flex items-center gap-2">
-                                    ${whatsappStatusIndicator}
-                                    <button class="btn btn-primary btn-sm" onclick="openWhatsAppAlertsForOrder(${order.sheetRow})">
-                                        <i class="fab fa-whatsapp"></i> שלח הודעה
-                                    </button>
-                                </td>
-                            `;
-                        });
-                    }
-                } else {
-                    showAlert(allOrdersData.message || 'שגיאה בשליפת הזמנות לטבלת התראות.', 'error');
-                }
-            } else {
-                showAlert('שגיאה בתקשורת עם השרת הראשי (Main SCRIPT_WEB_APP_URL).', 'error');
-            }
-        }
-
-        async function sendAllOverdueAlertsManually() {
-            showAlert('פותח הודעות WhatsApp עבור כל הלקוחות החורגים. זה עשוי לפתוח מספר רב של חלונות/כרטיסיות.', 'warning', 10000);
-            const overdueOrders = allOrders.filter(order => order._effectiveStatus === 'חורג' && order['טלפון לקוח']);
-
-            if (overdueOrders.length === 0) {
-                showAlert('אין לקוחות חורגים לשלוח להם התראות.', 'info');
-                return;
-            }
-
-            for (const order of overdueOrders) {
-                const messageResponse = await fetchData(
-                    'generateMessage', 
-                    { templateName: 'חריגה - תזכורת', sheetRow: order.sheetRow }, 
-                    0, 
-                    WHATSAPP_SCRIPT_URL
-                );
-
-                if (messageResponse.success) {
-                    const whatsappUrl = `https://wa.me/${order['טלפון לקוח']}?text=${encodeURIComponent(messageResponse.messageContent)}`;
-                    window.open(whatsappUrl, '_blank');
-                    await logWhatsAppMessage(
-                        order['תעודה'], 
-                        order['שם לקוח'], 
-                        order['טלפון לקוח'], 
-                        messageResponse.messageContent, 
-                        messageResponse.messageType, 
-                        'נשלח ידנית (נפתח חלון)', 
-                        'ידני'
-                    );
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                } else {
-                    showAlert(`שגיאה בהכנת הודעה ל${order['שם לקוח']}: ${messageResponse.message}`, 'error');
-                }
-            }
-            showAlert('הושלמה פתיחת הודעות WhatsApp עבור כל הלקוחות החורגים.', 'success');
-        }
-
-
-        // --- Utility function for formatting date (copied from main script) ---
-        function formatDate(dateInput) {
-            if (!dateInput) return '';
-            const date = new Date(dateInput);
-            if (isNaN(date.getTime())) return dateInput;
-            return date.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        }
-
-
-        // --- Automated Alerts Timer and Display ---
-        function startAutomatedAlertsTimer() {
-            if (timerIntervalId) {
-                clearInterval(timerIntervalId);
-            }
-            const timerDisplay = document.getElementById('automated-alerts-timer');
-            const timerContainer = document.getElementById('automated-alerts-status-container');
-            const updateTimer = () => {
-                const now = new Date();
-                const nextTrigger = new Date(now);
-                nextTrigger.setHours(AUTOMATED_TRIGGER_HOUR, AUTOMATED_TRIGGER_MINUTE, 0, 0);
-
-                if (now.getHours() > AUTOMATED_TRIGGER_HOUR || (now.getHours() === AUTOMATED_TRIGGER_HOUR && now.getMinutes() >= AUTOMATED_TRIGGER_MINUTE)) {
-                    nextTrigger.setDate(nextTrigger.getDate() + 1);
-                }
-
-                const timeLeftMs = nextTrigger.getTime() - now.getTime();
-                const hours = Math.floor(timeLeftMs / (1000 * 60 * 60));
-                const minutes = Math.floor((timeLeftMs % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((timeLeftMs % (1000 * 60)) / 1000);
-
-                const formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                timerDisplay.textContent = formattedTime;
-
-                if (now.getHours() < AUTOMATED_TRIGGER_HOUR || (now.getHours() === AUTOMATED_TRIGGER_HOUR && now.getMinutes() < AUTOMATED_TRIGGER_MINUTE)) {
-                    timerContainer.classList.remove('bg-green-100', 'animate-pulse-green');
-                    timerContainer.classList.add('bg-red-100', 'text-red-700', 'animate-pulse-red');
-                    timerContainer.innerHTML = `<i class="fas fa-hourglass-half ml-2"></i> התראות אוטומטיות יישלחו בעוד: <span id="automated-alerts-timer" class="font-bold text-red-700">${formattedTime}</span>`;
-                } else {
-                    timerContainer.classList.remove('bg-red-100', 'animate-pulse-red');
-                    timerContainer.classList.add('bg-green-100', 'text-green-700', 'animate-pulse-green');
-                    timerContainer.innerHTML = `<i class="fas fa-check-circle ml-2"></i> התראות אוטומטיות נשלחו להיום. <span id="automated-alerts-timer" class="font-bold text-green-700">${formattedTime}</span> זמן עד שליחה הבאה: `;
-                }
-            };
-            updateTimer();
-            timerIntervalId = setInterval(updateTimer, 1000);
-        }
-
-
-        // Initial load and setup
-        document.addEventListener('DOMContentLoaded', async () => {
-            initializeTheme();
-            // Attach event listener for the "Send All Overdue Alerts" button
-            document.getElementById('send-all-overdue-alerts-btn').addEventListener('click', sendAllOverdueAlertsManually);
-            await loadOrders(); // Load relevant data for this page
+            });
         });
-    </script>
+        const inUse = Object.entries(containerStates).filter(([,state]) => state.status !== 'סגור').sort((a,b) => a[0].localeCompare(b[0]));
+        const available = Object.entries(containerStates).filter(([,state]) => state.status === 'סגור').sort((a,b) => a[0].localeCompare(b[0]));
+        
+        page.innerHTML = `
+            <div class="text-center"><h2 class="text-3xl font-bold mb-3">מלאי מכולות 📦</h2></div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="card p-6"><h3 class="text-xl font-bold mb-4 text-[var(--color-danger)]">מכולות בשימוש (${inUse.length})</h3><div class="overflow-y-auto max-h-96"><table class="w-full text-right" id="containers-in-use-table"></table></div></div>
+                <div class="card p-6"><h3 class="text-xl font-bold mb-4 text-[var(--color-success)]">מכולות פנויות (${available.length})</h3><div class="overflow-y-auto max-h-96"><table class="w-full text-right" id="containers-available-table"></table></div></div>
+            </div>`;
+        
+        document.getElementById('containers-in-use-table').innerHTML = `<thead><tr><th class="p-2">מספר</th><th class="p-2">לקוח</th><th class="p-2">מתאריך</th></tr></thead><tbody>${inUse.map(([num, state]) => `<tr><td class="p-2">${escapeHTML(num)}</td><td class="p-2">${escapeHTML(state.customer)}</td><td class="p-2">${formatDate(state.date)}</td></tr>`).join('')}</tbody>`;
+        document.getElementById('containers-available-table').innerHTML = `<thead><tr><th class="p-2">מספר</th><th class="p-2">התפנתה בתאריך</th></tr></thead><tbody>${available.map(([num, state]) => `<tr><td class="p-2">${escapeHTML(num)}</td><td class="p-2">${formatDate(state.date)}</td></tr>`).join('')}</tbody>`;
+    }
+
+    // --- PAGE: TREATMENT BOARD (KANBAN) ---
+    function renderTreatmentBoard() {
+        const page = document.getElementById('treatment-board-page');
+        page.innerHTML = `
+            <div class="text-center"><h2 class="text-3xl font-bold mb-3">לוח טיפול Kanban 🛠️</h2></div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div id="column-overdue" class="kanban-column p-4 card non-interactive"><h3 class="font-bold text-xl text-center text-[var(--color-danger)] mb-4">חורגים 🚨</h3></div>
+                <div id="column-in-progress" class="kanban-column p-4 card non-interactive"><h3 class="font-bold text-xl text-center text-[var(--color-info)] mb-4">בטיפול ⚙️</h3></div>
+                <div id="column-resolved" class="kanban-column p-4 card non-interactive"><h3 class="font-bold text-xl text-center text-[var(--color-success)] mb-4">טופלו ✅</h3></div>
+            </div>`;
+            
+        const overdueColumn = document.getElementById('column-overdue');
+        const inProgressColumn = document.getElementById('column-in-progress');
+        const resolvedColumn = document.getElementById('column-resolved');
+
+        allOrders.forEach(order => {
+            let targetColumn = null;
+            if (order._effectiveStatus === 'חורג' && order['Kanban Status'] !== 'טופלו' && order['Kanban Status'] !== 'בטיפול') {
+                targetColumn = overdueColumn;
+            } else if (order['Kanban Status'] === 'בטיפול') {
+                targetColumn = inProgressColumn;
+            } else if (order['Kanban Status'] === 'טופלו') {
+                targetColumn = resolvedColumn;
+            }
+            
+            if (targetColumn) {
+                targetColumn.innerHTML += `<div class="card p-3 my-2 cursor-grab"><p class="font-bold">${escapeHTML(order['שם לקוח'])}</p><p class="text-sm">תעודה: ${order['תעודה']}</p><p class="text-sm">${order._daysPassedCalculated} ימים</p></div>`;
+            }
+        });
+    }
+    
+    // --- PAGE: WHATSAPP ALERTS ---
+    function renderWhatsappAlerts() {
+        const page = document.getElementById('whatsapp-alerts-page');
+        const overdue = allOrders.filter(o => o._effectiveStatus === 'חורג');
+        const inService = allOrders.filter(o => o._effectiveStatus === 'פתוח');
+
+        page.innerHTML = `
+            <div class="text-center"><h2 class="text-3xl font-bold mb-3">התראות WhatsApp 💬</h2></div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="card p-6"><h3 class="text-xl font-bold mb-4 text-[var(--color-danger)]">הזמנות חורגות (${overdue.length})</h3><div class="overflow-y-auto max-h-96" id="overdue-alerts"></div></div>
+                <div class="card p-6"><h3 class="text-xl font-bold mb-4 text-[var(--color-primary)]">לקוחות בשירות (${inService.length})</h3><div class="overflow-y-auto max-h-96" id="inservice-alerts"></div></div>
+            </div>`;
+        document.getElementById('overdue-alerts').innerHTML = overdue.map(order => `
+            <div class="p-3 border-b flex justify-between items-center">
+                <div><p class="font-bold">${escapeHTML(order['שם לקוח'])}</p><p class="text-sm">${order._daysPassedCalculated} ימים בשירות</p></div>
+                <button class="btn btn-secondary btn-sm" onclick="sendWhatsapp('overdue', ${order.sheetRow})"><i class="fab fa-whatsapp mr-2"></i>שלח התראה</button>
+            </div>`).join('');
+        document.getElementById('inservice-alerts').innerHTML = inService.map(order => `
+            <div class="p-3 border-b flex justify-between items-center">
+                <div><p class="font-bold">${escapeHTML(order['שם לקוח'])}</p><p class="text-sm">${order._daysPassedCalculated} ימים בשירות</p></div>
+                <button class="btn btn-secondary btn-sm" onclick="sendWhatsapp('inService', ${order.sheetRow})"><i class="fab fa-whatsapp mr-2"></i>שלח הודעה</button>
+            </div>`).join('');
+    }
+
+    function sendWhatsapp(type, sheetRow) {
+        const order = allOrders.find(o => o.sheetRow === sheetRow);
+        if (!order) return;
+        
+        let message = '';
+        if (type === 'overdue') {
+            message = `🚨 *הזמנה חורגת* 🚨\nשלום ${order['שם לקוח']}, אנו רואים שהמכולה (הזמנה ${order['תעודה']}) נמצאת אצלכם כבר *${order._daysPassedCalculated}* ימים. אנא צרו קשר לתאום פינוי בהקדם. תודה, צוות ח. סבן.`;
+        } else {
+            message = `📦 עדכון שירות 📦\nשלום ${order['שם לקוח']}, המכולה (הזמנה ${order['תעודה']}) נמצאת אצלכם בשירות *${order._daysPassedCalculated}* ימים. אם נדרש פינוי או החלפה, נשמח לעמוד לשירותכם. צוות ח. סבן.`;
+        }
+        
+        const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+        window.open(url, '_blank');
+    }
+
+    // --- PAGE: REPORTS ---
+    function renderReports() {
+        const page = document.getElementById('reports-page');
+        page.innerHTML = `<div class="text-center"><h2 class="text-3xl font-bold mb-3">דוחות וניתוחים 📈</h2></div>
+        <div class="card p-6"><p>דף הדוחות נמצא בפיתוח ויכלול ניתוחים מתקדמים...</p></div>`;
+    }
+    
+    // --- PAGE: CUSTOMER ANALYSIS ---
+    function renderCustomerAnalysis() {
+        const page = document.getElementById('customer-analysis-page');
+        const customers = [...new Set(allOrders.map(o => o['שם לקוח']))].sort();
+        page.innerHTML = `
+            <div class="text-center"><h2 class="text-3xl font-bold mb-3">ניתוח לקוחות 👥</h2></div>
+            <div class="card p-6">
+                <input type="text" id="customer-search" placeholder="חפש לקוח..." class="mb-4">
+                <div class="overflow-y-auto max-h-screen" id="customer-list"></div>
+            </div>`;
+        
+        const list = document.getElementById('customer-list');
+        list.innerHTML = customers.map(name => `<div class="p-3 border-b cursor-pointer hover:bg-[var(--color-background)]" onclick="showCustomerAnalysisDetailsModal('${escapeHTML(name)}')">${escapeHTML(name)}</div>`).join('');
+        
+        document.getElementById('customer-search').addEventListener('keyup', e => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filtered = customers.filter(name => name.toLowerCase().includes(searchTerm));
+            list.innerHTML = filtered.map(name => `<div class="p-3 border-b cursor-pointer hover:bg-[var(--color-background)]" onclick="showCustomerAnalysisDetailsModal('${escapeHTML(name)}')">${escapeHTML(name)}</div>`).join('');
+        });
+    }
+
+    // --- CHARTS & DRAWING ---
+    function drawDashboardCharts() {
+        Object.values(charts).forEach(chart => { if (chart) chart.destroy(); });
+        const colors = { green: 'var(--color-success)', yellow: 'var(--color-warning)', red: 'var(--color-danger)', primary: 'var(--color-primary)', muted: 'var(--color-text-muted)', surface: getComputedStyle(document.body).getPropertyValue('--color-surface').trim() };
+        
+        const statusData = allOrders.reduce((acc, order) => { acc[order._effectiveStatus] = (acc[order._effectiveStatus] || 0) + 1; return acc; }, {});
+        const statusCtx = document.getElementById('chart-status-pie')?.getContext('2d');
+        if (statusCtx) charts.statusChart = new Chart(statusCtx, { type: 'doughnut', data: { labels: Object.keys(statusData), datasets: [{ data: Object.values(statusData), backgroundColor: [colors.green, colors.red, colors.muted], borderColor: colors.surface, borderWidth: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+        
+        const customerData = allOrders.filter(o => o._effectiveStatus !== 'סגור').reduce((acc, order) => { acc[order['שם לקוח']] = (acc[order['שם לקוח']] || 0) + 1; return acc; }, {});
+        const topCustomers = Object.entries(customerData).sort((a,b) => b[1] - a[1]).slice(0, 7);
+        const customerCtx = document.getElementById('chart-containers-by-customer')?.getContext('2d');
+        if (customerCtx) charts.customerChart = new Chart(customerCtx, { type: 'bar', data: { labels: topCustomers.map(c=>c[0]), datasets: [{ label: 'הזמנות פתוחות', data: topCustomers.map(c=>c[1]), backgroundColor: colors.primary }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }});
+    }
+
+    // --- MODAL: Customer Analysis ---
+    function showCustomerAnalysisDetailsModal(customerName) {
+        const customerOrders = allOrders.filter(o => o['שם לקוח'] === customerName);
+        if (customerOrders.length === 0) return;
+        document.getElementById('analysis-details-customer-name').textContent = customerName;
+        const totalOrders = customerOrders.length;
+        const openOrders = customerOrders.filter(o => o._effectiveStatus === 'פתוח').length;
+        const overdueOrders = customerOrders.filter(o => o._effectiveStatus === 'חורג').length;
+        const lastOrderDate = customerOrders.sort((a, b) => new Date(b['תאריך הזמנה']) - new Date(a['תאריך הזמנה']))[0];
+        document.getElementById('customer-kpi-container').innerHTML = `
+            <div class="card p-4 text-center"><p class="text-sm text-[var(--color-text-muted)]">סה"כ הזמנות</p><p class="text-3xl font-bold">${totalOrders}</p></div>
+            <div class="card p-4 text-center"><p class="text-sm text-[var(--color-text-muted)]">הזמנות פתוחות</p><p class="text-3xl font-bold text-[var(--color-success)]">${openOrders}</p></div>
+            <div class="card p-4 text-center"><p class="text-sm text-[var(--color-text-muted)]">הזמנות חורגות</p><p class="text-3xl font-bold text-[var(--color-danger)]">${overdueOrders}</p></div>
+            <div class="card p-4 text-center"><p class="text-sm text-[var(--color-text-muted)]">הזמנה אחרונה</p><p class="text-xl font-bold">${formatDate(lastOrderDate['תאריך הזמנה'])}</p></div>`;
+        const tableContainer = document.getElementById('customer-analysis-orders-table');
+        const sortedOrders = customerOrders.sort((a, b) => new Date(b['תאריך הזמנה']) - new Date(a['תאריך הזמנה']));
+        let tableHTML = `<thead class="bg-[var(--color-background)] sticky top-0"><tr><th class="p-2">תאריך</th><th class="p-2">תעודה</th><th class="p-2">פעולה</th><th class="p-2">סטטוס</th></tr></thead><tbody>`;
+        sortedOrders.forEach(order => {
+            tableHTML += `<tr class="border-t border-[var(--color-border)] hover:bg-[var(--color-background)] cursor-pointer"><td class="p-2">${formatDate(order['תאריך הזמנה'])}</td><td class="p-2">${order['תעודה']}</td><td class="p-2">${order['סוג פעולה']}</td><td class="p-2"><span class="status-${order._effectiveStatus}">${order._effectiveStatus}</span></td></tr>`;
+        });
+        tableContainer.innerHTML = tableHTML + `</tbody>`;
+        drawCustomerCharts(customerOrders);
+        drawCustomerMap(customerOrders);
+        openModal('customer-analysis-details-modal');
+    }
+
+    function drawCustomerCharts(orders) {
+        const colors = { green: 'var(--color-success)', yellow: 'var(--color-warning)', red: 'var(--color-danger)', primary: 'var(--color-primary)', surface: getComputedStyle(document.body).getPropertyValue('--color-surface').trim() };
+        const actionData = orders.reduce((acc, order) => { const type = order['סוג פעולה']; if (type) acc[type] = (acc[type] || 0) + 1; return acc; }, {});
+        const actionCtx = document.getElementById('customer-action-distribution-chart')?.getContext('2d');
+        if(charts.customerAction) charts.customerAction.destroy();
+        if(actionCtx) charts.customerAction = new Chart(actionCtx, { type: 'doughnut', data: { labels: Object.keys(actionData), datasets: [{ data: Object.values(actionData), backgroundColor: [colors.green, colors.yellow, colors.red], borderColor: colors.surface, borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+        
+        const monthlyData = orders.reduce((acc, order) => { const month = new Date(order['תאריך הזמנה']).toLocaleString('he-IL', { month: 'short', year: '2-digit' }); acc[month] = (acc[month] || 0) + 1; return acc; }, {});
+        const monthlyCtx = document.getElementById('customer-monthly-activity-chart')?.getContext('2d');
+        if(charts.customerMonthly) charts.customerMonthly.destroy();
+        if(monthlyCtx) charts.customerMonthly = new Chart(monthlyCtx, { type: 'bar', data: { labels: Object.keys(monthlyData).reverse(), datasets: [{ label: 'הזמנות בחודש', data: Object.values(monthlyData).reverse(), backgroundColor: colors.primary }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
+    }
+
+    function drawCustomerMap(orders) {
+        const mapElement = document.getElementById('customer-analysis-map');
+        if (charts.customerMap) {
+            charts.customerMap.remove();
+            charts.customerMap = null;
+        }
+        
+        charts.customerMap = L.map(mapElement).setView([32.0853, 34.7818], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(charts.customerMap);
+
+        const uniqueAddresses = [...new Set(orders.map(o => o['כתובת']).filter(Boolean))];
+        if (uniqueAddresses.length === 0) {
+            setTimeout(() => charts.customerMap.invalidateSize(), 400);
+            return;
+        }
+        
+        let bounds = L.latLngBounds();
+        let hasGeocodingFailed = false;
+
+        const promises = uniqueAddresses.map(address =>
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+            .then(res => {
+                if (!res.ok) throw new Error('Network response error');
+                return res.json();
+            })
+            .then(data => {
+                if (data && data.length > 0) {
+                    const latLng = L.latLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
+                    L.marker(latLng).addTo(charts.customerMap).bindPopup(address);
+                    bounds.extend(latLng);
+                }
+            })
+            .catch(error => {
+                if (!hasGeocodingFailed) {
+                    hasGeocodingFailed = true;
+                    console.error("Geocoding failed for at least one address.", error);
+                }
+            })
+        );
+
+        Promise.allSettled(promises).then(() => {
+            if (bounds.isValid()) {
+                charts.customerMap.fitBounds(bounds, { padding: [50, 50] });
+            }
+            if (hasGeocodingFailed) {
+                showAlert('לא ניתן היה לטעון מיקומי כתובות על המפה עקב מגבלות רשת.', 'warning');
+            }
+            setTimeout(() => {
+                if(charts.customerMap) charts.customerMap.invalidateSize()
+            }, 400);
+        });
+    }
+    
+    // --- PRINTING ---
+    function printOrderDocument(sheetRow) {
+        const order = allOrders.find(o => o.sheetRow === sheetRow);
+        if(!order) return;
+        const isOverdue = order._effectiveStatus === 'חורג';
+        let printContent = `
+            <div style="padding: 2rem; font-family: 'Rubik', sans-serif; direction: rtl; ${isOverdue ? 'border: 3px solid #D64545;' : 'border: 1px solid #CFD8DC;'} max-width: 800px; margin: auto; background: white;">
+                <header style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #CFD8DC; padding-bottom: 1rem; margin-bottom: 1rem;">
+                    <img src="https://i.postimg.cc/J7JGQYcT/image.jpg" alt="לוגו" style="height: 60px;">
+                    <h1 style="color: #2E8B57; font-size: 1.8rem; margin: 0;">הזמנה #${order['תעודה']}</h1>
+                </header>
+                ${isOverdue ? `<div style="background-color: #fde8e8; color: #D64545; text-align: center; padding: 0.5rem; border-radius: 0.5rem; margin-bottom: 1rem; font-weight: bold;">🚨 הזמנה זו במצב חריגה! 🚨</div>` : ''}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div><strong>לקוח:</strong> ${escapeHTML(order['שם לקוח'])}</div>
+                    <div><strong>תאריך:</strong> ${formatDate(order['תאריך הזמנה'])}</div>
+                    <div><strong>כתובת:</strong> ${escapeHTML(order['כתובת'] || '')}</div>
+                    <div><strong>טלפון:</strong> ${escapeHTML(order['טלפון לקוח'] || '')}</div>
+                    <div><strong>סוכן:</strong> ${escapeHTML(order['שם סוכן'] || '')}</div>
+                    <div><strong>ימים בשירות:</strong> ${order._daysPassedCalculated}</div>
+                </div>
+                <h2 style="margin-top: 2rem; border-bottom: 1px solid #CFD8DC; padding-bottom: 0.5rem; color: #2F4F4F;">פרטי פעולה</h2>
+                <p><strong>סוג פעולה:</strong> ${escapeHTML(order['סוג פעולה'] || '')}</p>
+                ${order['מספר מכולה ירדה'] ? `<p><strong>מכולה ירדה:</strong> ${escapeHTML(order['מספר מכולה ירדה'])}</p>` : ''}
+                ${order['מספר מכולה עלתה'] ? `<p><strong>מכולה עלתה:</strong> ${escapeHTML(order['מספר מכולה עלתה'])}</p>` : ''}
+                <footer style="text-align: center; margin-top: 3rem; font-size: 0.8rem; color: #607D8B;">תודה שבחרתם ח. סבן חומרי בניין</footer>
+            </div>
+        `;
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write('<html><head><title>הדפסת הזמנה</title><link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet"></head><body>' + printContent + '</body></html>');
+        printWindow.document.close();
+        printWindow.print();
+    }
+    
+
+    // --- INITIALIZATION ---
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeTheme();
+        loadOrders();
+    });
+</script>
+
 </body>
 </html>
+
