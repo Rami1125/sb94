@@ -2,662 +2,436 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת CRM מתקדמת לניהול שכירות מכולות</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CRM מכולות - גרסת מובייל</title>
+
     <!-- External Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
+    
     <style>
-        /* Global Variables from eco.html */
         :root {
-            --color-background: #E6F0E6; /* Light green-white */
+            --color-background: #E6F0E6;
             --color-surface: #FFFFFF;
-            --color-primary: #2E8B57; /* Sea Green */
-            --color-primary-light: #4CAF50; /* Brighter Green */
-            --color-secondary: #A8D8B9; /* Lighter Green */
-            --color-accent: #2196F3; /* Bright Blue for accent */
-            --color-text-base: #2F4F4F; /* Dark Slate Gray */
-            --color-text-muted: #607D8B; /* Blue-Grey */
-            --color-border: #CFD8DC; /* Light Blue-Grey */
-            --color-danger: #D64545; /* Red (for errors/overdue) */
-            --color-warning: #FFC107; /* Amber (for warnings) */
-            --color-success: #4CAF50; /* Green (for success) */
-            --color-info: #2196F3; /* Blue (for info) */
+            --color-primary: #2E8B57;
+            --color-primary-light: #4CAF50;
+            --color-text-base: #2F4F4F;
+            --color-text-muted: #607D8B;
+            --color-border: #CFD8DC;
+            --color-danger: #D64545;
+            --color-warning: #FFC107;
+            --color-success: #4CAF50;
             --font-main: 'Rubik', sans-serif;
         }
+        html, body {
+            overscroll-behavior-y: contain;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+        body { 
+            font-family: var(--font-main); 
+            background-color: var(--color-background); 
+            color: var(--color-text-base);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Main Layout */
+        #main-header {
+            background-color: var(--color-surface);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+        #page-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 1rem 1rem 80px 1rem; /* Padding at bottom for nav bar */
+        }
 
-        body.dark {
-            --color-background: #1A3E4A;
-            --color-surface: #294F5E;
-            --color-primary: #5AB27F;
-            --color-primary-light: #7ED093;
-            --color-secondary: #4A7A89;
-            --color-accent: #64B5F6;
-            --color-text-base: #E0F2F7;
-            --color-text-muted: #9BB8C5;
-            --color-border: #3A6B7C;
-            --color-danger: #F44336;
-            --color-warning: #FFD54F;
-            --color-success: #66BB6A;
-            --color-info: #42A5F5;
+        /* Bottom Navigation */
+        #bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 65px;
+            background-color: var(--color-surface);
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
         }
-        
-        /* General Styling */
-        body { font-family: var(--font-main); background-color: var(--color-background); color: var(--color-text-base); transition: background-color 0.4s, color 0.4s; line-height: 1.6; }
-        .btn { padding: 0.85rem 1.8rem; border-radius: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.35s; display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; border: 1px solid transparent; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .btn-primary { background-color: var(--color-primary); color: white; background-image: linear-gradient(to right, var(--color-primary), var(--color-primary-light)); box-shadow: 0 6px 20px -5px color-mix(in srgb, var(--color-primary) 40%, transparent); }
-        .btn-primary:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 10px 30px -8px color-mix(in srgb, var(--color-primary) 60%, transparent); }
-        .btn-secondary { background-color: var(--color-surface); color: var(--color-text-base); border-color: var(--color-border); box-shadow: 0 4px 10px rgba(0,0,0,0.04); }
-        .btn-secondary:hover { background-color: var(--color-background); border-color: var(--color-primary-light); color: var(--color-primary); transform: translateY(-2px); }
-        .card { background-color: var(--color-surface); border-radius: 1.25rem; border: 1px solid var(--color-border); box-shadow: 0 6px 20px rgba(0,0,0,0.06); transition: all 0.4s; }
-        .card:hover:not(.non-interactive) { transform: translateY(-6px); box-shadow: 0 12px 35px rgba(0,0,0,0.12); }
-        .modal-overlay { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; padding: 1rem; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.4s; }
-        .modal-overlay.active { display: flex; opacity: 1; }
-        .modal-content { background-color: var(--color-surface); border-radius: 1.5rem; box-shadow: 0 15px 45px rgba(0,0,0,0.25); border: 1px solid var(--color-border); transform: scale(0.9); transition: transform 0.4s; }
-        .modal-overlay.active .modal-content { transform: scale(1); }
-        input, select, textarea { background-color: var(--color-background); border: 1px solid var(--color-border); border-radius: 0.8rem; transition: all 0.25s; padding: 0.75rem 1rem; width: 100%; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 25%, transparent); }
-        .status-פתוח { color: var(--color-success); font-weight: 700; }
-        .status-סגור { color: var(--color-text-muted); }
-        .status-חורג { color: var(--color-danger); font-weight: 700; }
-        .overdue-text-blinking { animation: text-pulse-red 1.8s infinite alternate; font-weight: 700; }
-        @keyframes text-pulse-red { from { color: var(--color-danger); } to { color: #FF0000; text-shadow: 0 0 8px rgba(255, 0, 0, 0.8); } }
-        .eco-background-header span { font-size: 2.5rem; animation: float 6s ease-in-out infinite; display:inline-block; }
-        .eco-background-header span:nth-child(2) { animation-delay: 1s; }
-        .eco-background-header span:nth-child(3) { animation-delay: 2s; }
-        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-8px); } 100% { transform: translateY(0px); } }
-        .chart-container { position: relative; width: 100%; height: 350px; }
-        
-        /* Responsive Table */
-        @media (max-width: 768px) {
-            .main-table-responsive thead { display: none; }
-            .main-table-responsive tr { display: block; border: 1px solid var(--color-border); margin-bottom: 0.5rem; border-radius: 0.75rem; padding: 0.75rem; }
-            .main-table-responsive td { display: block; border: none; position: relative; padding-left: 50% !important; text-align: left; padding-top: 0.5rem; padding-bottom: 0.5rem; }
-            .main-table-responsive td:before { content: attr(data-label); font-weight: 600; color: var(--color-text-muted); position: absolute; top: 50%; transform: translateY(-50%); left: 6px; width: 45%; padding-right: 10px; white-space: nowrap; text-align: right; }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--color-text-muted);
+            transition: color 0.2s;
+            flex-grow: 1;
+            padding: 0.5rem 0;
         }
-        #customer-analysis-map { height: 300px; width: 100%; border-radius: 0.75rem; border: 1px solid var(--color-border); }
-        .kanban-column { min-height: 300px; }
-        .kanban-column.drag-over { background-color: color-mix(in srgb, var(--color-primary) 10%, transparent); }
-        .action-icon-btn { background: none; border: none; cursor: pointer; font-size: 1.4rem; padding: 0.4rem; margin: 0 0.2rem; transition: transform 0.25s, color 0.25s; border-radius: 50%; }
-        .action-icon-btn:hover { transform: scale(1.3); background-color: rgba(0,0,0,0.05); }
+        .nav-item i {
+            font-size: 1.4rem;
+            margin-bottom: 2px;
+        }
+        .nav-item.active {
+            color: var(--color-primary);
+        }
+
+        /* Floating Action Button (FAB) */
+        #fab {
+            position: fixed;
+            bottom: 80px;
+            left: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background-color: var(--color-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 1001;
+        }
+
+        /* Order Card Style */
+        .order-card {
+            background-color: var(--color-surface);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 5px solid var(--color-primary);
+        }
+        .order-card.status-חורג {
+            border-left-color: var(--color-danger);
+        }
+        .order-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .order-card-customer {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        .status-badge {
+            font-size: 0.7rem;
+            font-weight: 500;
+            padding: 0.2rem 0.5rem;
+            border-radius: 999px;
+            color: white;
+        }
+        .status-badge.bg-open { background-color: var(--color-success); }
+        .status-badge.bg-overdue { background-color: var(--color-danger); }
+        
+        /* Bottom Sheet Modal */
+        #bottom-sheet-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0,0,0,0.5);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 2000;
+            pointer-events: none;
+        }
+        #bottom-sheet-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--color-surface);
+            border-top-left-radius: 1.5rem;
+            border-top-right-radius: 1.5rem;
+            max-height: 90vh;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+            z-index: 2001;
+            display: flex;
+            flex-direction: column;
+        }
+        #bottom-sheet.active {
+            transform: translateY(0);
+        }
+        #sheet-handle {
+            width: 50px;
+            height: 5px;
+            background-color: var(--color-border);
+            border-radius: 2.5px;
+            margin: 0.5rem auto;
+            cursor: grab;
+        }
+        #sheet-content {
+            overflow-y: auto;
+            padding: 0 1.5rem 1.5rem 1.5rem;
+        }
     </style>
 </head>
-<body class="text-base">
+<body>
 
-    <!-- Loader & Alert Placeholders -->
-    <div id="loader-overlay" class="fixed inset-0 bg-gray-500 bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-[1000] opacity-0 pointer-events-none"><div class="w-20 h-20 border-8 border-t-8 border-gray-200 border-t-[var(--color-primary)] rounded-full animate-spin"></div></div>
-    <div id="alert-container" class="fixed bottom-6 left-6 z-[1100] space-y-4"></div>
+    <header id="main-header" class="p-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <img src="https://i.postimg.cc/J7JGQYcT/image.jpg" alt="Company Logo" class="h-10 rounded-md">
+            <h1 class="text-xl font-bold text-[var(--color-primary)]">CRM נייד</h1>
+        </div>
+    </header>
 
-    <!-- All Modals -->
-    <div id="order-modal" class="modal-overlay"> <div class="modal-content w-full max-w-2xl max-h-[90vh] flex flex-col p-6"><div class="flex items-center justify-between pb-5 border-b mb-4"><h2 id="modal-title" class="text-2xl font-bold text-[var(--color-primary)]"></h2><button onclick="closeModal('order-modal')" class="text-3xl text-[var(--color-text-muted)] hover:text-[var(--color-danger)]">&times;</button></div><form id="order-form" class="space-y-5 overflow-y-auto"></form></div></div>
-    <div id="delete-confirm-modal" class="modal-overlay"><div class="modal-content w-full max-w-md p-6"><h2 class="text-xl font-bold mb-4">אישור מחיקה</h2><p class="mb-6">האם למחוק את הזמנה <span id="delete-order-id" class="font-bold"></span>?</p><div class="flex justify-end gap-3"><button type="button" class="btn btn-secondary" onclick="closeModal('delete-confirm-modal')">ביטול</button><button type="button" class="btn bg-[var(--color-danger)] text-white" id="confirm-delete-btn">מחק</button></div></div></div>
-    <div id="close-order-modal" class="modal-overlay"><div class="modal-content w-full max-w-md p-6"><h2 class="text-xl font-bold mb-4">סגירת הזמנה <span id="close-order-id-display"></span></h2><p class="mb-4">האם לסגור הזמנה זו?</p><div><label for="close-order-notes" class="block text-sm mb-1">הערות סגירה</label><textarea id="close-order-notes" rows="3"></textarea></div><div class="flex justify-end gap-3 mt-6"><button type="button" class="btn btn-secondary" onclick="closeModal('close-order-modal')">ביטול</button><button type="button" class="btn btn-primary" id="confirm-close-order-btn">אשר סגירה</button></div></div></div>
-    <div id="customer-analysis-details-modal" class="modal-overlay"><div class="modal-content w-full max-w-6xl max-h-[90vh] flex flex-col p-6"><div class="flex items-center justify-between pb-5 border-b mb-4"><h2 class="text-2xl font-bold text-[var(--color-primary)]">פרופיל לקוח: <span id="analysis-details-customer-name"></span></h2><button onclick="closeModal('customer-analysis-details-modal')" class="text-3xl text-[var(--color-text-muted)] hover:text-[var(--color-danger)]">&times;</button></div><div class="flex-grow overflow-y-auto space-y-6"><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="customer-kpi-container"></div><div class="grid grid-cols-1 lg:grid-cols-5 gap-6"><div class="lg:col-span-3 card p-4"><h3 class="text-lg font-semibold mb-2">מפת פעילות</h3><div id="customer-analysis-map"></div></div><div class="lg:col-span-2 card p-4"><h3 class="text-lg font-semibold mb-2">התפלגות פעולות</h3><div class="chart-container" style="height: 280px;"><canvas id="customer-action-distribution-chart"></canvas></div></div></div><div class="card p-4"><h3 class="text-lg font-semibold mb-2">פעילות חודשית</h3><div class="chart-container" style="height: 250px;"><canvas id="customer-monthly-activity-chart"></canvas></div></div><div class="card p-4"><h3 class="text-lg font-semibold mb-2">היסטוריית הזמנות</h3><div class="overflow-x-auto max-h-96"><table class="w-full text-right" id="customer-analysis-orders-table"></table></div></div></div></div></div>
+    <main id="page-content">
+        <!-- Page content will be rendered here by JS -->
+    </main>
 
-    <!-- Main Page Structure -->
-    <div class="min-h-screen flex flex-col">
-        <header class="p-6 text-center border-b border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm relative">
-             <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-2"><img src="https://i.postimg.cc/J7JGQYcT/image.jpg" alt="Company Logo" class="h-16 rounded-lg shadow-md border"><h1 class="text-3xl md:text-4xl font-bold text-[var(--color-primary)] mt-2 md:mt-0">מערכת CRM לניהול מכולות</h1></div>
-            <p class="text-lg text-[var(--color-text-muted)] mb-4">ניהול קל ויעיל של כל הזמנות המכולות</p>
-            <button id="theme-toggle" class="absolute top-5 left-5 text-2xl p-3 rounded-full hover:bg-[var(--color-border)]"><i class="fas fa-sun"></i></button>
-        </header>
-        
-        <nav class="flex justify-center p-4"><div class="card flex gap-3 p-3 shadow-lg flex-wrap justify-center">
-            <button id="nav-dashboard" class="nav-tab-btn active" onclick="showPage('dashboard')"><i class="fas fa-chart-pie mr-2"></i>לוח מחוונים</button>
-            <button id="nav-container-inventory" class="nav-tab-btn" onclick="showPage('container-inventory')"><i class="fas fa-boxes-stacked mr-2"></i>מלאי מכולות</button>
-            <button id="nav-treatment-board" class="nav-tab-btn" onclick="showPage('treatment-board')"><i class="fas fa-clipboard-list mr-2"></i>לוח טיפול</button>
-            <button id="nav-whatsapp-alerts" class="nav-tab-btn" onclick="showPage('whatsapp-alerts')"><i class="fab fa-whatsapp mr-2"></i>התראות</button>
-            <button id="nav-reports" class="nav-tab-btn" onclick="showPage('reports')"><i class="fas fa-chart-line mr-2"></i>דוחות</button>
-            <button id="nav-customer-analysis" class="nav-tab-btn" onclick="showPage('customer-analysis')"><i class="fas fa-user-chart mr-2"></i>ניתוח לקוחות</button>
-        </div></nav>
+    <button id="fab" title="הוסף הזמנה חדשה">
+        <i class="fas fa-plus"></i>
+    </button>
 
-        <main class="flex-grow p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
-            <section id="dashboard-page" class="page-content space-y-10"></section>
-            <section id="container-inventory-page" class="page-content hidden space-y-8"></section>
-            <section id="treatment-board-page" class="page-content hidden space-y-8"></section>
-            <section id="whatsapp-alerts-page" class="page-content hidden space-y-8"></section>
-            <section id="reports-page" class="page-content hidden space-y-8"></section>
-            <section id="customer-analysis-page" class="page-content hidden space-y-8"></section>
-        </main>
+    <nav id="bottom-nav">
+        <button class="nav-item active" onclick="showPage('dashboard')">
+            <i class="fas fa-home"></i>
+            <span>ראשי</span>
+        </button>
+        <button class="nav-item" onclick="showPage('customers')">
+            <i class="fas fa-users"></i>
+            <span>לקוחות</span>
+        </button>
+        <button class="nav-item" onclick="showPage('reports')">
+            <i class="fas fa-chart-line"></i>
+            <span>דוחות</span>
+        </button>
+        <button class="nav-item" onclick="showPage('inventory')">
+            <i class="fas fa-boxes-stacked"></i>
+            <span>מלאי</span>
+        </button>
+    </nav>
+    
+    <div id="bottom-sheet-overlay" onclick="closeSheet()"></div>
+    <div id="bottom-sheet">
+        <div id="sheet-handle"></div>
+        <div id="sheet-content">
+            <!-- Sheet content will be rendered here by JS -->
+        </div>
     </div>
+
 
 <script>
     // --- CONFIGURATION & STATE---
     const SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxiS3wXwXCyh8xM1EdTiwXy0T-UyBRQgfrnRRis531lTxmgtJIGawfsPeetX5nVJW3V/exec';
     const OVERDUE_THRESHOLD_DAYS = 10;
-    const WHATSAPP_NUMBER = '972508860896';
     let allOrders = [];
-    let charts = {}; 
     let currentPage = 'dashboard';
-    let appColors = {};
     
     // --- UTILITY FUNCTIONS ---
-    const openModal = (id) => document.getElementById(id).classList.add('active');
-    const closeModal = (id) => document.getElementById(id).classList.remove('active');
-    const showLoader = () => document.getElementById('loader-overlay').classList.remove('opacity-0', 'pointer-events-none');
-    const hideLoader = () => document.getElementById('loader-overlay').classList.add('opacity-0', 'pointer-events-none');
     const formatDate = (dateInput) => dateInput ? new Date(dateInput).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
     const escapeHTML = (str) => String(str).replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag));
-
-    function showAlert(message, type = 'info') {
-        const container = document.getElementById('alert-container');
-        const alertItem = document.createElement('div');
-        const themes = {
-            success: { bg: 'bg-green-100', border: 'border-green-500', text: 'text-green-800', icon: 'fa-check-circle' },
-            error: { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', icon: 'fa-times-circle' },
-            warning: { bg: 'bg-yellow-100', border: 'border-yellow-500', text: 'text-yellow-800', icon: 'fa-exclamation-triangle' },
-            info: { bg: 'bg-blue-100', border: 'border-blue-500', text: 'text-blue-800', icon: 'fa-info-circle' }
-        };
-        const theme = themes[type] || themes.info;
-        alertItem.className = `p-4 rounded-lg border-l-4 shadow-lg flex items-center gap-3 transform translate-x-full opacity-0 transition-all duration-500 ease-out ${theme.bg} ${theme.border} ${theme.text}`;
-        alertItem.innerHTML = `<i class="fas ${theme.icon}"></i><p>${message}</p>`;
-        container.prepend(alertItem);
-        setTimeout(() => { alertItem.style.transform = 'translateX(0)'; alertItem.style.opacity = '1'; }, 100);
-        setTimeout(() => { alertItem.style.transform = 'translateX(100%)'; alertItem.style.opacity = '0'; setTimeout(() => alertItem.remove(), 500); }, 5000);
-    }
 
     // --- THEME ---
     function initializeTheme() {
         if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.body.classList.add('dark');
-            document.querySelector('#theme-toggle i').className = 'fas fa-moon';
+            // This part of the code is intentionally left blank in this fix.
         }
-        document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
-        updateAppColors();
+        document.getElementById('theme-toggle')?.addEventListener('click', toggleTheme);
     }
-
     function toggleTheme() {
         document.body.classList.toggle('dark');
         localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
-        document.querySelector('#theme-toggle i').className = document.body.classList.contains('dark') ? 'fas fa-moon' : 'fas fa-sun';
-        updateAppColors();
+        // This part of the code is intentionally left blank in this fix.
         showPage(currentPage);
     }
 
-    function updateAppColors() {
-        const style = getComputedStyle(document.body);
-        appColors = {
-            green: style.getPropertyValue('--color-success').trim(),
-            yellow: style.getPropertyValue('--color-warning').trim(),
-            red: style.getPropertyValue('--color-danger').trim(),
-            primary: style.getPropertyValue('--color-primary').trim(),
-            muted: style.getPropertyValue('--color-text-muted').trim(),
-            surface: style.getPropertyValue('--color-surface').trim()
-        };
-        appColors.actionMap = { 'הורדה': appColors.green, 'החלפה': appColors.yellow, 'העלאה': appColors.red };
-    }
-
-
     // --- API & DATA ---
-    async function fetchData(action, params = {}) {
-        showLoader();
+     async function fetchData() {
         const url = new URL(SCRIPT_WEB_APP_URL);
-        url.searchParams.append('action', action);
-        Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, String(value)));
-        
+        url.searchParams.append('action', 'list');
+        url.searchParams.append('status', 'all');
         try {
             const response = await fetch(url, { method: 'GET', redirect: 'follow' });
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
-             if (!data.success) { 
-                throw new Error(data.message || 'Server operation failed');
-            }
+             if (!data.success) throw new Error(data.message || 'Server operation failed');
             return data.data;
         } catch (error) {
-            showAlert(`שגיאת תקשורת: ${error.message}`, 'error');
-            throw error;
-        } finally {
-            hideLoader();
+            console.error("Fetch Error:", error);
+            document.getElementById('page-content').innerHTML = `<div class="text-center p-4 bg-red-100 text-red-700 rounded-lg">שגיאת רשת. בדוק את החיבור ונסה שוב.</div>`;
+            return []; // Return empty array on error to prevent app crash
         }
     }
 
     async function loadOrders() {
-        try {
-            const rawOrders = await fetchData('list', { status: 'all' });
-            allOrders = rawOrders.map(order => {
-                const orderDate = new Date(order['תאריך הזמנה']);
-                const daysPassed = Math.floor((new Date() - orderDate) / (1000 * 60 * 60 * 24));
-                order._daysPassedCalculated = daysPassed;
-                order._effectiveStatus = order['סטטוס'] === 'סגור' ? 'סגור' : (daysPassed >= OVERDUE_THRESHOLD_DAYS ? 'חורג' : 'פתוח');
-                order.sheetRow = parseInt(order.sheetRow);
-                return order;
-            });
-            showPage(currentPage);
-        } catch (error) {
-            document.getElementById('dashboard-page').innerHTML = `<div class="card p-8 text-center text-red-600"><h2>שגיאה חמורה בטעינת הנתונים</h2><p>${error.message}</p><button class="btn btn-primary mt-4" onclick="location.reload()">רענן עמוד</button></div>`;
-        }
+        const rawOrders = await fetchData();
+        allOrders = rawOrders.map(order => {
+            const orderDate = new Date(order['תאריך הזמנה']);
+            const daysPassed = Math.floor((new Date() - orderDate) / (1000 * 60 * 60 * 24));
+            order._daysPassedCalculated = daysPassed;
+            order._effectiveStatus = order['סטטוס'] === 'סגור' ? 'סגור' : (daysPassed >= OVERDUE_THRESHOLD_DAYS ? 'חורג' : 'פתוח');
+            order.sheetRow = parseInt(order.sheetRow);
+            return order;
+        }).sort((a,b) => new Date(b['תאריך הזמנה']) - new Date(a['תאריך הזמנה']));
+        showPage(currentPage);
     }
-    
-    // --- PAGE NAVIGATION & RENDERING ---
+
+    // --- NAVIGATION ---
     function showPage(pageId) {
         currentPage = pageId;
-        document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
-        document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
-        
-        const pageContainer = document.getElementById(`${pageId}-page`);
-        pageContainer.innerHTML = ''; // Clear previous content
-        pageContainer.classList.remove('hidden');
-        document.getElementById(`nav-${pageId}`).classList.add('active');
-        
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.toggle('active', item.getAttribute('onclick').includes(`'${pageId}'`));
+        });
+
         const renderFunctions = {
             'dashboard': renderDashboard,
-            'container-inventory': renderContainerInventory,
-            'treatment-board': renderTreatmentBoard,
-            'whatsapp-alerts': renderWhatsappAlerts,
-            'reports': renderReports,
-            'customer-analysis': renderCustomerAnalysis,
+            'customers': renderCustomersPage,
+            'reports': renderReportsPage,
+            'inventory': renderInventoryPage
         };
-        if (renderFunctions[pageId]) renderFunctions[pageId]();
+        
+        const pageContainer = document.getElementById('page-content');
+        pageContainer.scrollTop = 0; // Scroll to top on page change
+        if (renderFunctions[pageId]) {
+            pageContainer.innerHTML = renderFunctions[pageId]();
+        } else {
+            pageContainer.innerHTML = `<p>הדף "${pageId}" בבנייה.</p>`;
+        }
     }
     
-    // --- PAGE: DASHBOARD ---
+    // --- PAGES ---
     function renderDashboard() {
-        const page = document.getElementById('dashboard-page');
         const openOrders = allOrders.filter(o => o._effectiveStatus === 'פתוח').length;
         const overdueOrders = allOrders.filter(o => o._effectiveStatus === 'חורג').length;
-        const containersInUse = new Set(allOrders.filter(o => o._effectiveStatus !== 'סגור').flatMap(o => String(o['מספר מכולה ירדה'] || '').split(',').map(c => c.trim()).filter(Boolean))).size;
-        const activeCustomers = new Set(allOrders.filter(o => o._effectiveStatus !== 'סגור').map(o => o['שם לקוח'])).size;
 
-        page.innerHTML = `
-            <div class="text-center"><div class="eco-background-header"><span>🌱</span><span>🌍</span><span>🌳</span></div><h2 class="text-3xl font-bold mb-3">סקירה כללית 📊</h2></div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="card p-6"><p class="font-semibold text-lg">הזמנות פתוחות</p><p class="text-4xl font-bold text-[var(--color-success)] mt-2">${openOrders}</p></div>
-                <div class="card p-6"><p class="font-semibold text-lg">הזמנות חורגות</p><p class="text-4xl font-bold text-[var(--color-danger)] mt-2">${overdueOrders}</p></div>
-                <div class="card p-6"><p class="font-semibold text-lg">מכולות בשימוש</p><p class="text-4xl font-bold text-[var(--color-primary)] mt-2">${containersInUse}</p></div>
-                <div class="card p-6"><p class="font-semibold text-lg">לקוחות פעילים</p><p class="text-4xl font-bold text-[var(--color-primary)] mt-2">${activeCustomers}</p></div>
+        let html = `
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="p-4 rounded-lg text-center bg-green-100 text-green-800">
+                    <p class="font-bold text-2xl">${openOrders}</p>
+                    <p class="text-sm">הזמנות פתוחות</p>
+                </div>
+                 <div class="p-4 rounded-lg text-center bg-red-100 text-red-800">
+                    <p class="font-bold text-2xl">${overdueOrders}</p>
+                    <p class="text-sm">הזמנות חורגות</p>
+                </div>
             </div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="card p-6"><h3 class="text-xl font-semibold mb-4">התפלגות פעולות כללית</h3><div class="chart-container"><canvas id="chart-actions-pie"></canvas></div></div>
-                <div class="card p-6"><h3 class="text-xl font-semibold mb-4">התפלגות לפי סטטוס</h3><div class="chart-container"><canvas id="chart-status-pie"></canvas></div></div>
-            </div>
-            <div class="card p-6"><h2 class="text-2xl font-bold mb-6">רשימת הזמנות 📋</h2><div class="overflow-x-auto rounded-lg border"><table id="orders-table" class="w-full text-right table-auto main-table-responsive"></table></div></div>
-        `;
-        renderOrdersTable(allOrders);
-        drawDashboardCharts();
+            <h2 class="text-xl font-bold mb-4">הזמנות אחרונות</h2>
+            <div id="orders-list">`;
+        
+        allOrders.slice(0, 20).forEach(order => { // Show latest 20 orders
+            html += renderOrderCard(order);
+        });
+
+        html += `</div>`;
+        return html;
     }
 
-    function renderOrdersTable(orders) {
-        const table = document.getElementById('orders-table');
-        if (!table) return;
-        let tableHTML = `<thead><tr>
-            <th class="p-3">תאריך</th><th class="p-3">לקוח</th><th class="p-3">פעולה</th><th class="p-3">ימים</th><th class="p-3">סטטוס</th><th class="p-3">פעולות</th>
-        </tr></thead><tbody>`;
-        if (orders.length === 0) {
-            tableHTML += `<tr><td colspan="6" class="text-center p-4">אין הזמנות להצגה</td></tr>`;
-        } else {
-            orders.sort((a,b) => new Date(b['תאריך הזמנה']) - new Date(a['תאריך הזמנה'])).forEach(order => {
-                tableHTML += `<tr class="border-t hover:bg-[var(--color-background)]">
-                    <td class="p-3" data-label="תאריך">${formatDate(order['תאריך הזמנה'])}</td>
-                    <td class="p-3 font-semibold cursor-pointer hover:text-[var(--color-primary)]" data-label="לקוח" onclick="showCustomerAnalysisDetailsModal('${escapeHTML(order['שם לקוח'])}')">${escapeHTML(order['שם לקוח'])}</td>
-                    <td class="p-3" data-label="פעולה">${escapeHTML(order['סוג פעולה'] || '')}</td>
-                    <td class="p-3" data-label="ימים">${order._effectiveStatus === 'חורג' ? `<span class="overdue-text-blinking">${order._daysPassedCalculated}</span>` : order._daysPassedCalculated}</td>
-                    <td class="p-3" data-label="סטטוס"><span class="status-${order._effectiveStatus}">${order._effectiveStatus}</span></td>
-                    <td class="p-3 whitespace-nowrap" data-label="פעולות"><button class="action-icon-btn" onclick="printOrderDocument(${order.sheetRow})" title="הדפס"><i class="fas fa-print text-[var(--color-secondary)]"></i></button></td>
-                </tr>`;
+    function renderCustomersPage() {
+        const customers = [...new Set(allOrders.map(o => o['שם לקוח']))].sort();
+        let html = `<input type="search" id="customer-search" placeholder="חיפוש לקוח..." class="w-full mb-4 p-3 rounded-lg border">
+                    <div id="customer-list-container">`;
+        customers.forEach(customer => {
+            const customerOrders = allOrders.filter(o => o['שם לקוח'] === customer);
+            const openCount = customerOrders.filter(o => o._effectiveStatus !== 'סגור').length;
+            html += `
+                <div class="bg-white p-4 rounded-lg mb-2 flex justify-between items-center" data-customer-name="${escapeHTML(customer).toLowerCase()}">
+                    <div>
+                        <p class="font-bold">${escapeHTML(customer)}</p>
+                        <p class="text-sm text-gray-500">${openCount} הזמנות פתוחות</p>
+                    </div>
+                    <button class="text-gray-400"><i class="fas fa-chevron-left"></i></button>
+                </div>
+            `;
+        });
+        html += `</div>`;
+
+        // Add event listener after rendering
+        setTimeout(() => {
+            document.getElementById('customer-search').addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                document.querySelectorAll('#customer-list-container > div').forEach(div => {
+                    div.style.display = div.dataset.customerName.includes(searchTerm) ? 'flex' : 'none';
+                });
             });
-        }
-        table.innerHTML = tableHTML + '</tbody>';
+        }, 0);
+        
+        return html;
     }
     
-    // --- PAGE: CONTAINER INVENTORY ---
-    function renderContainerInventory() {
-        const page = document.getElementById('container-inventory-page');
-        const containerStates = {};
-        allOrders.forEach(order => {
-            const containers = String(order['מספר מכולה ירדה'] || '').split(',').filter(Boolean);
-            containers.forEach(num => {
-                const cleanNum = num.trim();
-                if (!containerStates[cleanNum] || new Date(order['תאריך הזמנה']) > new Date(containerStates[cleanNum].date)) {
-                    containerStates[cleanNum] = { status: order._effectiveStatus, date: order['תאריך הזמנה'], customer: order['שם לקוח'] };
-                }
-            });
-        });
-        const inUse = Object.entries(containerStates).filter(([,state]) => state.status !== 'סגור').sort((a,b) => a[0].localeCompare(b[0]));
-        const available = Object.entries(containerStates).filter(([,state]) => state.status === 'סגור').sort((a,b) => a[0].localeCompare(b[0]));
-        
-        page.innerHTML = `
-            <div class="text-center"><h2 class="text-3xl font-bold mb-3">מלאי מכולות 📦</h2></div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="card p-6"><h3 class="text-xl font-bold mb-4 text-[var(--color-danger)]">מכולות בשימוש (${inUse.length})</h3><div class="overflow-y-auto max-h-96"><table class="w-full text-right" id="containers-in-use-table"></table></div></div>
-                <div class="card p-6"><h3 class="text-xl font-bold mb-4 text-[var(--color-success)]">מכולות פנויות (${available.length})</h3><div class="overflow-y-auto max-h-96"><table class="w-full text-right" id="containers-available-table"></table></div></div>
-            </div>`;
-        
-        document.getElementById('containers-in-use-table').innerHTML = `<thead><tr><th class="p-2">מספר</th><th class="p-2">לקוח</th><th class="p-2">מתאריך</th></tr></thead><tbody>${inUse.map(([num, state]) => `<tr><td class="p-2">${escapeHTML(num)}</td><td class="p-2">${escapeHTML(state.customer)}</td><td class="p-2">${formatDate(state.date)}</td></tr>`).join('')}</tbody>`;
-        document.getElementById('containers-available-table').innerHTML = `<thead><tr><th class="p-2">מספר</th><th class="p-2">התפנתה בתאריך</th></tr></thead><tbody>${available.map(([num, state]) => `<tr><td class="p-2">${escapeHTML(num)}</td><td class="p-2">${formatDate(state.date)}</td></tr>`).join('')}</tbody>`;
+    function renderReportsPage() {
+        return `<div class="text-center p-8 bg-white rounded-lg"><h2 class="text-xl font-bold">דוחות</h2><p class="text-gray-500 mt-2">דף הדוחות בגרסת המובייל נמצא בפיתוח.</p></div>`;
     }
 
-    // --- PAGE: TREATMENT BOARD (KANBAN) ---
-    function renderTreatmentBoard() {
-        const page = document.getElementById('treatment-board-page');
-        page.innerHTML = `
-            <div class="text-center"><h2 class="text-3xl font-bold mb-3">לוח טיפול Kanban 🛠️</h2></div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div id="column-overdue" class="kanban-column p-4 card non-interactive"><h3 class="font-bold text-xl text-center text-[var(--color-danger)] mb-4">חורגים 🚨</h3></div>
-                <div id="column-in-progress" class="kanban-column p-4 card non-interactive"><h3 class="font-bold text-xl text-center text-[var(--color-info)] mb-4">בטיפול ⚙️</h3></div>
-                <div id="column-resolved" class="kanban-column p-4 card non-interactive"><h3 class="font-bold text-xl text-center text-[var(--color-success)] mb-4">טופלו ✅</h3></div>
-            </div>`;
-            
-        const overdueColumn = document.getElementById('column-overdue');
-        const inProgressColumn = document.getElementById('column-in-progress');
-        const resolvedColumn = document.getElementById('column-resolved');
-
-        allOrders.forEach(order => {
-            let targetColumn = null;
-            if (order._effectiveStatus === 'חורג' && order['Kanban Status'] !== 'טופלו' && order['Kanban Status'] !== 'בטיפול') {
-                targetColumn = overdueColumn;
-            } else if (order['Kanban Status'] === 'בטיפול') {
-                targetColumn = inProgressColumn;
-            } else if (order['Kanban Status'] === 'טופלו') {
-                targetColumn = resolvedColumn;
-            }
-            
-            if (targetColumn) {
-                targetColumn.innerHTML += `<div class="card p-3 my-2 cursor-grab"><p class="font-bold">${escapeHTML(order['שם לקוח'])}</p><p class="text-sm">תעודה: ${order['תעודה']}</p><p class="text-sm">${order._daysPassedCalculated} ימים</p></div>`;
-            }
-        });
-    }
-    
-    // --- PAGE: WHATSAPP ALERTS ---
-    function renderWhatsappAlerts() {
-        const page = document.getElementById('whatsapp-alerts-page');
-        const overdue = allOrders.filter(o => o._effectiveStatus === 'חורג');
-        const inService = allOrders.filter(o => o._effectiveStatus === 'פתוח');
-
-        page.innerHTML = `
-            <div class="text-center"><h2 class="text-3xl font-bold mb-3">התראות WhatsApp 💬</h2></div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="card p-6"><h3 class="text-xl font-bold mb-4 text-[var(--color-danger)]">הזמנות חורגות (${overdue.length})</h3><div class="overflow-y-auto max-h-96" id="overdue-alerts"></div></div>
-                <div class="card p-6"><h3 class="text-xl font-bold mb-4 text-[var(--color-primary)]">לקוחות בשירות (${inService.length})</h3><div class="overflow-y-auto max-h-96" id="inservice-alerts"></div></div>
-            </div>`;
-        document.getElementById('overdue-alerts').innerHTML = overdue.map(order => `
-            <div class="p-3 border-b flex justify-between items-center">
-                <div><p class="font-bold">${escapeHTML(order['שם לקוח'])}</p><p class="text-sm">${order._daysPassedCalculated} ימים בשירות</p></div>
-                <button class="btn btn-secondary btn-sm" onclick="sendWhatsapp('overdue', ${order.sheetRow})"><i class="fab fa-whatsapp mr-2"></i>שלח התראה</button>
-            </div>`).join('');
-        document.getElementById('inservice-alerts').innerHTML = inService.map(order => `
-            <div class="p-3 border-b flex justify-between items-center">
-                <div><p class="font-bold">${escapeHTML(order['שם לקוח'])}</p><p class="text-sm">${order._daysPassedCalculated} ימים בשירות</p></div>
-                <button class="btn btn-secondary btn-sm" onclick="sendWhatsapp('inService', ${order.sheetRow})"><i class="fab fa-whatsapp mr-2"></i>שלח הודעה</button>
-            </div>`).join('');
+    function renderInventoryPage() {
+        return `<div class="text-center p-8 bg-white rounded-lg"><h2 class="text-xl font-bold">מלאי</h2><p class="text-gray-500 mt-2">דף המלאי בגרסת המובייל נמצא בפיתוח.</p></div>`;
     }
 
-    function sendWhatsapp(type, sheetRow) {
+    // --- COMPONENTS ---
+    function renderOrderCard(order) {
+        const statusClass = order._effectiveStatus === 'חורג' ? 'status-חורג' : '';
+        const badgeClass = order._effectiveStatus === 'חורג' ? 'bg-overdue' : 'bg-open';
+        const badgeText = order._effectiveStatus === 'חורג' ? 'חורג' : 'פתוח';
+        return `
+            <div class="order-card ${statusClass}" onclick="openSheet(${order.sheetRow})">
+                <div class="order-card-header">
+                    <div>
+                        <p class="order-card-customer">${escapeHTML(order['שם לקוח'])}</p>
+                        <p class="text-sm text-gray-500">${escapeHTML(order['כתובת'] || '')}</p>
+                    </div>
+                    ${order._effectiveStatus !== 'סגור' ? `<span class="status-badge ${badgeClass}">${badgeText}</span>` : ''}
+                </div>
+                <div class="mt-4 flex justify-between text-sm text-gray-600">
+                    <span>תעודה: <strong>${order['תעודה']}</strong></span>
+                    <span><strong>${order._daysPassedCalculated}</strong> ימים בשירות</span>
+                </div>
+            </div>`;
+    }
+
+    // --- BOTTOM SHEET ---
+    function openSheet(sheetRow) {
         const order = allOrders.find(o => o.sheetRow === sheetRow);
         if (!order) return;
         
-        let message = '';
-        if (type === 'overdue') {
-            message = `🚨 *הזמנה חורגת* 🚨\nשלום ${order['שם לקוח']}, אנו רואים שהמכולה (הזמנה ${order['תעודה']}) נמצאת אצלכם כבר *${order._daysPassedCalculated}* ימים. אנא צרו קשר לתאום פינוי בהקדם. תודה, צוות ח. סבן.`;
-        } else {
-            message = `📦 עדכון שירות 📦\nשלום ${order['שם לקוח']}, המכולה (הזמנה ${order['תעודה']}) נמצאת אצלכם בשירות *${order._daysPassedCalculated}* ימים. אם נדרש פינוי או החלפה, נשמח לעמוד לשירותכם. צוות ח. סבן.`;
-        }
-        
-        const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-        window.open(url, '_blank');
-    }
-
-    // --- PAGE: REPORTS ---
-    function renderReports() {
-        const page = document.getElementById('reports-page');
-        page.innerHTML = `
-            <div class="text-center"><h2 class="text-3xl font-bold mb-3">דוחות וניתוחים 📈</h2></div>
-            <div class="card p-6 space-y-4">
-                <div class="flex flex-wrap gap-4 items-center">
-                    <input type="date" id="report-start-date" class="flex-grow p-2">
-                    <input type="date" id="report-end-date" class="flex-grow p-2">
-                    <button class="btn btn-primary" onclick="filterAndRenderReports()">הצג דוח</button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="report-kpis"></div>
-                <div class="chart-container"><canvas id="report-chart-actions"></canvas></div>
-                <div class="overflow-x-auto"><table id="report-table" class="w-full text-right main-table-responsive"></table></div>
-            </div>`;
-    }
-
-    function filterAndRenderReports() {
-        const start = document.getElementById('report-start-date').value;
-        const end = document.getElementById('report-end-date').value;
-        const startDate = start ? new Date(start) : null;
-        const endDate = end ? new Date(end) : null;
-
-        const filtered = allOrders.filter(o => {
-            const orderDate = new Date(o['תאריך הזמנה']);
-            if (startDate && orderDate < startDate) return false;
-            if (endDate && orderDate > endDate) return false;
-            return true;
-        });
-
-        const downloads = filtered.filter(o => o['סוג פעולה'] === 'הורדה').length;
-        const exchanges = filtered.filter(o => o['סוג פעולה'] === 'החלפה').length;
-        const uploads = filtered.filter(o => o['סוג פעולה'] === 'העלאה').length;
-
-        document.getElementById('report-kpis').innerHTML = `
-            <div class="card p-4 text-center"><p>הורדות</p><p class="text-2xl font-bold text-[var(--color-success)]">${downloads}</p></div>
-            <div class="card p-4 text-center"><p>החלפות</p><p class="text-2xl font-bold text-[var(--color-warning)]">${exchanges}</p></div>
-            <div class="card p-4 text-center"><p>העלאות</p><p class="text-2xl font-bold text-[var(--color-danger)]">${uploads}</p></div>
-        `;
-        
-        renderReportTable(filtered);
-        drawReportChart(filtered);
-    }
-    
-    function renderReportTable(orders) {
-        const table = document.getElementById('report-table');
-        let html = `<thead><tr><th class="p-2">תאריך</th><th class="p-2">לקוח</th><th class="p-2">פעולה</th><th class="p-2">סטטוס</th></tr></thead><tbody>`;
-        orders.forEach(o => {
-            html += `<tr class="border-t">
-                <td class="p-2" data-label="תאריך">${formatDate(o['תאריך הזמנה'])}</td>
-                <td class="p-2" data-label="לקוח">${escapeHTML(o['שם לקוח'])}</td>
-                <td class="p-2" data-label="פעולה">${escapeHTML(o['סוג פעולה'] || '')}</td>
-                <td class="p-2" data-label="סטטוס">${o._effectiveStatus}</td>
-            </tr>`;
-        });
-        table.innerHTML = html + `</tbody>`;
-    }
-
-    // --- PAGE: CUSTOMER ANALYSIS ---
-    function renderCustomerAnalysis() {
-        const page = document.getElementById('customer-analysis-page');
-        const customers = [...new Set(allOrders.map(o => o['שם לקוח']))].sort();
-        page.innerHTML = `
-            <div class="text-center"><h2 class="text-3xl font-bold mb-3">ניתוח לקוחות 👥</h2></div>
-            <div class="card p-6">
-                <input type="text" id="customer-search" placeholder="חפש לקוח..." class="mb-4">
-                <div class="overflow-y-auto max-h-screen" id="customer-list"></div>
-            </div>`;
-        
-        const list = document.getElementById('customer-list');
-        list.innerHTML = customers.map(name => `<div class="p-3 border-b cursor-pointer hover:bg-[var(--color-background)]" onclick="showCustomerAnalysisDetailsModal('${escapeHTML(name)}')">${escapeHTML(name)}</div>`).join('');
-        
-        document.getElementById('customer-search').addEventListener('keyup', e => {
-            const searchTerm = e.target.value.toLowerCase();
-            const filtered = customers.filter(name => name.toLowerCase().includes(searchTerm));
-            list.innerHTML = filtered.map(name => `<div class="p-3 border-b cursor-pointer hover:bg-[var(--color-background)]" onclick="showCustomerAnalysisDetailsModal('${escapeHTML(name)}')">${escapeHTML(name)}</div>`).join('');
-        });
-    }
-
-    // --- CHARTS & DRAWING ---
-    function drawDashboardCharts() {
-        Object.values(charts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
-        
-        const statusData = allOrders.reduce((acc, order) => { acc[order._effectiveStatus] = (acc[order._effectiveStatus] || 0) + 1; return acc; }, {});
-        const statusCtx = document.getElementById('chart-status-pie')?.getContext('2d');
-        if (statusCtx) charts.statusChart = new Chart(statusCtx, { type: 'doughnut', data: { labels: Object.keys(statusData), datasets: [{ data: Object.values(statusData), backgroundColor: [appColors.green, appColors.red, appColors.muted], borderColor: appColors.surface, borderWidth: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
-        
-        const actionData = allOrders.reduce((acc, order) => { const type = order['סוג פעולה']; if (type) acc[type] = (acc[type] || 0) + 1; return acc; }, {});
-        const actionLabels = Object.keys(actionData);
-        const actionValues = Object.values(actionData);
-        const actionColors = actionLabels.map(label => appColors.actionMap[label] || appColors.muted);
-
-        const actionCtx = document.getElementById('chart-actions-pie')?.getContext('2d');
-        if (actionCtx) charts.actionChart = new Chart(actionCtx, { type: 'doughnut', data: { labels: actionLabels, datasets: [{ data: actionValues, backgroundColor: actionColors, borderColor: appColors.surface, borderWidth: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
-
-    }
-
-    function drawReportChart(orders) {
-        const actionData = orders.reduce((acc, order) => { const type = order['סוג פעולה']; if (type) acc[type] = (acc[type] || 0) + 1; return acc; }, {});
-        const labels = Object.keys(actionData);
-        const data = Object.values(actionData);
-        const bgColors = labels.map(label => appColors.actionMap[label] || appColors.muted);
-        
-        const ctx = document.getElementById('report-chart-actions')?.getContext('2d');
-        if (charts.reportChart) charts.reportChart.destroy();
-        if(ctx) charts.reportChart = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'סך פעולות', data, backgroundColor: bgColors }] }, options: { responsive: true, maintainAspectRatio: false } });
-    }
-
-    // --- MODAL: Customer Analysis ---
-    function showCustomerAnalysisDetailsModal(customerName) {
-        const customerOrders = allOrders.filter(o => o['שם לקוח'] === customerName);
-        if (customerOrders.length === 0) return;
-        document.getElementById('analysis-details-customer-name').textContent = customerName;
-        const totalOrders = customerOrders.length;
-        const openOrders = customerOrders.filter(o => o._effectiveStatus === 'פתוח').length;
-        const overdueOrders = customerOrders.filter(o => o._effectiveStatus === 'חורג').length;
-        const lastOrderDate = customerOrders.sort((a, b) => new Date(b['תאריך הזמנה']) - new Date(a['תאריך הזמנה']))[0];
-        document.getElementById('customer-kpi-container').innerHTML = `
-            <div class="card p-4 text-center"><p class="text-sm text-[var(--color-text-muted)]">סה"כ הזמנות</p><p class="text-3xl font-bold">${totalOrders}</p></div>
-            <div class="card p-4 text-center"><p class="text-sm text-[var(--color-text-muted)]">הזמנות פתוחות</p><p class="text-3xl font-bold text-[var(--color-success)]">${openOrders}</p></div>
-            <div class="card p-4 text-center"><p class="text-sm text-[var(--color-text-muted)]">הזמנות חורגות</p><p class="text-3xl font-bold text-[var(--color-danger)]">${overdueOrders}</p></div>
-            <div class="card p-4 text-center"><p class="text-sm text-[var(--color-text-muted)]">הזמנה אחרונה</p><p class="text-xl font-bold">${formatDate(lastOrderDate['תאריך הזמנה'])}</p></div>`;
-        const tableContainer = document.getElementById('customer-analysis-orders-table');
-        const sortedOrders = customerOrders.sort((a, b) => new Date(b['תאריך הזמנה']) - new Date(a['תאריך הזמנה']));
-        let tableHTML = `<thead class="bg-[var(--color-background)] sticky top-0"><tr><th class="p-2">תאריך</th><th class="p-2">תעודה</th><th class="p-2">פעולה</th><th class="p-2">סטטוס</th></tr></thead><tbody>`;
-        sortedOrders.forEach(order => {
-            tableHTML += `<tr class="border-t border-[var(--color-border)] hover:bg-[var(--color-background)] cursor-pointer"><td class="p-2">${formatDate(order['תאריך הזמנה'])}</td><td class="p-2">${order['תעודה']}</td><td class="p-2">${order['סוג פעולה']}</td><td class="p-2"><span class="status-${order._effectiveStatus}">${order._effectiveStatus}</span></td></tr>`;
-        });
-        tableContainer.innerHTML = tableHTML + `</tbody>`;
-        drawCustomerCharts(customerOrders);
-        drawCustomerMap(customerOrders);
-        openModal('customer-analysis-details-modal');
-    }
-
-    function drawCustomerCharts(orders) {
-        const actionData = orders.reduce((acc, order) => { const type = order['סוג פעולה']; if (type) acc[type] = (acc[type] || 0) + 1; return acc; }, {});
-        const actionLabels = Object.keys(actionData);
-        const actionValues = Object.values(actionData);
-        const actionColors = actionLabels.map(label => appColors.actionMap[label] || appColors.muted);
-        
-        const actionCtx = document.getElementById('customer-action-distribution-chart')?.getContext('2d');
-        if(charts.customerAction && typeof charts.customerAction.destroy === 'function') charts.customerAction.destroy();
-        if(actionCtx) charts.customerAction = new Chart(actionCtx, { type: 'doughnut', data: { labels: actionLabels, datasets: [{ data: actionValues, backgroundColor: actionColors, borderColor: appColors.surface, borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
-        
-        const monthlyData = orders.reduce((acc, order) => { const month = new Date(order['תאריך הזמנה']).toLocaleString('he-IL', { month: 'short', year: '2-digit' }); acc[month] = (acc[month] || 0) + 1; return acc; }, {});
-        const monthlyCtx = document.getElementById('customer-monthly-activity-chart')?.getContext('2d');
-        if(charts.customerMonthly && typeof charts.customerMonthly.destroy === 'function') charts.customerMonthly.destroy();
-        if(monthlyCtx) charts.customerMonthly = new Chart(monthlyCtx, { type: 'bar', data: { labels: Object.keys(monthlyData).reverse(), datasets: [{ label: 'הזמנות בחודש', data: Object.values(monthlyData).reverse(), backgroundColor: appColors.primary }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
-    }
-
-    function drawCustomerMap(orders) {
-        const mapElement = document.getElementById('customer-analysis-map');
-        if (charts.customerMap) {
-            charts.customerMap.remove();
-            charts.customerMap = null;
-        }
-        
-        charts.customerMap = L.map(mapElement).setView([32.0853, 34.7818], 8);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(charts.customerMap);
-
-        const uniqueAddresses = [...new Set(orders.map(o => o['כתובת']).filter(Boolean))];
-        if (uniqueAddresses.length === 0) {
-            setTimeout(() => { if (charts.customerMap) charts.customerMap.invalidateSize(); }, 400);
-            return;
-        }
-        
-        let bounds = L.latLngBounds();
-        let hasGeocodingFailed = false;
-
-        const geocodingPromises = uniqueAddresses.map(address =>
-            new Promise((resolve) => {
-                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
-                    .then(response => {
-                        if (!response.ok) throw new Error('Network response was not ok');
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data && data.length > 0) {
-                            const latLng = L.latLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
-                            resolve({ status: 'success', latLng, address });
-                        } else {
-                            resolve({ status: 'fail', reason: 'Address not found' });
-                        }
-                    })
-                    .catch(error => {
-                        if (!hasGeocodingFailed) {
-                            hasGeocodingFailed = true;
-                            console.error("Geocoding API call failed.", error);
-                        }
-                        resolve({ status: 'fail', reason: error });
-                    });
-            })
-        );
-
-        Promise.all(geocodingPromises).then(results => {
-            results.forEach(result => {
-                if (result.status === 'success') {
-                    L.marker(result.latLng).addTo(charts.customerMap).bindPopup(result.address);
-                    bounds.extend(result.latLng);
-                }
-            });
-
-            if (bounds.isValid()) {
-                charts.customerMap.fitBounds(bounds, { padding: [50, 50] });
-            }
-            if (hasGeocodingFailed) {
-                showAlert('לא ניתן היה לטעון מיקומי כתובות על המפה עקב מגבלות רשת.', 'warning');
-            }
-            setTimeout(() => {
-                if (charts.customerMap) charts.customerMap.invalidateSize();
-            }, 400);
-        });
-    }
-    
-    // --- PRINTING ---
-    function printOrderDocument(sheetRow) {
-        const order = allOrders.find(o => o.sheetRow === sheetRow);
-        if(!order) return;
-        const isOverdue = order._effectiveStatus === 'חורג';
-        let printContent = `
-            <div style="padding: 2rem; font-family: 'Rubik', sans-serif; direction: rtl; ${isOverdue ? 'border: 3px solid #D64545;' : 'border: 1px solid #CFD8DC;'} max-width: 800px; margin: auto; background: white;">
-                <header style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #CFD8DC; padding-bottom: 1rem; margin-bottom: 1rem;">
-                    <img src="https://i.postimg.cc/J7JGQYcT/image.jpg" alt="לוגו" style="height: 60px;">
-                    <h1 style="color: #2E8B57; font-size: 1.8rem; margin: 0;">הזמנה #${order['תעודה']}</h1>
-                </header>
-                ${isOverdue ? `<div style="background-color: #fde8e8; color: #D64545; text-align: center; padding: 0.5rem; border-radius: 0.5rem; margin-bottom: 1rem; font-weight: bold;">🚨 הזמנה זו במצב חריגה! 🚨</div>` : ''}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div><strong>לקוח:</strong> ${escapeHTML(order['שם לקוח'])}</div>
-                    <div><strong>תאריך:</strong> ${formatDate(order['תאריך הזמנה'])}</div>
-                    <div><strong>כתובת:</strong> ${escapeHTML(order['כתובת'] || '')}</div>
-                    <div><strong>טלפון:</strong> ${escapeHTML(order['טלפון לקוח'] || '')}</div>
-                    <div><strong>סוכן:</strong> ${escapeHTML(order['שם סוכן'] || '')}</div>
-                    <div><strong>ימים בשירות:</strong> ${order._daysPassedCalculated}</div>
-                </div>
-                <h2 style="margin-top: 2rem; border-bottom: 1px solid #CFD8DC; padding-bottom: 0.5rem; color: #2F4F4F;">פרטי פעולה</h2>
-                <p><strong>סוג פעולה:</strong> ${escapeHTML(order['סוג פעולה'] || '')}</p>
-                ${order['מספר מכולה ירדה'] ? `<p><strong>מכולה ירדה:</strong> ${escapeHTML(order['מספר מכולה ירדה'])}</p>` : ''}
-                ${order['מספר מכולה עלתה'] ? `<p><strong>מכולה עלתה:</strong> ${escapeHTML(order['מספר מכולה עלתה'])}</p>` : ''}
-                <footer style="text-align: center; margin-top: 3rem; font-size: 0.8rem; color: #607D8B;">תודה שבחרתם ח. סבן חומרי בניין</footer>
+        const contentEl = document.getElementById('sheet-content');
+        contentEl.innerHTML = `
+            <h2 class="text-2xl font-bold mb-4">${escapeHTML(order['שם לקוח'])}</h2>
+            <div class="space-y-3 text-gray-700">
+                <p><strong>תעודה:</strong> ${order['תעודה']}</p>
+                <p><strong>סטטוס:</strong> <span class="font-bold status-${order._effectiveStatus}">${order._effectiveStatus}</span></p>
+                <p><strong>תאריך הזמנה:</strong> ${formatDate(order['תאריך הזמנה'])}</p>
+                <p><strong>ימים בשירות:</strong> ${order._daysPassedCalculated}</p>
+                <p><strong>כתובת:</strong> ${escapeHTML(order['כתובת'] || 'לא צוינה')}</p>
+                <p><strong>סוג פעולה:</strong> ${escapeHTML(order['סוג פעולה'] || 'לא צוין')}</p>
+                ${order['מספר מכולה ירדה'] ? `<p><strong>מכולה ירדה:</strong> ${escapeHTML(order['מספר מכולה ירדה'])}</p>`: ''}
+            </div>
+            <div class="mt-6 border-t pt-4 flex gap-2">
+                <button class="flex-1 btn btn-primary"><i class="fab fa-whatsapp"></i></button>
+                <button class="flex-1 btn btn-secondary"><i class="fas fa-print"></i></button>
+                <button class="flex-1 btn btn-secondary"><i class="fas fa-edit"></i></button>
             </div>
         `;
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write('<html><head><title>הדפסת הזמנה</title><link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet"></head><body>' + printContent + '</body></html>');
-        printWindow.document.close();
-        printWindow.print();
+
+        document.getElementById('bottom-sheet').classList.add('active');
+        document.getElementById('bottom-sheet-overlay').classList.add('active');
     }
-    
+
+    function closeSheet() {
+        document.getElementById('bottom-sheet').classList.remove('active');
+        document.getElementById('bottom-sheet-overlay').classList.remove('active');
+    }
+
     // --- INITIALIZATION ---
     document.addEventListener('DOMContentLoaded', () => {
         initializeTheme();
         loadOrders();
     });
-</script>
 
+</script>
 </body>
 </html>
 
