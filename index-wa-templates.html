@@ -135,6 +135,7 @@
     let allOrders = [];
     let charts = {}; 
     let currentPage = 'dashboard';
+    let appColors = {};
     
     // --- UTILITY FUNCTIONS ---
     const openModal = (id) => document.getElementById(id).classList.add('active');
@@ -162,20 +163,36 @@
     }
 
     // --- THEME ---
-    const toggleTheme = () => {
-        document.body.classList.toggle('dark');
-        localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
-        document.querySelector('#theme-toggle i').className = document.body.classList.contains('dark') ? 'fas fa-moon' : 'fas fa-sun';
-        showPage(currentPage);
-    };
-
-    const initializeTheme = () => {
+    function initializeTheme() {
         if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.body.classList.add('dark');
             document.querySelector('#theme-toggle i').className = 'fas fa-moon';
         }
         document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
-    };
+        updateAppColors();
+    }
+
+    function toggleTheme() {
+        document.body.classList.toggle('dark');
+        localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+        document.querySelector('#theme-toggle i').className = document.body.classList.contains('dark') ? 'fas fa-moon' : 'fas fa-sun';
+        updateAppColors();
+        showPage(currentPage);
+    }
+
+    function updateAppColors() {
+        const style = getComputedStyle(document.body);
+        appColors = {
+            green: style.getPropertyValue('--color-success').trim(),
+            yellow: style.getPropertyValue('--color-warning').trim(),
+            red: style.getPropertyValue('--color-danger').trim(),
+            primary: style.getPropertyValue('--color-primary').trim(),
+            muted: style.getPropertyValue('--color-text-muted').trim(),
+            surface: style.getPropertyValue('--color-surface').trim()
+        };
+        appColors.actionMap = { 'הורדה': appColors.green, 'החלפה': appColors.yellow, 'העלאה': appColors.red };
+    }
+
 
     // --- API & DATA ---
     async function fetchData(action, params = {}) {
@@ -256,7 +273,7 @@
                 <div class="card p-6"><p class="font-semibold text-lg">לקוחות פעילים</p><p class="text-4xl font-bold text-[var(--color-primary)] mt-2">${activeCustomers}</p></div>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="card p-6"><h3 class="text-xl font-semibold mb-4">מכולות בשימוש לפי לקוח (Top 7)</h3><div class="chart-container"><canvas id="chart-containers-by-customer"></canvas></div></div>
+                <div class="card p-6"><h3 class="text-xl font-semibold mb-4">התפלגות פעולות כללית</h3><div class="chart-container"><canvas id="chart-actions-pie"></canvas></div></div>
                 <div class="card p-6"><h3 class="text-xl font-semibold mb-4">התפלגות לפי סטטוס</h3><div class="chart-container"><canvas id="chart-status-pie"></canvas></div></div>
             </div>
             <div class="card p-6"><h2 class="text-2xl font-bold mb-6">רשימת הזמנות 📋</h2><div class="overflow-x-auto rounded-lg border"><table id="orders-table" class="w-full text-right table-auto main-table-responsive"></table></div></div>
@@ -388,10 +405,61 @@
     // --- PAGE: REPORTS ---
     function renderReports() {
         const page = document.getElementById('reports-page');
-        page.innerHTML = `<div class="text-center"><h2 class="text-3xl font-bold mb-3">דוחות וניתוחים 📈</h2></div>
-        <div class="card p-6"><p>דף הדוחות נמצא בפיתוח ויכלול ניתוחים מתקדמים...</p></div>`;
+        page.innerHTML = `
+            <div class="text-center"><h2 class="text-3xl font-bold mb-3">דוחות וניתוחים 📈</h2></div>
+            <div class="card p-6 space-y-4">
+                <div class="flex flex-wrap gap-4 items-center">
+                    <input type="date" id="report-start-date" class="flex-grow p-2">
+                    <input type="date" id="report-end-date" class="flex-grow p-2">
+                    <button class="btn btn-primary" onclick="filterAndRenderReports()">הצג דוח</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="report-kpis"></div>
+                <div class="chart-container"><canvas id="report-chart-actions"></canvas></div>
+                <div class="overflow-x-auto"><table id="report-table" class="w-full text-right main-table-responsive"></table></div>
+            </div>`;
+    }
+
+    function filterAndRenderReports() {
+        const start = document.getElementById('report-start-date').value;
+        const end = document.getElementById('report-end-date').value;
+        const startDate = start ? new Date(start) : null;
+        const endDate = end ? new Date(end) : null;
+
+        const filtered = allOrders.filter(o => {
+            const orderDate = new Date(o['תאריך הזמנה']);
+            if (startDate && orderDate < startDate) return false;
+            if (endDate && orderDate > endDate) return false;
+            return true;
+        });
+
+        const downloads = filtered.filter(o => o['סוג פעולה'] === 'הורדה').length;
+        const exchanges = filtered.filter(o => o['סוג פעולה'] === 'החלפה').length;
+        const uploads = filtered.filter(o => o['סוג פעולה'] === 'העלאה').length;
+
+        document.getElementById('report-kpis').innerHTML = `
+            <div class="card p-4 text-center"><p>הורדות</p><p class="text-2xl font-bold text-[var(--color-success)]">${downloads}</p></div>
+            <div class="card p-4 text-center"><p>החלפות</p><p class="text-2xl font-bold text-[var(--color-warning)]">${exchanges}</p></div>
+            <div class="card p-4 text-center"><p>העלאות</p><p class="text-2xl font-bold text-[var(--color-danger)]">${uploads}</p></div>
+        `;
+        
+        renderReportTable(filtered);
+        drawReportChart(filtered);
     }
     
+    function renderReportTable(orders) {
+        const table = document.getElementById('report-table');
+        let html = `<thead><tr><th class="p-2">תאריך</th><th class="p-2">לקוח</th><th class="p-2">פעולה</th><th class="p-2">סטטוס</th></tr></thead><tbody>`;
+        orders.forEach(o => {
+            html += `<tr class="border-t">
+                <td class="p-2" data-label="תאריך">${formatDate(o['תאריך הזמנה'])}</td>
+                <td class="p-2" data-label="לקוח">${escapeHTML(o['שם לקוח'])}</td>
+                <td class="p-2" data-label="פעולה">${escapeHTML(o['סוג פעולה'] || '')}</td>
+                <td class="p-2" data-label="סטטוס">${o._effectiveStatus}</td>
+            </tr>`;
+        });
+        table.innerHTML = html + `</tbody>`;
+    }
+
     // --- PAGE: CUSTOMER ANALYSIS ---
     function renderCustomerAnalysis() {
         const page = document.getElementById('customer-analysis-page');
@@ -415,17 +483,31 @@
 
     // --- CHARTS & DRAWING ---
     function drawDashboardCharts() {
-        Object.values(charts).forEach(chart => { if (chart) chart.destroy(); });
-        const colors = { green: 'var(--color-success)', yellow: 'var(--color-warning)', red: 'var(--color-danger)', primary: 'var(--color-primary)', muted: 'var(--color-text-muted)', surface: getComputedStyle(document.body).getPropertyValue('--color-surface').trim() };
+        Object.values(charts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
         
         const statusData = allOrders.reduce((acc, order) => { acc[order._effectiveStatus] = (acc[order._effectiveStatus] || 0) + 1; return acc; }, {});
         const statusCtx = document.getElementById('chart-status-pie')?.getContext('2d');
-        if (statusCtx) charts.statusChart = new Chart(statusCtx, { type: 'doughnut', data: { labels: Object.keys(statusData), datasets: [{ data: Object.values(statusData), backgroundColor: [colors.green, colors.red, colors.muted], borderColor: colors.surface, borderWidth: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+        if (statusCtx) charts.statusChart = new Chart(statusCtx, { type: 'doughnut', data: { labels: Object.keys(statusData), datasets: [{ data: Object.values(statusData), backgroundColor: [appColors.green, appColors.red, appColors.muted], borderColor: appColors.surface, borderWidth: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
         
-        const customerData = allOrders.filter(o => o._effectiveStatus !== 'סגור').reduce((acc, order) => { acc[order['שם לקוח']] = (acc[order['שם לקוח']] || 0) + 1; return acc; }, {});
-        const topCustomers = Object.entries(customerData).sort((a,b) => b[1] - a[1]).slice(0, 7);
-        const customerCtx = document.getElementById('chart-containers-by-customer')?.getContext('2d');
-        if (customerCtx) charts.customerChart = new Chart(customerCtx, { type: 'bar', data: { labels: topCustomers.map(c=>c[0]), datasets: [{ label: 'הזמנות פתוחות', data: topCustomers.map(c=>c[1]), backgroundColor: colors.primary }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }});
+        const actionData = allOrders.reduce((acc, order) => { const type = order['סוג פעולה']; if (type) acc[type] = (acc[type] || 0) + 1; return acc; }, {});
+        const actionLabels = Object.keys(actionData);
+        const actionValues = Object.values(actionData);
+        const actionColors = actionLabels.map(label => appColors.actionMap[label] || appColors.muted);
+
+        const actionCtx = document.getElementById('chart-actions-pie')?.getContext('2d');
+        if (actionCtx) charts.actionChart = new Chart(actionCtx, { type: 'doughnut', data: { labels: actionLabels, datasets: [{ data: actionValues, backgroundColor: actionColors, borderColor: appColors.surface, borderWidth: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+
+    }
+
+    function drawReportChart(orders) {
+        const actionData = orders.reduce((acc, order) => { const type = order['סוג פעולה']; if (type) acc[type] = (acc[type] || 0) + 1; return acc; }, {});
+        const labels = Object.keys(actionData);
+        const data = Object.values(actionData);
+        const bgColors = labels.map(label => appColors.actionMap[label] || appColors.muted);
+        
+        const ctx = document.getElementById('report-chart-actions')?.getContext('2d');
+        if (charts.reportChart) charts.reportChart.destroy();
+        if(ctx) charts.reportChart = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'סך פעולות', data, backgroundColor: bgColors }] }, options: { responsive: true, maintainAspectRatio: false } });
     }
 
     // --- MODAL: Customer Analysis ---
@@ -455,16 +537,19 @@
     }
 
     function drawCustomerCharts(orders) {
-        const colors = { green: 'var(--color-success)', yellow: 'var(--color-warning)', red: 'var(--color-danger)', primary: 'var(--color-primary)', surface: getComputedStyle(document.body).getPropertyValue('--color-surface').trim() };
         const actionData = orders.reduce((acc, order) => { const type = order['סוג פעולה']; if (type) acc[type] = (acc[type] || 0) + 1; return acc; }, {});
+        const actionLabels = Object.keys(actionData);
+        const actionValues = Object.values(actionData);
+        const actionColors = actionLabels.map(label => appColors.actionMap[label] || appColors.muted);
+        
         const actionCtx = document.getElementById('customer-action-distribution-chart')?.getContext('2d');
-        if(charts.customerAction) charts.customerAction.destroy();
-        if(actionCtx) charts.customerAction = new Chart(actionCtx, { type: 'doughnut', data: { labels: Object.keys(actionData), datasets: [{ data: Object.values(actionData), backgroundColor: [colors.green, colors.yellow, colors.red], borderColor: colors.surface, borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+        if(charts.customerAction && typeof charts.customerAction.destroy === 'function') charts.customerAction.destroy();
+        if(actionCtx) charts.customerAction = new Chart(actionCtx, { type: 'doughnut', data: { labels: actionLabels, datasets: [{ data: actionValues, backgroundColor: actionColors, borderColor: appColors.surface, borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
         
         const monthlyData = orders.reduce((acc, order) => { const month = new Date(order['תאריך הזמנה']).toLocaleString('he-IL', { month: 'short', year: '2-digit' }); acc[month] = (acc[month] || 0) + 1; return acc; }, {});
         const monthlyCtx = document.getElementById('customer-monthly-activity-chart')?.getContext('2d');
-        if(charts.customerMonthly) charts.customerMonthly.destroy();
-        if(monthlyCtx) charts.customerMonthly = new Chart(monthlyCtx, { type: 'bar', data: { labels: Object.keys(monthlyData).reverse(), datasets: [{ label: 'הזמנות בחודש', data: Object.values(monthlyData).reverse(), backgroundColor: colors.primary }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
+        if(charts.customerMonthly && typeof charts.customerMonthly.destroy === 'function') charts.customerMonthly.destroy();
+        if(monthlyCtx) charts.customerMonthly = new Chart(monthlyCtx, { type: 'bar', data: { labels: Object.keys(monthlyData).reverse(), datasets: [{ label: 'הזמנות בחודש', data: Object.values(monthlyData).reverse(), backgroundColor: appColors.primary }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
     }
 
     function drawCustomerMap(orders) {
@@ -481,35 +566,46 @@
 
         const uniqueAddresses = [...new Set(orders.map(o => o['כתובת']).filter(Boolean))];
         if (uniqueAddresses.length === 0) {
-            setTimeout(() => charts.customerMap.invalidateSize(), 400);
+            setTimeout(() => { if (charts.customerMap) charts.customerMap.invalidateSize(); }, 400);
             return;
         }
         
         let bounds = L.latLngBounds();
         let hasGeocodingFailed = false;
 
-        const promises = uniqueAddresses.map(address =>
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
-            .then(res => {
-                if (!res.ok) throw new Error('Network response error');
-                return res.json();
-            })
-            .then(data => {
-                if (data && data.length > 0) {
-                    const latLng = L.latLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
-                    L.marker(latLng).addTo(charts.customerMap).bindPopup(address);
-                    bounds.extend(latLng);
-                }
-            })
-            .catch(error => {
-                if (!hasGeocodingFailed) {
-                    hasGeocodingFailed = true;
-                    console.error("Geocoding failed for at least one address.", error);
-                }
+        const geocodingPromises = uniqueAddresses.map(address =>
+            new Promise((resolve) => {
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data && data.length > 0) {
+                            const latLng = L.latLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
+                            resolve({ status: 'success', latLng, address });
+                        } else {
+                            resolve({ status: 'fail', reason: 'Address not found' });
+                        }
+                    })
+                    .catch(error => {
+                        if (!hasGeocodingFailed) {
+                            hasGeocodingFailed = true;
+                            console.error("Geocoding API call failed.", error);
+                        }
+                        resolve({ status: 'fail', reason: error });
+                    });
             })
         );
 
-        Promise.allSettled(promises).then(() => {
+        Promise.all(geocodingPromises).then(results => {
+            results.forEach(result => {
+                if (result.status === 'success') {
+                    L.marker(result.latLng).addTo(charts.customerMap).bindPopup(result.address);
+                    bounds.extend(result.latLng);
+                }
+            });
+
             if (bounds.isValid()) {
                 charts.customerMap.fitBounds(bounds, { padding: [50, 50] });
             }
@@ -517,7 +613,7 @@
                 showAlert('לא ניתן היה לטעון מיקומי כתובות על המפה עקב מגבלות רשת.', 'warning');
             }
             setTimeout(() => {
-                if(charts.customerMap) charts.customerMap.invalidateSize()
+                if (charts.customerMap) charts.customerMap.invalidateSize();
             }, 400);
         });
     }
@@ -555,7 +651,6 @@
         printWindow.print();
     }
     
-
     // --- INITIALIZATION ---
     document.addEventListener('DOMContentLoaded', () => {
         initializeTheme();
