@@ -86,6 +86,23 @@
         .kanban-column.drag-over { background-color: color-mix(in srgb, var(--color-primary) 10%, transparent); }
         .action-icon-btn { background: none; border: none; cursor: pointer; font-size: 1.4rem; padding: 0.4rem; margin: 0 0.2rem; transition: transform 0.25s, color 0.25s; border-radius: 50%; }
         .action-icon-btn:hover { transform: scale(1.3); background-color: rgba(0,0,0,0.05); }
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--color-border);
+            background-color: var(--color-surface);
+        }
+        .filter-btn.active {
+            background-color: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+        .filter-btn:not(.active):hover {
+             background-color: var(--color-background);
+        }
     </style>
 </head>
 <body class="text-base">
@@ -181,6 +198,8 @@
     }
 
     function updateAppColors() {
+        // This function needs to run after the DOM is ready and styles are applied.
+        // It reads the CSS variables from the :root or body.dark and stores them for chart usage.
         const style = getComputedStyle(document.body);
         appColors = {
             green: style.getPropertyValue('--color-success').trim(),
@@ -190,9 +209,13 @@
             muted: style.getPropertyValue('--color-text-muted').trim(),
             surface: style.getPropertyValue('--color-surface').trim()
         };
-        appColors.actionMap = { 'הורדה': appColors.green, 'החלפה': appColors.yellow, 'העלאה': appColors.red };
+        // Mapping for specific actions to their colors
+        appColors.actionMap = {
+            'הורדה': appColors.green,
+            'החלפה': appColors.yellow,
+            'העלאה': appColors.red
+        };
     }
-
 
     // --- API & DATA ---
     async function fetchData(action, params = {}) {
@@ -237,6 +260,8 @@
     // --- PAGE NAVIGATION & RENDERING ---
     function showPage(pageId) {
         currentPage = pageId;
+        Object.values(charts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
+
         document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
         document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
         
@@ -267,20 +292,58 @@
         page.innerHTML = `
             <div class="text-center"><div class="eco-background-header"><span>🌱</span><span>🌍</span><span>🌳</span></div><h2 class="text-3xl font-bold mb-3">סקירה כללית 📊</h2></div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="card p-6"><p class="font-semibold text-lg">הזמנות פתוחות</p><p class="text-4xl font-bold text-[var(--color-success)] mt-2">${openOrders}</p></div>
-                <div class="card p-6"><p class="font-semibold text-lg">הזמנות חורגות</p><p class="text-4xl font-bold text-[var(--color-danger)] mt-2">${overdueOrders}</p></div>
-                <div class="card p-6"><p class="font-semibold text-lg">מכולות בשימוש</p><p class="text-4xl font-bold text-[var(--color-primary)] mt-2">${containersInUse}</p></div>
-                <div class="card p-6"><p class="font-semibold text-lg">לקוחות פעילים</p><p class="text-4xl font-bold text-[var(--color-primary)] mt-2">${activeCustomers}</p></div>
+                <div class="card p-6 cursor-pointer" onclick="filterAndShow('open')"><p class="font-semibold text-lg">הזמנות פתוחות</p><p class="text-4xl font-bold text-[var(--color-success)] mt-2">${openOrders}</p></div>
+                <div class="card p-6 cursor-pointer" onclick="filterAndShow('overdue')"><p class="font-semibold text-lg">הזמנות חורגות</p><p class="text-4xl font-bold text-[var(--color-danger)] mt-2">${overdueOrders}</p></div>
+                <div class="card p-6 cursor-pointer" onclick="filterAndShow('inUse')"><p class="font-semibold text-lg">מכולות בשימוש</p><p class="text-4xl font-bold text-[var(--color-primary)] mt-2">${containersInUse}</p></div>
+                <div class="card p-6 cursor-pointer" onclick="filterAndShow('active')"><p class="font-semibold text-lg">לקוחות פעילים</p><p class="text-4xl font-bold text-[var(--color-primary)] mt-2">${activeCustomers}</p></div>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div class="card p-6"><h3 class="text-xl font-semibold mb-4">התפלגות פעולות כללית</h3><div class="chart-container"><canvas id="chart-actions-pie"></canvas></div></div>
                 <div class="card p-6"><h3 class="text-xl font-semibold mb-4">התפלגות לפי סטטוס</h3><div class="chart-container"><canvas id="chart-status-pie"></canvas></div></div>
             </div>
-            <div class="card p-6"><h2 class="text-2xl font-bold mb-6">רשימת הזמנות 📋</h2><div class="overflow-x-auto rounded-lg border"><table id="orders-table" class="w-full text-right table-auto main-table-responsive"></table></div></div>
+            <div id="orders-table-container" class="card p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold">רשימת הזמנות 📋</h2>
+                    <div id="table-filters" class="flex gap-2">
+                        <button class="filter-btn" data-filter="all" onclick="filterDashboardTable('all')">הכל</button>
+                        <button class="filter-btn active" data-filter="open" onclick="filterDashboardTable('open')">פתוחות</button>
+                        <button class="filter-btn" data-filter="overdue" onclick="filterDashboardTable('overdue')">חורגות</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto rounded-lg border"><table id="orders-table" class="w-full text-right table-auto main-table-responsive"></table></div>
+            </div>
         `;
-        renderOrdersTable(allOrders);
+        filterDashboardTable('open'); // Default view
         drawDashboardCharts();
     }
+    
+    function filterAndShow(filterType) {
+        let status;
+        if (filterType === 'open') status = 'open';
+        if (filterType === 'overdue') status = 'overdue';
+        if (filterType === 'inUse' || filterType === 'active') status = 'open'; // Show open orders for these clicks
+        
+        filterDashboardTable(status);
+        document.getElementById('orders-table-container')?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function filterDashboardTable(filter) {
+        let filteredOrders;
+        if (filter === 'all') {
+            filteredOrders = allOrders;
+        } else if (filter === 'overdue') {
+            filteredOrders = allOrders.filter(o => o._effectiveStatus === 'חורג');
+        } else { // 'open' is default
+            filteredOrders = allOrders.filter(o => o._effectiveStatus === 'פתוח' || o._effectiveStatus === 'חורג');
+        }
+        
+        document.querySelectorAll('#table-filters .filter-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.filter === filter);
+        });
+
+        renderOrdersTable(filteredOrders);
+    }
+
 
     function renderOrdersTable(orders) {
         const table = document.getElementById('orders-table');
@@ -506,7 +569,7 @@
         const bgColors = labels.map(label => appColors.actionMap[label] || appColors.muted);
         
         const ctx = document.getElementById('report-chart-actions')?.getContext('2d');
-        if (charts.reportChart) charts.reportChart.destroy();
+        if (charts.reportChart && typeof charts.reportChart.destroy === 'function') charts.reportChart.destroy();
         if(ctx) charts.reportChart = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'סך פעולות', data, backgroundColor: bgColors }] }, options: { responsive: true, maintainAspectRatio: false } });
     }
 
