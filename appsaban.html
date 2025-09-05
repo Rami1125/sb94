@@ -12,339 +12,204 @@
     
     <style>
         :root {
-            --phone-bg: #1a1a1a;
-            --screen-bg: #f7f9fc;
-            --primary-color: #007aff;
-            --primary-light: #e6f2ff;
-            --text-dark: #1c1c1e;
-            --text-light: #8a8a8e;
-            --surface-color: #ffffff;
-            --border-color: #e5e5e5;
-            --success-color: #34c759;
-            --danger-color: #ff3b30;
-            --warning-color: #ff9500;
+            --bg-main: #f0f4f8;
+            --bg-surface: #ffffff;
+            --primary: #2c5282;
+            --primary-light: #3b82f6;
+            --text-dark: #1a202c;
+            --text-light: #4a5568;
+            --border-color: #e2e8f0;
+            --danger: #e53e3e;
+            --success: #38a169;
             --font-main: 'Rubik', sans-serif;
         }
-
         html, body {
+            overscroll-behavior-y: contain;
             height: 100%;
             width: 100%;
-            margin: 0;
-            padding: 0;
+            overflow: hidden;
+            background-color: #2d3748; /* Dark background for the 'phone' */
+        }
+        body { 
+            font-family: var(--font-main); 
+            color: var(--text-dark);
             display: flex;
-            align-items: center;
             justify-content: center;
-            background-color: #e0e0e0;
-            font-family: var(--font-main);
-            overflow: hidden;
-        }
-
-        /* --- Phone Frame --- */
-        .phone-frame {
-            width: 420px;
-            height: 880px;
-            background: var(--phone-bg);
-            border-radius: 50px;
-            padding: 15px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3), 0 0 0 10px #f0f0f0;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .phone-screen {
-            flex-grow: 1;
-            background: var(--screen-bg);
-            border-radius: 35px;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            align-items: center;
         }
         
-        .phone-notch {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 160px;
-            height: 30px;
-            background: var(--phone-bg);
-            border-bottom-left-radius: 15px;
-            border-bottom-right-radius: 15px;
-            z-index: 100;
-        }
-
-        /* --- App Specific Styles --- */
-        .app-container {
+        /* Samsung S25-like frame */
+        .mobile-frame {
+            width: 100%;
+            height: 100%;
+            max-width: 420px;
+            max-height: 880px;
+            background-color: var(--bg-main);
+            border-radius: 40px;
+            box-shadow: 0 0 40px rgba(0,0,0,0.3);
             display: flex;
             flex-direction: column;
-            height: 100%;
-            width: 100%;
-            opacity: 0;
-            transition: opacity 0.5s;
+            overflow: hidden;
+            position: relative;
+            border: 8px solid #1a202c;
         }
 
-        /* --- Login Screen --- */
+        /* Dynamic content area */
+        #app-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--bg-surface);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        /* Main Content */
+        main {
+            flex-grow: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 1.25rem;
+        }
+
+        /* Login Screen */
         #login-screen {
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
-            height: 100%;
-            padding: 2rem;
-            background: linear-gradient(135deg, var(--primary-color) 0%, #0056b3 100%);
-            color: white;
-        }
-        #login-screen .logo {
-            width: 80px;
-            height: 80px;
-            border-radius: 18px;
-            margin-bottom: 1.5rem;
-        }
-        #login-screen .avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            border: 4px solid rgba(255,255,255,0.8);
-            margin-bottom: 2rem;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        #login-form h1 {
-            font-size: 1.8rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-        #login-form p {
-            margin-bottom: 2rem;
-            opacity: 0.8;
-        }
-        .input-group {
-            position: relative;
-            margin-bottom: 1.5rem;
-        }
-        .input-group i {
-            position: absolute;
-            top: 50%;
-            right: 15px;
-            transform: translateY(-50%);
-            color: #ccc;
-        }
-        .login-input {
-            width: 100%;
-            padding: 1rem 1rem 1rem 3rem; /* Padding for icon */
-            border-radius: 0.75rem;
-            border: 1px solid transparent;
-            background-color: rgba(255,255,255,0.2);
-            color: white;
-            font-size: 1rem;
-        }
-        .login-input::placeholder { color: rgba(255,255,255,0.7); }
-        .login-button {
-            width: 100%;
-            padding: 1rem;
-            border-radius: 0.75rem;
-            background-color: white;
-            color: var(--primary-color);
-            font-size: 1.1rem;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .login-button:active { transform: scale(0.98); }
-
-
-        /* --- Main App Header --- */
-        .app-header {
-            padding: 1rem;
-            padding-top: 35px; /* Space for notch */
-            background-color: var(--surface-color);
-            display: flex;
-            justify-content: space-between;
             align-items: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            z-index: 10;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, #1a202c 100%);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+        }
+        .logo {
+             width: 100px;
+             height: 100px;
+             border-radius: 20px;
+             margin-bottom: 1.5rem;
+             box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
 
-        /* --- Page Content --- */
-        #page-content {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 1rem;
-        }
-
-        /* --- Side Nav --- */
-        #side-nav {
+        /* Hamburger Menu */
+        #side-menu {
             position: absolute;
             top: 0;
-            right: -300px;
-            width: 300px;
+            right: -300px; /* Start off-screen */
+            width: 280px;
             height: 100%;
-            background-color: var(--surface-color);
+            background-color: var(--bg-surface);
             z-index: 2000;
-            transition: right 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: right 0.3s ease-in-out;
             box-shadow: -5px 0 15px rgba(0,0,0,0.1);
         }
-        #side-nav.open { right: 0; }
-        #nav-overlay {
+        #side-menu.open {
+            right: 0;
+        }
+        #menu-overlay {
             position: absolute;
-            inset: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background-color: rgba(0,0,0,0.5);
             z-index: 1999;
             opacity: 0;
-            pointer-events: none;
             transition: opacity 0.3s;
+            pointer-events: none;
         }
-        #nav-overlay.open { opacity: 1; pointer-events: auto; }
-
-        /* --- Dashboard Cards --- */
-        .status-card {
-            background-color: var(--surface-color);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            border: 1px solid var(--border-color);
-        }
-        
-        .status-card.overdue {
-             background: linear-gradient(135deg, #fff1f0 0%, #ffe0de 100%);
-             border-left: 5px solid var(--danger-color);
-        }
-        
-        /* --- Action Buttons --- */
-        .action-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-        .action-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem 0.5rem;
-            border-radius: 0.75rem;
-            background-color: var(--primary-light);
-            color: var(--primary-color);
-            border: none;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        .action-btn i {
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
-        }
-        .action-btn:active {
-            transform: scale(0.95);
-            background-color: #d0e7ff;
+        #menu-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
         }
 
-        /* --- Modal --- */
+        /* Modal */
         .modal-overlay {
             position: absolute;
             inset: 0;
             background-color: rgba(0,0,0,0.6);
-            z-index: 3000;
             display: flex;
-            align-items: center;
             justify-content: center;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.3s;
+            align-items: center;
+            z-index: 3000;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
         }
-        .modal-overlay.open { opacity: 1; pointer-events: auto; }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
         .modal-content {
-            background-color: var(--surface-color);
-            border-radius: 1rem;
+            background-color: var(--bg-surface);
             padding: 1.5rem;
+            border-radius: 1rem;
             width: 90%;
-            max-width: 350px;
+            max-width: 500px;
             transform: scale(0.95);
-            transition: transform 0.3s;
+            transition: transform 0.2s;
         }
-        .modal-overlay.open .modal-content { transform: scale(1); }
-        
-        /* Utility */
-        .hidden { display: none !important; }
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
 
+        /* Utility classes */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary {
+            background-color: var(--primary-light);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary);
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+            background-color: #f7fafc;
+        }
+
+        /* Spinner */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
-
-    <div class="phone-frame">
-        <div class="phone-screen">
-            <div class="phone-notch"></div>
-
-            <!-- Login Screen -->
-            <div id="login-screen">
-                 <img src="https://i.postimg.cc/J7JGQYcT/image.jpg" alt="Company Logo" class="logo">
-                <img src="https://placehold.co/120x120/E6F2FF/007AFF?text=לקוח" alt="User Avatar" class="avatar" id="login-avatar">
-                <form id="login-form" class="w-full text-center">
-                    <h1>ברוך הבא</h1>
-                    <p>הזן את מספר הטלפון שלך כדי להתחבר</p>
-                    <div class="input-group">
-                        <i class="fas fa-phone"></i>
-                        <input type="tel" id="customer-phone-input" class="login-input text-center" placeholder="מספר טלפון" required>
-                    </div>
-                    <button type="submit" class="login-button">התחבר</button>
-                    <div id="login-error" class="text-red-300 mt-4 h-5"></div>
-                </form>
-            </div>
-
-            <!-- Main App Container (hidden by default) -->
-            <div id="app-container" class="app-container">
-                <header class="app-header">
-                    <h1 class="text-xl font-bold text-gray-800" id="page-title">דף הבית</h1>
-                    <button id="hamburger-btn" class="text-2xl text-gray-600">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                </header>
-
-                <main id="page-content">
-                    <!-- Dynamic content goes here -->
-                </main>
-
-            </div>
-            
-            <!-- Side Navigation Menu -->
-            <div id="nav-overlay" onclick="toggleNav()"></div>
-            <nav id="side-nav">
-                <div class="p-4 border-b">
-                    <div class="flex items-center gap-3">
-                        <img src="https://placehold.co/60x60/E6F2FF/007AFF?text=לקוח" alt="User Avatar" class="w-16 h-16 rounded-full" id="nav-avatar">
-                        <div>
-                            <p class="font-bold text-lg" id="nav-customer-name">שם לקוח</p>
-                            <p class="text-sm text-gray-500" id="nav-customer-phone">מספר טלפון</p>
-                        </div>
-                    </div>
-                </div>
-                <ul class="p-2">
-                    <li><a href="#" class="nav-link active" data-page="dashboard"><i class="fas fa-home w-6"></i> דף הבית</a></li>
-                    <li><a href="#" class="nav-link" data-page="history"><i class="fas fa-history w-6"></i> היסטוריית הזמנות</a></li>
-                    <li><a href="#" class="nav-link" data-page="notifications"><i class="fas fa-bell w-6"></i> התראות</a></li>
-                    <li><a href="#" class="nav-link" data-page="profile"><i class="fas fa-user-cog w-6"></i> פרופיל</a></li>
-                    <li class="mt-8"><a href="#" id="logout-btn" class="nav-link text-red-500"><i class="fas fa-sign-out-alt w-6"></i> התנתק</a></li>
-                </ul>
-            </nav>
-            
-             <!-- Generic Modal -->
-            <div id="modal" class="modal-overlay">
-                <div class="modal-content">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 id="modal-title" class="text-lg font-bold">כותרת</h3>
-                        <button id="modal-close" class="text-gray-500">&times;</button>
-                    </div>
-                    <div id="modal-body">
-                        <!-- Modal content here -->
-                    </div>
-                </div>
-            </div>
-
+    <div class="mobile-frame">
+        <div id="app-container">
+            <!-- App content will be rendered here -->
         </div>
     </div>
 
+    <!-- Modal Template -->
+    <div id="modal-container" class="modal-overlay">
+        <div class="modal-content">
+           <!-- Modal content will be injected here -->
+        </div>
+    </div>
 
 <script>
     // --- CONFIGURATION & STATE ---
@@ -353,401 +218,410 @@
     
     let state = {
         isLoggedIn: false,
+        isLoading: true,
+        userProfile: null,
+        currentContainer: null,
+        orderHistory: [],
         customerPhone: null,
-        customerData: null,
-        currentPage: 'dashboard',
     };
 
-    // --- DOM ELEMENTS ---
-    const $ = (selector) => document.querySelector(selector);
-    const $$ = (selector) => document.querySelectorAll(selector);
-
-    const elements = {
-        loginScreen: $('#login-screen'),
-        appContainer: $('#app-container'),
-        loginForm: $('#login-form'),
-        customerPhoneInput: $('#customer-phone-input'),
-        loginError: $('#login-error'),
-        pageContent: $('#page-content'),
-        pageTitle: $('#page-title'),
-        hamburgerBtn: $('#hamburger-btn'),
-        sideNav: $('#side-nav'),
-        navOverlay: $('#nav-overlay'),
-        navLinks: $$('.nav-link'),
-        logoutBtn: $('#logout-btn'),
-        modal: $('#modal'),
-        modalTitle: $('#modal-title'),
-        modalBody: $('#modal-body'),
-        modalClose: $('#modal-close'),
-        navCustomerPhone: $('#nav-customer-phone')
-    };
-
-    // --- API & DATA ---
-    async function apiCall(action, params = {}) {
+    // --- API & DATA HANDLING ---
+    
+    /**
+     * Central function for all API calls to the Google Apps Script.
+     * @param {string} action - The 'action' parameter for the script's doGet/doPost.
+     * @param {object} params - An object of parameters for the request.
+     * @param {string} method - 'GET' or 'POST'.
+     * @returns {Promise<any>} - The JSON response data from the script.
+     */
+    async function apiCall(action, params = {}, method = 'GET') {
         const url = new URL(SCRIPT_URL);
-        url.searchParams.append('action', action);
-        for (const key in params) {
-            url.searchParams.append(key, params[key]);
-        }
-        
-        showLoader('טוען נתונים...');
         
         try {
-            const response = await fetch(url, { method: 'GET', redirect: 'follow' });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const data = await response.json();
-            if (!data.success) throw new Error(data.message || 'Server operation failed');
-            return data.data;
+            if (method === 'GET') {
+                url.searchParams.append('action', action);
+                for (const key in params) {
+                    url.searchParams.append(key, params[key]);
+                }
+                const response = await fetch(url, { method: 'GET', redirect: 'follow' });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return await response.json();
+            } else { // POST
+                const payload = { action, ...params };
+                const response = await fetch(url, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Required by Apps Script
+                    body: JSON.stringify(payload),
+                });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return await response.json();
+            }
         } catch (error) {
             console.error("API Error:", error);
-            showError(error.message);
-            return null;
-        } finally {
-            hideLoader();
+            showToast("שגיאת תקשורת. בדוק את החיבור ונסה שוב.", 'error');
+            throw error; // Re-throw to handle it in the calling function
         }
     }
 
-    async function submitOrder(orderData) {
-        showLoader('שולח הזמנה...');
-
-        try {
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                redirect: 'follow',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'createOrder', ...orderData })
-            });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const result = await response.json();
-            if (!result.success) throw new Error(result.message || 'Failed to submit order');
-            return result;
-        } catch (error) {
-            console.error("Submit Order Error:", error);
-            showError(error.message);
-            return null;
-        } finally {
-            hideLoader();
-        }
-    }
-
-    // --- AUTHENTICATION ---
+    /**
+     * Login function: fetches all data for a given customer phone.
+     * @param {string} phone - The customer's phone number.
+     */
     async function login(phone) {
-        elements.loginError.textContent = '';
-        const data = await apiCall('getCustomerData', { phone });
-        
-        if (data && data.profile) {
-            state.isLoggedIn = true;
-            state.customerPhone = phone;
-            state.customerData = data;
-            
-            localStorage.setItem('customerPhone', phone);
-            
-            elements.loginScreen.style.display = 'none';
-            elements.appContainer.style.opacity = '1';
-            
-            updateNavHeader();
-            navigateTo('dashboard');
-            checkRentalDuration();
-        } else {
-            elements.loginError.textContent = 'מספר טלפון לא נמצא. נסה שוב.';
-        }
-    }
-    
-    function logout() {
-        state.isLoggedIn = false;
-        state.customerPhone = null;
-        state.customerData = null;
-        localStorage.removeItem('customerPhone');
-        
-        elements.appContainer.style.opacity = '0';
-        setTimeout(() => {
-            elements.loginScreen.style.display = 'flex';
-            elements.customerPhoneInput.value = '';
-        }, 500);
-    }
-    
-    function checkLoginStatus() {
-        const storedCustomerPhone = localStorage.getItem('customerPhone');
-        if (storedCustomerPhone) {
-            login(storedCustomerPhone);
-        }
-    }
-
-    // --- NAVIGATION ---
-    function toggleNav() {
-        elements.sideNav.classList.toggle('open');
-        elements.navOverlay.classList.toggle('open');
-    }
-
-    function navigateTo(page) {
-        state.currentPage = page;
-        
-        elements.navLinks.forEach(link => {
-            link.classList.toggle('active', link.dataset.page === page);
-        });
-
-        const renderFunctions = {
-            'dashboard': renderDashboard,
-            'history': renderHistory,
-            'notifications': renderNotifications,
-            'profile': renderProfile
-        };
-        
-        if (renderFunctions[page]) {
-            elements.pageContent.innerHTML = renderFunctions[page]();
-            elements.pageTitle.textContent = document.querySelector(`.nav-link[data-page="${page}"]`).textContent;
-        } else {
-            elements.pageContent.innerHTML = `<p>הדף "${page}" בבנייה.</p>`;
-        }
-        
-        if (elements.sideNav.classList.contains('open')) {
-            toggleNav();
-        }
-    }
-
-    // --- PAGE RENDERING ---
-    function renderDashboard() {
-        const container = state.customerData.currentContainer;
-        if (!container || !container['תעודה']) {
-            return `
-                <div class="status-card text-center">
-                    <i class="fas fa-info-circle text-4xl text-gray-400 mb-4"></i>
-                    <h2 class="text-xl font-bold mb-2">אין לך מכולה פעילה</h2>
-                    <p class="text-gray-600 mb-6">באפשרותך להזמין מכולה חדשה עכשיו.</p>
-                    <button onclick="openOrderModal('new')" class="bg-primary-color text-white font-bold py-3 px-6 rounded-lg w-full">הזמן מכולה חדשה</button>
-                </div>
-            `;
-        }
-
-        const orderDate = new Date(container['תאריך הזמנה']);
-        const daysPassed = Math.floor((new Date() - orderDate) / (1000 * 60 * 60 * 24));
-        const isOverdue = daysPassed >= RENTAL_WARNING_DAYS;
-        
-        return `
-            <div class="status-card ${isOverdue ? 'overdue' : ''}">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-sm font-medium ${isOverdue ? 'text-danger-color' : 'text-primary-color'}">מכולה פעילה</p>
-                        <h2 class="text-2xl font-bold my-1">${container['מספר מכולה ירדה']}</h2>
-                        <p class="text-sm text-text-light">${container['כתובת'] || ''}</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-3xl font-bold ${isOverdue ? 'text-danger-color' : 'text-text-dark'}">${daysPassed}</p>
-                        <p class="text-xs text-text-light">ימי שכירות</p>
-                    </div>
-                </div>
-                <div class="mt-4 pt-4 border-t border-gray-200 text-sm space-y-2">
-                    <p><strong>תאריך הצבה:</strong> ${new Date(container['תאריך הזמנה']).toLocaleDateString('he-IL')}</p>
-                    <p><strong>פרויקט:</strong> ${container['שם לקוח'] || ''}</p>
-                    <p><strong>סטטוס הזמנה:</strong> <span class="font-semibold text-success-color">${container['סטטוס']}</span></p>
-                </div>
-            </div>
-            
-            <h3 class="font-bold text-lg my-4">פעולות מהירות</h3>
-            <div class="action-grid">
-                <button class="action-btn" onclick="openOrderModal('replace')">
-                    <i class="fas fa-sync-alt"></i>
-                    <span>החלפת מכולה</span>
-                </button>
-                <button class="action-btn" onclick="openOrderModal('pickup')">
-                    <i class="fas fa-truck"></i>
-                    <span>פינוי מכולה</span>
-                </button>
-                <button class="action-btn" onclick="openOrderModal('new')">
-                    <i class="fas fa-plus-circle"></i>
-                    <span>הזמנה חדשה</span>
-                </button>
-            </div>
-        `;
-    }
-    
-    function renderHistory() {
-        const history = state.customerData.orderHistory;
-        if (!history || history.length === 0) {
-            return `<p>אין היסטוריית הזמנות.</p>`;
-        }
-        
-        let html = '<div class="space-y-3">';
-        history.sort((a, b) => new Date(b['תאריך הזמנה']) - new Date(a['תאריך הזמנה'])).forEach(order => {
-            html += `
-                <div class="bg-white p-4 rounded-lg border border-gray-200">
-                    <div class="flex justify-between items-center">
-                        <p class="font-bold">${order['סוג פעולה'] || 'הזמנה'}</p>
-                        <p class="text-sm text-gray-500">${new Date(order['תאריך הזמנה']).toLocaleDateString('he-IL')}</p>
-                    </div>
-                    <p class="text-sm text-gray-600 mt-2"><strong>כתובת:</strong> ${order['כתובת']}</p>
-                    <p class="text-sm text-gray-600"><strong>תעודה:</strong> ${order['תעודה']}</p>
-                </div>
-            `;
-        });
-        html += '</div>';
-        return html;
-    }
-    
-    function renderNotifications() { return `<p>דף התראות בבנייה.</p>`; }
-    function renderProfile() { 
-        const profile = state.customerData.profile;
-        return `
-            <div class="status-card">
-                <h2 class="text-xl font-bold mb-4">פרטי לקוח</h2>
-                <div class="space-y-3">
-                    <p><strong>שם:</strong> ${profile['שם לקוח']}</p>
-                    <p><strong>טלפון:</strong> ${state.customerPhone}</p>
-                    <p><strong>איש קשר:</strong> ${profile['איש קשר'] || 'לא הוגדר'}</p>
-                </div>
-            </div>
-        `;
-    }
-
-    // --- UI & MODALS ---
-    function updateNavHeader() {
-        $('#nav-customer-name').textContent = state.customerData.profile['שם לקוח'];
-        elements.navCustomerPhone.textContent = state.customerPhone;
-    }
-    
-    function showLoader(message) {
-        elements.modalTitle.textContent = message;
-        elements.modalBody.innerHTML = `<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-4xl text-primary-color"></i></div>`;
-        elements.modal.classList.add('open');
-    }
-    
-    function hideLoader() {
-        elements.modal.classList.remove('open');
-    }
-    
-    function showError(message) {
-        elements.modalTitle.textContent = 'שגיאה';
-        elements.modalBody.innerHTML = `<p class="text-center text-danger-color">${message}</p>`;
-        elements.modal.classList.add('open');
-    }
-    
-    function openOrderModal(type) {
-        const titles = {
-            'new': 'הזמנת מכולה חדשה',
-            'replace': 'החלפת מכולה קיימת',
-            'pickup': 'בקשה לפינוי מכולה'
-        };
-        elements.modalTitle.textContent = titles[type];
-        elements.modalBody.innerHTML = `
-            <form id="order-form">
-                <input type="hidden" name="orderType" value="${type}">
-                <p class="mb-4">אנא מלא את הפרטים ונחזור אליך לאישור.</p>
-                ${type !== 'pickup' ? `
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">כתובת להצבה</label>
-                    <input type="text" name="address" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" required>
-                </div>` : ''}
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">הערות</label>
-                    <textarea name="notes" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"></textarea>
-                </div>
-                 <div class="mb-4">
-                    <button type="button" onclick="getLocation()" class="text-sm text-primary-color"><i class="fas fa-map-marker-alt"></i> שלח מיקום נוכחי</button>
-                    <p id="location-status" class="text-xs text-gray-500 mt-1"></p>
-                 </div>
-                <button type="submit" class="w-full bg-primary-color text-white font-bold py-2 px-4 rounded-lg">שלח בקשה</button>
-            </form>
-        `;
-        elements.modal.classList.add('open');
-        
-        $('#order-form').addEventListener('submit', handleOrderSubmit);
-    }
-    
-    async function handleOrderSubmit(e) {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const orderData = Object.fromEntries(formData.entries());
-        orderData.phone = state.customerPhone;
-        
-        const result = await submitOrder(orderData);
-        if (result && result.success) {
-            elements.modalTitle.textContent = 'הבקשה נשלחה!';
-            elements.modalBody.innerHTML = `<p class="text-center text-green-600">הבקשה שלך נשלחה בהצלחה. ניצור קשר לאישור סופי.</p>`;
-            setTimeout(() => {
-                hideLoader();
-                login(state.customerPhone); // Refresh data
-            }, 2000);
-        }
-    }
-    
-    // --- FEATURES ---
-    function requestNotificationPermission() {
-        if (!("Notification" in window)) {
-            console.log("This browser does not support desktop notification");
-        } else if (Notification.permission !== "denied") {
-            Notification.requestPermission();
-        }
-    }
-
-    function showNotification(title, body) {
-        if (Notification.permission === "granted") {
-            new Notification(title, { body: body, icon: 'https://i.postimg.cc/J7JGQYcT/image.jpg' });
-        }
-    }
-    
-    function checkRentalDuration() {
-        const container = state.customerData.currentContainer;
-        if (container && container['תאריך הזמנה']) {
-            const orderDate = new Date(container['תאריך הזמנה']);
-            const daysPassed = Math.floor((new Date() - orderDate) / (1000 * 60 * 60 * 24));
-            if (daysPassed >= RENTAL_WARNING_DAYS) {
-                showNotification(
-                    'חריגה בימי שכירות',
-                    `המכולה שלך נמצאת באתר ${daysPassed} ימים. יש לתאם פינוי או החלפה.`
-                );
+        showLoader(true, 'מאמת נתונים...');
+        try {
+            const response = await apiCall('getCustomerData', { phone });
+            if (response.success && response.data.profile) {
+                state = {
+                    ...state,
+                    isLoggedIn: true,
+                    userProfile: response.data.profile,
+                    currentContainer: response.data.currentContainer,
+                    orderHistory: response.data.orderHistory,
+                    customerPhone: phone,
+                };
+                localStorage.setItem('customerPhone', phone);
+                showToast(`ברוך הבא, ${state.userProfile['שם לקוח']}!`);
+                renderApp();
+            } else {
+                showToast("מספר טלפון לא נמצא במערכת.", 'error');
+                localStorage.removeItem('customerPhone');
             }
+        } catch (error) {
+            // Error is already logged by apiCall
+        } finally {
+            showLoader(false);
         }
     }
-    
-    function getLocation() {
-        if (navigator.geolocation) {
-            $('#location-status').textContent = 'מאחזר מיקום...';
-            navigator.geolocation.getCurrentPosition(position => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                const locationInput = document.createElement('input');
-                locationInput.type = 'hidden';
-                locationInput.name = 'location';
-                locationInput.value = `${lat},${lon}`;
-                $('#order-form').appendChild(locationInput);
-                $('#location-status').textContent = `מיקום נשלח בהצלחה!`;
-                $('#location-status').style.color = 'var(--success-color)';
-            }, () => {
-                 $('#location-status').textContent = 'לא ניתן לקבל מיקום.';
-                 $('#location-status').style.color = 'var(--danger-color)';
-            });
+
+    function logout() {
+        localStorage.removeItem('customerPhone');
+        state = { isLoggedIn: false, isLoading: false, userProfile: null, currentContainer: null, orderHistory: [], customerPhone: null };
+        renderApp();
+        showToast("התנתקת בהצלחה.");
+    }
+
+    // --- RENDERING ---
+
+    function renderApp() {
+        const container = document.getElementById('app-container');
+        if (state.isLoading) {
+            container.innerHTML = `<div class="flex justify-center items-center h-full bg-gray-800"><div class="spinner"></div></div>`;
+            return;
+        }
+        if (!state.isLoggedIn) {
+            container.innerHTML = renderLoginScreen();
+            attachLoginListener();
         } else {
-             $('#location-status').textContent = 'שירותי מיקום לא נתמכים בדפדפן.';
+            container.innerHTML = renderMainLayout();
+            renderDashboardPage(); // Default page
+            attachMainListeners();
         }
     }
 
-    // --- EVENT LISTENERS & INITIALIZATION ---
-    function initialize() {
-        elements.loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const customerPhone = elements.customerPhoneInput.value.trim();
-            if (customerPhone) login(customerPhone);
-        });
-        
-        elements.hamburgerBtn.addEventListener('click', toggleNav);
-        elements.navOverlay.addEventListener('click', toggleNav);
-        elements.logoutBtn.addEventListener('click', logout);
-        elements.modalClose.addEventListener('click', () => elements.modal.classList.remove('open'));
-        
-        elements.navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                navigateTo(e.currentTarget.dataset.page);
-            });
-        });
+    function renderLoginScreen() {
+        return `
+            <div id="login-screen">
+                <img src="https://i.postimg.cc/J7JGQYcT/image.jpg" alt="Eco Containers Logo" class="logo">
+                <h1 class="text-3xl font-bold mb-2">ניהול מכולות</h1>
+                <p class="text-lg text-gray-300 mb-8">הזן מספר טלפון לצפייה בנתונים</p>
+                <form id="login-form" class="w-full max-w-sm">
+                    <input type="tel" id="phone-input" class="input-field text-center text-lg mb-4 text-gray-800" placeholder="05X-XXXXXXX" required>
+                    <button type="submit" class="btn btn-primary w-full text-lg">התחבר</button>
+                </form>
+                <div id="loader" class="hidden mt-4"></div>
+            </div>`;
+    }
 
-        checkLoginStatus();
-        requestNotificationPermission();
+    function renderMainLayout() {
+        const user = state.userProfile;
+        return `
+            <div id="menu-overlay" onclick="toggleMenu()"></div>
+            <aside id="side-menu" class="p-4">
+                <div class="text-center mb-8">
+                    <img src="https://i.pravatar.cc/100?u=${user['טלפון']}" alt="Avatar" class="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-gray-200">
+                    <h2 class="text-xl font-bold">${user['שם לקוח']}</h2>
+                    <p class="text-sm text-gray-500">${user['איש קשר']}</p>
+                </div>
+                <nav class="flex flex-col space-y-2">
+                    <a href="#" class="menu-item active" data-page="dashboard">
+                        <i class="fas fa-tachometer-alt w-6"></i><span>מצב נוכחי</span>
+                    </a>
+                    <a href="#" class="menu-item" data-page="history">
+                        <i class="fas fa-history w-6"></i><span>היסטוריית הזמנות</span>
+                    </a>
+                </nav>
+                <button id="logout-btn" class="absolute bottom-4 left-4 right-4 text-red-500 hover:bg-red-100 p-2 rounded-lg flex items-center gap-2">
+                    <i class="fas fa-sign-out-alt"></i><span>התנתק</span>
+                </button>
+            </aside>
+            <header class="p-4 flex justify-between items-center">
+                <h1 id="header-title" class="text-xl font-bold text-gray-700">מצב נוכחי</h1>
+                <button id="menu-toggle" class="text-2xl text-gray-600">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </header>
+            <main id="page-content"></main>
+        `;
+    }
+
+    function renderDashboardPage() {
+        const container = document.getElementById('page-content');
+        const { currentContainer } = state;
+
+        if (!currentContainer || Object.keys(currentContainer).length === 0) {
+            container.innerHTML = `
+                <div class="bg-white p-6 rounded-lg shadow text-center">
+                    <i class="fas fa-check-circle text-5xl text-green-500 mb-4"></i>
+                    <h2 class="text-xl font-bold mb-2">אין מכולה פעילה</h2>
+                    <p class="text-gray-600 mb-6">אין לך כרגע מכולה בשכירות. לחץ למטה כדי לבצע הזמנה חדשה.</p>
+                    <button class="btn btn-primary" onclick="openNewOrderModal()">הזמן מכולה חדשה</button>
+                </div>`;
+            return;
+        }
+
+        const orderDate = new Date(currentContainer['תאריך הזמנה']);
+        const daysInRent = Math.floor((new Date() - orderDate) / (1000 * 60 * 60 * 24));
+        const isOverdue = daysInRent >= RENTAL_WARNING_DAYS;
+        
+        container.innerHTML = `
+            <div class="bg-white p-5 rounded-lg shadow-md mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold">מכולה נוכחית</h2>
+                    <span class="text-sm font-semibold px-3 py-1 rounded-full ${isOverdue ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">
+                        ${isOverdue ? `חריגה של ${daysInRent - RENTAL_WARNING_DAYS + 1} ימים` : 'תקין'}
+                    </span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div><strong class="block text-gray-500">תעודה</strong><span>${currentContainer['תעודה'] || 'N/A'}</span></div>
+                    <div><strong class="block text-gray-500">מספר מכולה</strong><span>${currentContainer['מספר מכולה ירדה'] || 'N/A'}</span></div>
+                    <div><strong class="block text-gray-500">תאריך הצבה</strong><span>${orderDate.toLocaleDateString('he-IL')}</span></div>
+                    <div><strong class="block text-gray-500">ימים בשכירות</strong><span>${daysInRent}</span></div>
+                    <div class="col-span-2"><strong class="block text-gray-500">כתובת</strong><span>${currentContainer['כתובת'] || 'N/A'}</span></div>
+                </div>
+            </div>
+             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <button class="action-btn bg-blue-500" onclick="openNewOrderModal('החלפה')"><i class="fas fa-sync-alt"></i><span>החלפת מכולה</span></button>
+                <button class="action-btn bg-green-500" onclick="openNewOrderModal('פינוי')"><i class="fas fa-truck"></i><span>פינוי פסולת</span></button>
+                <button class="action-btn bg-gray-700" onclick="openNewOrderModal('חדשה')"><i class="fas fa-plus"></i><span>הזמנה חדשה</span></button>
+            </div>
+        `;
+    }
+
+    function renderHistoryPage() {
+        const container = document.getElementById('page-content');
+        let content = `<div class="space-y-4">`;
+        if (state.orderHistory.length === 0) {
+            content += `<p class="text-center text-gray-500">אין היסטוריית הזמנות להצגה.</p>`;
+        } else {
+            state.orderHistory.forEach(order => {
+                const orderDate = new Date(order['תאריך הזמנה']);
+                const status = (String(order['סטטוס']).toLowerCase() === 'סגור') ? 
+                    `<span class="text-green-600 font-semibold">סגור</span>` : 
+                    `<span class="text-blue-600 font-semibold">פתוח</span>`;
+                
+                content += `
+                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-bold">${order['סוג פעולה'] || 'הזמנה'}</p>
+                                <p class="text-sm text-gray-500">${order['כתובת']}</p>
+                            </div>
+                            <p class="text-sm text-gray-500">${orderDate.toLocaleDateString('he-IL')}</p>
+                        </div>
+                        <div class="mt-3 pt-3 border-t text-xs flex justify-between">
+                            <span>תעודה: ${order['תעודה']}</span>
+                            <span>סטטוס: ${status}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        content += `</div>`;
+        container.innerHTML = content;
+    }
+
+
+    // --- MODALS & UI ---
+
+    function openNewOrderModal(orderType = 'חדשה') {
+        const modalContainer = document.getElementById('modal-container');
+        const title = {
+            'החלפה': 'בקשה להחלפת מכולה',
+            'פינוי': 'בקשה לפינוי פסולת',
+            'חדשה': 'הזמנת מכולה חדשה'
+        }[orderType];
+
+        modalContainer.innerHTML = `
+            <div class="modal-content">
+                <h3 class="text-xl font-bold mb-4">${title}</h3>
+                <form id="new-order-form">
+                    <input type="hidden" name="orderType" value="${orderType}">
+                    <div class="mb-4">
+                        <label for="address" class="block text-sm font-medium text-gray-700 mb-1">כתובת</label>
+                        <input type="text" name="address" class="input-field" value="${state.currentContainer?.['כתובת'] || ''}" required>
+                    </div>
+                    <div class="mb-4">
+                         <label class="block text-sm font-medium text-gray-700 mb-1">מיקום (אופציונלי)</label>
+                         <button type="button" id="get-location-btn" class="text-sm text-blue-600 hover:underline">שלח מיקום נוכחי</button>
+                         <input type="hidden" name="location">
+                         <p id="location-status" class="text-xs text-gray-500 mt-1"></p>
+                    </div>
+                    <div class="mb-4">
+                        <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">הערות</label>
+                        <textarea name="notes" rows="3" class="input-field" placeholder="לדוגמה: להניח ליד הגדר"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-3 mt-6">
+                        <button type="button" class="btn bg-gray-200 text-gray-700" onclick="closeModal()">ביטול</button>
+                        <button type="submit" class="btn btn-primary">שלח בקשה</button>
+                    </div>
+                </form>
+            </div>`;
+        modalContainer.classList.add('active');
+        attachOrderFormListeners();
     }
     
-    document.addEventListener('DOMContentLoaded', initialize);
-</script>
+    function closeModal() {
+        document.getElementById('modal-container').classList.remove('active');
+    }
 
+    function showLoader(show, text = 'טוען...') {
+        const form = document.getElementById('login-form');
+        const loader = document.getElementById('loader');
+        if (!form || !loader) return;
+
+        if (show) {
+            form.style.display = 'none';
+            loader.innerHTML = `<div class="spinner border-t-blue-500"></div><p class="mt-2 text-white">${text}</p>`;
+            loader.classList.remove('hidden');
+        } else {
+            form.style.display = 'block';
+            loader.classList.add('hidden');
+        }
+    }
+    
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `fixed top-5 right-5 p-4 rounded-lg shadow-lg text-white ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
+
+    // --- EVENT LISTENERS ---
+
+    function attachLoginListener() {
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const phone = document.getElementById('phone-input').value;
+            login(phone);
+        });
+    }
+
+    function attachMainListeners() {
+        document.getElementById('menu-toggle').addEventListener('click', toggleMenu);
+        document.getElementById('logout-btn').addEventListener('click', logout);
+        
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = e.currentTarget.dataset.page;
+                
+                document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+
+                const titles = { dashboard: 'מצב נוכחי', history: 'היסטוריית הזמנות' };
+                document.getElementById('header-title').textContent = titles[page];
+                
+                if (page === 'dashboard') renderDashboardPage();
+                else if (page === 'history') renderHistoryPage();
+
+                toggleMenu(false); // Close menu after selection
+            });
+        });
+    }
+    
+    function attachOrderFormListeners() {
+        document.getElementById('get-location-btn').addEventListener('click', async () => {
+            if (!navigator.geolocation) {
+                showToast("דפדפן לא תומך בשירותי מיקום.", 'error');
+                return;
+            }
+            const btn = document.getElementById('get-location-btn');
+            const statusEl = document.getElementById('location-status');
+            btn.disabled = true;
+            statusEl.textContent = 'מאחזר מיקום...';
+            
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    const locationString = `${latitude},${longitude}`;
+                    document.querySelector('input[name="location"]').value = locationString;
+                    statusEl.textContent = 'מיקום נשמר בהצלחה!';
+                    statusEl.style.color = 'green';
+                    btn.disabled = false;
+                },
+                () => {
+                    statusEl.textContent = 'שליחת מיקום נכשלה.';
+                    statusEl.style.color = 'red';
+                    btn.disabled = false;
+                    showToast("לא אישרת גישה למיקום.", 'error');
+                }
+            );
+        });
+        
+        document.getElementById('new-order-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const orderData = Object.fromEntries(formData.entries());
+            orderData.phone = state.customerPhone; // Add customer phone to the request
+
+            showToast("שולח בקשה...", 'success');
+            closeModal();
+            
+            try {
+                const response = await apiCall('createOrder', orderData, 'POST');
+                if (response.success) {
+                    showToast("הבקשה נשלחה בהצלחה!", 'success');
+                    // Refresh data after new order
+                    await login(state.customerPhone);
+                } else {
+                    throw new Error(response.message || 'Unknown error');
+                }
+            } catch (error) {
+                // Error toast is already shown by apiCall
+            }
+        });
+    }
+
+    function toggleMenu(force) {
+        const menu = document.getElementById('side-menu');
+        const overlay = document.getElementById('menu-overlay');
+        const shouldOpen = force !== undefined ? force : !menu.classList.contains('open');
+        menu.classList.toggle('open', shouldOpen);
+        overlay.classList.toggle('open', shouldOpen);
+    }
+    
+
+    // --- INITIALIZATION ---
+    function init() {
+        state.isLoading = true;
+        renderApp();
+        const savedPhone = localStorage.getItem('customerPhone');
+        if (savedPhone) {
+            login(savedPhone);
+        } else {
+            state.isLoading = false;
+            renderApp();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+
+</script>
 </body>
 </html>
 
