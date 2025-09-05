@@ -283,10 +283,10 @@
                 <img src="https://placehold.co/120x120/E6F2FF/007AFF?text=לקוח" alt="User Avatar" class="avatar" id="login-avatar">
                 <form id="login-form" class="w-full text-center">
                     <h1>ברוך הבא</h1>
-                    <p>הזן את מספר הלקוח שלך כדי להתחבר</p>
+                    <p>הזן את מספר הטלפון שלך כדי להתחבר</p>
                     <div class="input-group">
-                        <i class="fas fa-user"></i>
-                        <input type="text" id="customer-id-input" class="login-input text-center" placeholder="מספר לקוח" required>
+                        <i class="fas fa-phone"></i>
+                        <input type="tel" id="customer-phone-input" class="login-input text-center" placeholder="מספר טלפון" required>
                     </div>
                     <button type="submit" class="login-button">התחבר</button>
                     <div id="login-error" class="text-red-300 mt-4 h-5"></div>
@@ -316,7 +316,7 @@
                         <img src="https://placehold.co/60x60/E6F2FF/007AFF?text=לקוח" alt="User Avatar" class="w-16 h-16 rounded-full" id="nav-avatar">
                         <div>
                             <p class="font-bold text-lg" id="nav-customer-name">שם לקוח</p>
-                            <p class="text-sm text-gray-500" id="nav-customer-id">מספר לקוח</p>
+                            <p class="text-sm text-gray-500" id="nav-customer-phone">מספר טלפון</p>
                         </div>
                     </div>
                 </div>
@@ -348,12 +348,12 @@
 
 <script>
     // --- CONFIGURATION & STATE ---
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxiS3wXwXCyh8xM1EdTiwXy0T-UyBRQgfrnRRis531lTxmgtJIGawfsPeetX5nVJW3V/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyi815_Gg8853_g3_vA52331lA_wA-2c3E4F5gH6iJ7kL8mN9p0/exec'; // This is a placeholder, replace with your script URL
     const RENTAL_WARNING_DAYS = 10;
     
     let state = {
         isLoggedIn: false,
-        customerId: null,
+        customerPhone: null,
         customerData: null,
         currentPage: 'dashboard',
     };
@@ -366,7 +366,7 @@
         loginScreen: $('#login-screen'),
         appContainer: $('#app-container'),
         loginForm: $('#login-form'),
-        customerIdInput: $('#customer-id-input'),
+        customerPhoneInput: $('#customer-phone-input'),
         loginError: $('#login-error'),
         pageContent: $('#page-content'),
         pageTitle: $('#page-title'),
@@ -379,6 +379,7 @@
         modalTitle: $('#modal-title'),
         modalBody: $('#modal-body'),
         modalClose: $('#modal-close'),
+        navCustomerPhone: $('#nav-customer-phone')
     };
 
     // --- API & DATA ---
@@ -389,7 +390,6 @@
             url.searchParams.append(key, params[key]);
         }
         
-        // Show loader
         showLoader('טוען נתונים...');
         
         try {
@@ -408,14 +408,13 @@
     }
 
     async function submitOrder(orderData) {
-        // Show loader
         showLoader('שולח הזמנה...');
 
         try {
             const response = await fetch(SCRIPT_URL, {
                 method: 'POST',
                 redirect: 'follow',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // As per Apps Script Web App requirements for POST
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ action: 'createOrder', ...orderData })
             });
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -432,16 +431,16 @@
     }
 
     // --- AUTHENTICATION ---
-    async function login(customerId) {
+    async function login(phone) {
         elements.loginError.textContent = '';
-        const data = await apiCall('getCustomerData', { customerId });
+        const data = await apiCall('getCustomerData', { phone });
         
         if (data && data.profile) {
             state.isLoggedIn = true;
-            state.customerId = customerId;
+            state.customerPhone = phone;
             state.customerData = data;
             
-            localStorage.setItem('customerId', customerId);
+            localStorage.setItem('customerPhone', phone);
             
             elements.loginScreen.style.display = 'none';
             elements.appContainer.style.opacity = '1';
@@ -450,27 +449,27 @@
             navigateTo('dashboard');
             checkRentalDuration();
         } else {
-            elements.loginError.textContent = 'מספר לקוח לא נמצא. נסה שוב.';
+            elements.loginError.textContent = 'מספר טלפון לא נמצא. נסה שוב.';
         }
     }
     
     function logout() {
         state.isLoggedIn = false;
-        state.customerId = null;
+        state.customerPhone = null;
         state.customerData = null;
-        localStorage.removeItem('customerId');
+        localStorage.removeItem('customerPhone');
         
         elements.appContainer.style.opacity = '0';
         setTimeout(() => {
             elements.loginScreen.style.display = 'flex';
-            elements.customerIdInput.value = '';
+            elements.customerPhoneInput.value = '';
         }, 500);
     }
     
     function checkLoginStatus() {
-        const storedCustomerId = localStorage.getItem('customerId');
-        if (storedCustomerId) {
-            login(storedCustomerId);
+        const storedCustomerPhone = localStorage.getItem('customerPhone');
+        if (storedCustomerPhone) {
+            login(storedCustomerPhone);
         }
     }
 
@@ -569,7 +568,7 @@
         }
         
         let html = '<div class="space-y-3">';
-        history.forEach(order => {
+        history.sort((a, b) => new Date(b['תאריך הזמנה']) - new Date(a['תאריך הזמנה'])).forEach(order => {
             html += `
                 <div class="bg-white p-4 rounded-lg border border-gray-200">
                     <div class="flex justify-between items-center">
@@ -593,9 +592,8 @@
                 <h2 class="text-xl font-bold mb-4">פרטי לקוח</h2>
                 <div class="space-y-3">
                     <p><strong>שם:</strong> ${profile['שם לקוח']}</p>
-                    <p><strong>מספר לקוח:</strong> ${state.customerId}</p>
+                    <p><strong>טלפון:</strong> ${state.customerPhone}</p>
                     <p><strong>איש קשר:</strong> ${profile['איש קשר'] || 'לא הוגדר'}</p>
-                    <p><strong>טלפון:</strong> ${profile['טלפון'] || 'לא הוגדר'}</p>
                 </div>
             </div>
         `;
@@ -604,7 +602,7 @@
     // --- UI & MODALS ---
     function updateNavHeader() {
         $('#nav-customer-name').textContent = state.customerData.profile['שם לקוח'];
-        $('#nav-customer-id').textContent = `לקוח מס' ${state.customerId}`;
+        elements.navCustomerPhone.textContent = state.customerPhone;
     }
     
     function showLoader(message) {
@@ -659,12 +657,16 @@
         e.preventDefault();
         const formData = new FormData(e.target);
         const orderData = Object.fromEntries(formData.entries());
-        orderData.customerId = state.customerId;
+        orderData.phone = state.customerPhone;
         
         const result = await submitOrder(orderData);
         if (result && result.success) {
             elements.modalTitle.textContent = 'הבקשה נשלחה!';
             elements.modalBody.innerHTML = `<p class="text-center text-green-600">הבקשה שלך נשלחה בהצלחה. ניצור קשר לאישור סופי.</p>`;
+            setTimeout(() => {
+                hideLoader();
+                login(state.customerPhone); // Refresh data
+            }, 2000);
         }
     }
     
@@ -685,7 +687,7 @@
     
     function checkRentalDuration() {
         const container = state.customerData.currentContainer;
-        if (container) {
+        if (container && container['תאריך הזמנה']) {
             const orderDate = new Date(container['תאריך הזמנה']);
             const daysPassed = Math.floor((new Date() - orderDate) / (1000 * 60 * 60 * 24));
             if (daysPassed >= RENTAL_WARNING_DAYS) {
@@ -723,8 +725,8 @@
     function initialize() {
         elements.loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const customerId = elements.customerIdInput.value.trim();
-            if (customerId) login(customerId);
+            const customerPhone = elements.customerPhoneInput.value.trim();
+            if (customerPhone) login(customerPhone);
         });
         
         elements.hamburgerBtn.addEventListener('click', toggleNav);
@@ -748,3 +750,4 @@
 
 </body>
 </html>
+
