@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ניהול מכולות</title>
+
+    <!-- External Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --phone-bg: #1a1a1a;
+            --screen-bg: #f7f9fc;
+            --primary-color: #007aff;
+            --primary-light: #e6f2ff;
+            --text-dark: #1c1c1e;
+            --text-light: #8a8a8e;
+            --surface-color: #ffffff;
+            --border-color: #e5e5e5;
+            --success-color: #34c759;
+            --danger-color: #ff3b30;
+            --warning-color: #ff9500;
+            --font-main: 'Rubik', sans-serif;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #e0e0e0;
+            font-family: var(--font-main);
+            overflow: hidden;
+        }
+
+        /* --- Phone Frame --- */
+        .phone-frame {
+            width: 420px;
+            height: 880px;
+            background: var(--phone-bg);
+            border-radius: 50px;
+            padding: 15px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3), 0 0 0 10px #f0f0f0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .phone-screen {
+            flex-grow: 1;
+            background: var(--screen-bg);
+            border-radius: 35px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .phone-notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 160px;
+            height: 30px;
+            background: var(--phone-bg);
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+            z-index: 100;
+        }
+
+        /* --- App Specific Styles --- */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        /* --- Login Screen --- */
+        #login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #0056b3 100%);
+            color: white;
+        }
+        #login-screen .logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 18px;
+            margin-bottom: 1.5rem;
+        }
+        #login-screen .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid rgba(255,255,255,0.8);
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        #login-form h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        #login-form p {
+            margin-bottom: 2rem;
+            opacity: 0.8;
+        }
+        .input-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .input-group i {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            color: #ccc;
+        }
+        .login-input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem; /* Padding for icon */
+            border-radius: 0.75rem;
+            border: 1px solid transparent;
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 1rem;
+        }
+        .login-input::placeholder { color: rgba(255,255,255,0.7); }
+        .login-button {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            background-color: white;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .login-button:active { transform: scale(0.98); }
+
+
+        /* --- Main App Header --- */
+        .app-header {
+            padding: 1rem;
+            padding-top: 35px; /* Space for notch */
+            background-color: var(--surface-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        /* --- Page Content --- */
+        #page-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        /* --- Side Nav --- */
+        #side-nav {
+            position: absolute;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100%;
+            background-color: var(--surface-color);
+            z-index: 2000;
+            transition: right 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+        }
+        #side-nav.open { right: 0; }
+        #nav-overlay {
+            position: absolute;
+            inset: 0;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        #nav-overlay.open { opacity: 1; pointer-events: auto; }
+
+        /* --- Dashboard Cards --- */
+        .status-card {
+            background-color: var(--surface-color);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 1px solid var(--border-color);
+        }
+        
+        .status-card.overdue {
+             background: linear-gradient(135deg, #fff1f0 0%, #ffe0de 100%);
+             border-left: 5px solid var(--danger-color);
+        }
+        
+        /* --- Action Buttons --- */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 0.5rem;
+            border-radius: 0.75rem;
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .action-btn i {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        .action-btn:active {
+            transform: scale(0.95);
+            background-color: #d0e7ff;
+        }
+
+        /* --- Modal --- */
+        .modal-overlay {
+            position: absolute;
+            inset: 0;
+            background-color: rgba(0,0,0,0.6);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: auto; }
+        .modal-content {
+            background-color: var(--surface-color);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 350px;
+            transform: scale(0.95);
+            transition: transform 0.3s;
+        }
+        .modal-overlay.open .modal-content { transform: scale(1); }
+        
+        /* Utility */
+        .hidden { display: none !important; }
+
+    </style>
+</head>
+<body>
+
+    <div class="phone-frame">
+        <div class="phone-screen">
+            <div class="phone-notch"></div>
+
+            <!-- Login Screen -->
+            <div id="login-screen">
+                 <img src="https://i.postimg.cc/J7JGQYcT/image.jpg" alt="Company Logo" class="logo">
+                <img src="https://placehold.co/120x120/E6F2FF/007AFF?text=לקוח" alt="User Avatar" class="avatar" id="login-avatar">
+                <form id="login-form" class="w-full text-center">
+                    <h1>ברוך הבא</h1>
+                    <p>הזן את מספר הלקוח שלך כדי להתחבר</p>
+                    <div class="input-group">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="customer-id-input" class="login-input text-center" placeholder="מספר לקוח" required>
+                    </div>
+                    <button type="submit" class="login-button">התחבר</button>
+                    <div id="login-error" class="text-red-300 mt-4 h-5"></div>
+                </form>
+            </div>
+
+            <!-- Main App Container (hidden by default) -->
+            <div id="app-container" class="app-container">
+                <header class="app-header">
+                    <h1 class="text-xl font-bold text-gray-800" id="page-title">דף הבית</h1>
+                    <button id="hamburger-btn" class="text-2xl text-gray-600">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </header>
+
+                <main id="page-content">
+                    <!-- Dynamic content goes here -->
+                </main>
+
+            </div>
+            
+            <!-- Side Navigation Menu -->
+            <div id="nav-overlay" onclick="toggleNav()"></div>
+            <nav id="side-nav">
+                <div class="p-4 border-b">
+                    <div class="flex items-center gap-3">
+                        <img src="https://placehold.co/60x60/E6F2FF/007AFF?text=לקוח" alt="User Avatar" class="w-16 h-16 rounded-full" id="nav-avatar">
+                        <div>
+                            <p class="font-bold text-lg" id="nav-customer-name">שם לקוח</p>
+                            <p class="text-sm text-gray-500" id="nav-customer-id">מספר לקוח</p>
+                        </div>
+                    </div>
+                </div>
+                <ul class="p-2">
+                    <li><a href="#" class="nav-link active" data-page="dashboard"><i class="fas fa-home w-6"></i> דף הבית</a></li>
+                    <li><a href="#" class="nav-link" data-page="history"><i class="fas fa-history w-6"></i> היסטוריית הזמנות</a></li>
+                    <li><a href="#" class="nav-link" data-page="notifications"><i class="fas fa-bell w-6"></i> התראות</a></li>
+                    <li><a href="#" class="nav-link" data-page="profile"><i class="fas fa-user-cog w-6"></i> פרופיל</a></li>
+                    <li class="mt-8"><a href="#" id="logout-btn" class="nav-link text-red-500"><i class="fas fa-sign-out-alt w-6"></i> התנתק</a></li>
+                </ul>
+            </nav>
+            
+             <!-- Generic Modal -->
+            <div id="modal" class="modal-overlay">
+                <div class="modal-content">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 id="modal-title" class="text-lg font-bold">כותרת</h3>
+                        <button id="modal-close" class="text-gray-500">&times;</button>
+                    </div>
+                    <div id="modal-body">
+                        <!-- Modal content here -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+<script>
+    // --- CONFIGURATION & STATE ---
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxiS3wXwXCyh8xM1EdTiwXy0T-UyBRQgfrnRRis531lTxmgtJIGawfsPeetX5nVJW3V/exec';
+    const RENTAL_WARNING_DAYS = 10;
+    
+    let state = {
+        isLoggedIn: false,
+        customerId: null,
+        customerData: null,
+        currentPage: 'dashboard',
+    };
+
+    // --- DOM ELEMENTS ---
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => document.querySelectorAll(selector);
+
+    const elements = {
+        loginScreen: $('#login-screen'),
+        appContainer: $('#app-container'),
+        loginForm: $('#login-form'),
+        customerIdInput: $('#customer-id-input'),
+        loginError: $('#login-error'),
+        pageContent: $('#page-content'),
+        pageTitle: $('#page-title'),
+        hamburgerBtn: $('#hamburger-btn'),
+        sideNav: $('#side-nav'),
+        navOverlay: $('#nav-overlay'),
+        navLinks: $$('.nav-link'),
+        logoutBtn: $('#logout-btn'),
+        modal: $('#modal'),
+        modalTitle: $('#modal-title'),
+        modalBody: $('#modal-body'),
+        modalClose: $('#modal-close'),
+    };
+
+    // --- API & DATA ---
+    async function apiCall(action, params = {}) {
+        const url = new URL(SCRIPT_URL);
+        url.searchParams.append('action', action);
+        for (const key in params) {
+            url.searchParams.append(key, params[key]);
+        }
+        
+        // Show loader
+        showLoader('טוען נתונים...');
+        
+        try {
+            const response = await fetch(url, { method: 'GET', redirect: 'follow' });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+            if (!data.success) throw new Error(data.message || 'Server operation failed');
+            return data.data;
+        } catch (error) {
+            console.error("API Error:", error);
+            showError(error.message);
+            return null;
+        } finally {
+            hideLoader();
+        }
+    }
+
+    async function submitOrder(orderData) {
+        // Show loader
+        showLoader('שולח הזמנה...');
+
+        try {
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                redirect: 'follow',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // As per Apps Script Web App requirements for POST
+                body: JSON.stringify({ action: 'createOrder', ...orderData })
+            });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const result = await response.json();
+            if (!result.success) throw new Error(result.message || 'Failed to submit order');
+            return result;
+        } catch (error) {
+            console.error("Submit Order Error:", error);
+            showError(error.message);
+            return null;
+        } finally {
+            hideLoader();
+        }
+    }
+
+    // --- AUTHENTICATION ---
+    async function login(customerId) {
+        elements.loginError.textContent = '';
+        const data = await apiCall('getCustomerData', { customerId });
+        
+        if (data && data.profile) {
+            state.isLoggedIn = true;
+            state.customerId = customerId;
+            state.customerData = data;
+            
+            localStorage.setItem('customerId', customerId);
+            
+            elements.loginScreen.style.display = 'none';
+            elements.appContainer.style.opacity = '1';
+            
+            updateNavHeader();
+            navigateTo('dashboard');
+            checkRentalDuration();
+        } else {
+            elements.loginError.textContent = 'מספר לקוח לא נמצא. נסה שוב.';
+        }
+    }
+    
+    function logout() {
+        state.isLoggedIn = false;
+        state.customerId = null;
+        state.customerData = null;
+        localStorage.removeItem('customerId');
+        
+        elements.appContainer.style.opacity = '0';
+        setTimeout(() => {
+            elements.loginScreen.style.display = 'flex';
+            elements.customerIdInput.value = '';
+        }, 500);
+    }
+    
+    function checkLoginStatus() {
+        const storedCustomerId = localStorage.getItem('customerId');
+        if (storedCustomerId) {
+            login(storedCustomerId);
+        }
+    }
+
+    // --- NAVIGATION ---
+    function toggleNav() {
+        elements.sideNav.classList.toggle('open');
+        elements.navOverlay.classList.toggle('open');
+    }
+
+    function navigateTo(page) {
+        state.currentPage = page;
+        
+        elements.navLinks.forEach(link => {
+            link.classList.toggle('active', link.dataset.page === page);
+        });
+
+        const renderFunctions = {
+            'dashboard': renderDashboard,
+            'history': renderHistory,
+            'notifications': renderNotifications,
+            'profile': renderProfile
+        };
+        
+        if (renderFunctions[page]) {
+            elements.pageContent.innerHTML = renderFunctions[page]();
+            elements.pageTitle.textContent = document.querySelector(`.nav-link[data-page="${page}"]`).textContent;
+        } else {
+            elements.pageContent.innerHTML = `<p>הדף "${page}" בבנייה.</p>`;
+        }
+        
+        if (elements.sideNav.classList.contains('open')) {
+            toggleNav();
+        }
+    }
+
+    // --- PAGE RENDERING ---
+    function renderDashboard() {
+        const container = state.customerData.currentContainer;
+        if (!container || !container['תעודה']) {
+            return `
+                <div class="status-card text-center">
+                    <i class="fas fa-info-circle text-4xl text-gray-400 mb-4"></i>
+                    <h2 class="text-xl font-bold mb-2">אין לך מכולה פעילה</h2>
+                    <p class="text-gray-600 mb-6">באפשרותך להזמין מכולה חדשה עכשיו.</p>
+                    <button onclick="openOrderModal('new')" class="bg-primary-color text-white font-bold py-3 px-6 rounded-lg w-full">הזמן מכולה חדשה</button>
+                </div>
+            `;
+        }
+
+        const orderDate = new Date(container['תאריך הזמנה']);
+        const daysPassed = Math.floor((new Date() - orderDate) / (1000 * 60 * 60 * 24));
+        const isOverdue = daysPassed >= RENTAL_WARNING_DAYS;
+        
+        return `
+            <div class="status-card ${isOverdue ? 'overdue' : ''}">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm font-medium ${isOverdue ? 'text-danger-color' : 'text-primary-color'}">מכולה פעילה</p>
+                        <h2 class="text-2xl font-bold my-1">${container['מספר מכולה ירדה']}</h2>
+                        <p class="text-sm text-text-light">${container['כתובת'] || ''}</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-3xl font-bold ${isOverdue ? 'text-danger-color' : 'text-text-dark'}">${daysPassed}</p>
+                        <p class="text-xs text-text-light">ימי שכירות</p>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-200 text-sm space-y-2">
+                    <p><strong>תאריך הצבה:</strong> ${new Date(container['תאריך הזמנה']).toLocaleDateString('he-IL')}</p>
+                    <p><strong>פרויקט:</strong> ${container['שם לקוח'] || ''}</p>
+                    <p><strong>סטטוס הזמנה:</strong> <span class="font-semibold text-success-color">${container['סטטוס']}</span></p>
+                </div>
+            </div>
+            
+            <h3 class="font-bold text-lg my-4">פעולות מהירות</h3>
+            <div class="action-grid">
+                <button class="action-btn" onclick="openOrderModal('replace')">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>החלפת מכולה</span>
+                </button>
+                <button class="action-btn" onclick="openOrderModal('pickup')">
+                    <i class="fas fa-truck"></i>
+                    <span>פינוי מכולה</span>
+                </button>
+                <button class="action-btn" onclick="openOrderModal('new')">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>הזמנה חדשה</span>
+                </button>
+            </div>
+        `;
+    }
+    
+    function renderHistory() {
+        const history = state.customerData.orderHistory;
+        if (!history || history.length === 0) {
+            return `<p>אין היסטוריית הזמנות.</p>`;
+        }
+        
+        let html = '<div class="space-y-3">';
+        history.forEach(order => {
+            html += `
+                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <p class="font-bold">${order['סוג פעולה'] || 'הזמנה'}</p>
+                        <p class="text-sm text-gray-500">${new Date(order['תאריך הזמנה']).toLocaleDateString('he-IL')}</p>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2"><strong>כתובת:</strong> ${order['כתובת']}</p>
+                    <p class="text-sm text-gray-600"><strong>תעודה:</strong> ${order['תעודה']}</p>
+                </div>
+            `;
+        });
+        html += '</div>';
+        return html;
+    }
+    
+    function renderNotifications() { return `<p>דף התראות בבנייה.</p>`; }
+    function renderProfile() { 
+        const profile = state.customerData.profile;
+        return `
+            <div class="status-card">
+                <h2 class="text-xl font-bold mb-4">פרטי לקוח</h2>
+                <div class="space-y-3">
+                    <p><strong>שם:</strong> ${profile['שם לקוח']}</p>
+                    <p><strong>מספר לקוח:</strong> ${state.customerId}</p>
+                    <p><strong>איש קשר:</strong> ${profile['איש קשר'] || 'לא הוגדר'}</p>
+                    <p><strong>טלפון:</strong> ${profile['טלפון'] || 'לא הוגדר'}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    // --- UI & MODALS ---
+    function updateNavHeader() {
+        $('#nav-customer-name').textContent = state.customerData.profile['שם לקוח'];
+        $('#nav-customer-id').textContent = `לקוח מס' ${state.customerId}`;
+    }
+    
+    function showLoader(message) {
+        elements.modalTitle.textContent = message;
+        elements.modalBody.innerHTML = `<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-4xl text-primary-color"></i></div>`;
+        elements.modal.classList.add('open');
+    }
+    
+    function hideLoader() {
+        elements.modal.classList.remove('open');
+    }
+    
+    function showError(message) {
+        elements.modalTitle.textContent = 'שגיאה';
+        elements.modalBody.innerHTML = `<p class="text-center text-danger-color">${message}</p>`;
+        elements.modal.classList.add('open');
+    }
+    
+    function openOrderModal(type) {
+        const titles = {
+            'new': 'הזמנת מכולה חדשה',
+            'replace': 'החלפת מכולה קיימת',
+            'pickup': 'בקשה לפינוי מכולה'
+        };
+        elements.modalTitle.textContent = titles[type];
+        elements.modalBody.innerHTML = `
+            <form id="order-form">
+                <input type="hidden" name="orderType" value="${type}">
+                <p class="mb-4">אנא מלא את הפרטים ונחזור אליך לאישור.</p>
+                ${type !== 'pickup' ? `
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">כתובת להצבה</label>
+                    <input type="text" name="address" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" required>
+                </div>` : ''}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">הערות</label>
+                    <textarea name="notes" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"></textarea>
+                </div>
+                 <div class="mb-4">
+                    <button type="button" onclick="getLocation()" class="text-sm text-primary-color"><i class="fas fa-map-marker-alt"></i> שלח מיקום נוכחי</button>
+                    <p id="location-status" class="text-xs text-gray-500 mt-1"></p>
+                 </div>
+                <button type="submit" class="w-full bg-primary-color text-white font-bold py-2 px-4 rounded-lg">שלח בקשה</button>
+            </form>
+        `;
+        elements.modal.classList.add('open');
+        
+        $('#order-form').addEventListener('submit', handleOrderSubmit);
+    }
+    
+    async function handleOrderSubmit(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const orderData = Object.fromEntries(formData.entries());
+        orderData.customerId = state.customerId;
+        
+        const result = await submitOrder(orderData);
+        if (result && result.success) {
+            elements.modalTitle.textContent = 'הבקשה נשלחה!';
+            elements.modalBody.innerHTML = `<p class="text-center text-green-600">הבקשה שלך נשלחה בהצלחה. ניצור קשר לאישור סופי.</p>`;
+        }
+    }
+    
+    // --- FEATURES ---
+    function requestNotificationPermission() {
+        if (!("Notification" in window)) {
+            console.log("This browser does not support desktop notification");
+        } else if (Notification.permission !== "denied") {
+            Notification.requestPermission();
+        }
+    }
+
+    function showNotification(title, body) {
+        if (Notification.permission === "granted") {
+            new Notification(title, { body: body, icon: 'https://i.postimg.cc/J7JGQYcT/image.jpg' });
+        }
+    }
+    
+    function checkRentalDuration() {
+        const container = state.customerData.currentContainer;
+        if (container) {
+            const orderDate = new Date(container['תאריך הזמנה']);
+            const daysPassed = Math.floor((new Date() - orderDate) / (1000 * 60 * 60 * 24));
+            if (daysPassed >= RENTAL_WARNING_DAYS) {
+                showNotification(
+                    'חריגה בימי שכירות',
+                    `המכולה שלך נמצאת באתר ${daysPassed} ימים. יש לתאם פינוי או החלפה.`
+                );
+            }
+        }
+    }
+    
+    function getLocation() {
+        if (navigator.geolocation) {
+            $('#location-status').textContent = 'מאחזר מיקום...';
+            navigator.geolocation.getCurrentPosition(position => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                const locationInput = document.createElement('input');
+                locationInput.type = 'hidden';
+                locationInput.name = 'location';
+                locationInput.value = `${lat},${lon}`;
+                $('#order-form').appendChild(locationInput);
+                $('#location-status').textContent = `מיקום נשלח בהצלחה!`;
+                $('#location-status').style.color = 'var(--success-color)';
+            }, () => {
+                 $('#location-status').textContent = 'לא ניתן לקבל מיקום.';
+                 $('#location-status').style.color = 'var(--danger-color)';
+            });
+        } else {
+             $('#location-status').textContent = 'שירותי מיקום לא נתמכים בדפדפן.';
+        }
+    }
+
+    // --- EVENT LISTENERS & INITIALIZATION ---
+    function initialize() {
+        elements.loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const customerId = elements.customerIdInput.value.trim();
+            if (customerId) login(customerId);
+        });
+        
+        elements.hamburgerBtn.addEventListener('click', toggleNav);
+        elements.navOverlay.addEventListener('click', toggleNav);
+        elements.logoutBtn.addEventListener('click', logout);
+        elements.modalClose.addEventListener('click', () => elements.modal.classList.remove('open'));
+        
+        elements.navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigateTo(e.currentTarget.dataset.page);
+            });
+        });
+
+        checkLoginStatus();
+        requestNotificationPermission();
+    }
+    
+    document.addEventListener('DOMContentLoaded', initialize);
+</script>
+
+</body>
+</html>
