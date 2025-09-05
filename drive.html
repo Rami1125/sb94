@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>מערכת CRM מתקדמת V2</title>
+    <title>מערכת CRM מתקדמת V3</title>
     
     <!-- External Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -64,38 +64,14 @@
         .modal-overlay.active .modal-content { transform: scale(1); }
         input, select, textarea { background-color: var(--color-background); border: 1px solid var(--color-border); border-radius: 0.7rem; transition: all 0.25s; padding: 0.75rem 1rem; width: 100%; }
         input:focus, select:focus, textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 25%, transparent); }
-        .status-פתוח, .status-pending { color: var(--color-success); font-weight: 700; }
-        .status-סגור, .status-completed { color: var(--color-text-muted); }
-        .status-חורג { color: var(--color-danger); font-weight: 700; }
-        .status-in-progress { color: var(--color-info); font-weight: 700; }
-        .overdue-text-blinking { animation: text-pulse-red 1.8s infinite alternate; font-weight: 700; }
-        @keyframes text-pulse-red { from { color: var(--color-danger); } to { color: #FF0000; text-shadow: 0 0 8px rgba(255, 0, 0, 0.8); } }
         
-        /* PWA Simulation Styles */
-        #pwa-container { background-color: #111; padding: 40px 10px 50px; border-radius: 30px; max-width: 420px; margin: 2rem auto; box-shadow: 0 25px 60px rgba(0,0,0,0.4), inset 0 0 15px rgba(255,255,255,0.2); position: relative; }
-        #pwa-screen { background-color: var(--color-background); height: 700px; border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        #pwa-notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 120px; height: 20px; background-color: #111; border-radius: 0 0 10px 10px; z-index: 20; }
-        #pwa-bottom-bar { position: absolute; bottom: -45px; left: 50%; transform: translateX(-50%); width: 150px; height: 5px; background-color: rgba(255,255,255,0.3); border-radius: 10px; }
-        .pwa-header { background-color: var(--color-surface); padding: 1rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10; padding-top: 25px; /* for notch */}
-        .pwa-main { flex-grow: 1; overflow-y: auto; padding: 1rem; }
-        .pwa-nav { background-color: var(--color-surface); display: flex; justify-content: space-around; padding: 0.5rem 0; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); }
-        .pwa-nav-btn { flex-direction: column; color: var(--color-text-muted); font-size: 0.7rem; }
-        .pwa-nav-btn.active { color: var(--color-primary); }
-        .pwa-nav-btn i { font-size: 1.5rem; margin-bottom: 2px; }
-        .pwa-side-menu { position: absolute; top: 0; right: 0; bottom: 0; width: 250px; background-color: var(--color-surface); z-index: 1000; transform: translateX(100%); transition: transform 0.3s ease-in-out; }
-        .pwa-side-menu.open { transform: translateX(0); }
-        .pwa-menu-overlay { position: absolute; inset: 0; background-color: rgba(0,0,0,0.5); z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-        .pwa-menu-overlay.open { opacity: 1; pointer-events: auto; }
-
-        /* Tasks Kanban Styles */
-        .task-board { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem;}
-        .task-column { min-width: 300px; background-color: var(--color-background); border-radius: 0.75rem; padding: 0.75rem; }
-        .task-card { background-color: var(--color-surface); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.07); cursor: grab; border-left: 5px solid; }
-        .task-card:active { cursor: grabbing; }
-        .task-card.priority-high { border-color: var(--color-danger); }
-        .task-card.priority-medium { border-color: var(--color-warning); }
-        .task-card.priority-low { border-color: var(--color-info); }
-        .task-column .sortable-ghost { background-color: color-mix(in srgb, var(--color-primary) 20%, transparent); border-radius: 0.5rem; }
+        /* Responsive Table */
+        @media (max-width: 768px) {
+            .responsive-table thead { display: none; }
+            .responsive-table tr { display: block; border: 1px solid var(--color-border); margin-bottom: 0.5rem; border-radius: 0.75rem; padding: 0.75rem; }
+            .responsive-table td { display: block; border: none; position: relative; padding-left: 50% !important; text-align: left; padding-top: 0.5rem; padding-bottom: 0.5rem; }
+            .responsive-table td:before { content: attr(data-label); font-weight: 600; color: var(--color-text-muted); position: absolute; top: 50%; transform: translateY(-50%); left: 6px; width: 45%; padding-right: 10px; white-space: nowrap; text-align: right; }
+        }
 
     </style>
 </head>
@@ -105,129 +81,58 @@
     <div id="loader-overlay" class="fixed inset-0 bg-gray-500 bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-[1000] opacity-0 pointer-events-none transition-opacity"><div class="w-20 h-20 border-8 border-t-8 border-gray-200 border-t-[var(--color-primary)] rounded-full animate-spin"></div></div>
     <div id="alert-container" class="fixed bottom-6 left-6 z-[1100] space-y-4"></div>
     <div id="notification-container" class="fixed top-6 right-6 z-[1200] space-y-3 w-80"></div>
-    <!-- Add new Task Modal -->
-    <div id="task-modal" class="modal-overlay"><div class="modal-content w-full max-w-lg p-6"><div class="flex items-center justify-between pb-4 border-b"><h2 id="task-modal-title" class="text-2xl font-bold text-[var(--color-primary)]">יצירת משימה חדשה</h2><button onclick="closeModal('task-modal')" class="text-3xl text-[var(--color-text-muted)] hover:text-[var(--color-danger)]">&times;</button></div><form id="task-form" class="space-y-4 pt-4"></form></div></div>
+    
+    <!-- New Order Modal -->
+    <div id="order-modal" class="modal-overlay">
+        <div class="modal-content w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h2 id="order-modal-title" class="text-2xl font-bold text-[var(--color-primary)]">יצירת הזמנה חדשה</h2>
+                <button onclick="closeModal('order-modal')" class="text-3xl text-[var(--color-text-muted)] hover:text-[var(--color-danger)]">&times;</button>
+            </div>
+            <form id="order-form" class="space-y-4 p-6 overflow-y-auto">
+                <!-- Form content will be injected by JavaScript -->
+            </form>
+        </div>
+    </div>
+
 
     <!-- Main CRM Application View -->
     <div id="crm-container">
         <header class="p-6 text-center border-b border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm relative">
-             <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-2"><img src="https://i.postimg.cc/J7JGQYcT/image.jpg" alt="Company Logo" class="h-16 rounded-lg shadow-md border"><h1 class="text-3xl md:text-4xl font-bold text-[var(--color-primary)] mt-2 md:mt-0">מערכת CRM לניהול מכולות V2</h1></div>
+             <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-2"><img src="https://i.postimg.cc/J7JGQYcT/image.jpg" alt="Company Logo" class="h-16 rounded-lg shadow-md border"><h1 class="text-3xl md:text-4xl font-bold text-[var(--color-primary)] mt-2 md:mt-0">מערכת CRM לניהול מכולות V3</h1></div>
             <p class="text-lg text-[var(--color-text-muted)] mb-4">ניהול מתקדם של לקוחות, משימות ונהגים</p>
             <div class="absolute top-5 left-5 flex gap-2">
-                <button id="pwa-view-btn" onclick="showPwaView()" class="text-2xl p-3 rounded-full hover:bg-[var(--color-border)]" title="פתח אפליקציית נהגים"><i class="fas fa-mobile-alt"></i></button>
                 <button id="theme-toggle" class="text-2xl p-3 rounded-full hover:bg-[var(--color-border)]"><i class="fas fa-sun"></i></button>
             </div>
         </header>
         
         <nav class="flex justify-center p-4"><div class="card flex gap-3 p-3 shadow-lg flex-wrap justify-center">
-            <button id="nav-dashboard" class="nav-tab-btn active" onclick="showPage('dashboard')"><i class="fas fa-chart-pie mr-2"></i>לוח מחוונים</button>
-            <button id="nav-container-inventory" class="nav-tab-btn" onclick="showPage('container-inventory')"><i class="fas fa-boxes-stacked mr-2"></i>מלאי מכולות</button>
+            <button id="nav-orders" class="nav-tab-btn active" onclick="showPage('orders')"><i class="fas fa-receipt mr-2"></i>הזמנות</button>
             <button id="nav-tasks" class="nav-tab-btn" onclick="showPage('tasks')"><i class="fas fa-tasks mr-2"></i>ניהול משימות</button>
-            <button id="nav-customer-analysis" class="nav-tab-btn" onclick="showPage('customer-analysis')"><i class="fas fa-user-chart mr-2"></i>ניתוח לקוחות</button>
         </div></nav>
 
         <main class="flex-grow p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
-            <section id="dashboard-page" class="page-content space-y-10"></section>
-            <section id="container-inventory-page" class="page-content hidden space-y-8"></section>
+            <section id="orders-page" class="page-content space-y-8"></section>
             <section id="tasks-page" class="page-content hidden space-y-8"></section>
-            <section id="customer-analysis-page" class="page-content hidden space-y-8"></section>
         </main>
     </div>
     
-    <!-- PWA (Driver's App) Simulation View -->
-    <div id="pwa-container" class="hidden">
-        <div id="pwa-screen">
-            <div id="pwa-notch"></div>
-            <div id="pwa-menu-overlay" onclick="toggleSideMenu()"></div>
-            <aside id="pwa-side-menu">
-                <div class="p-4 border-b flex items-center gap-3 bg-[var(--color-primary)] text-white">
-                    <img src="https://i.postimg.cc/J7JGQYcT/image.jpg" class="h-10 rounded-full border-2 border-white">
-                    <div>
-                        <h3 class="font-bold">אפליקציית נהגים</h3>
-                        <p class="text-sm" id="pwa-driver-name-menu">לא מחובר</p>
-                    </div>
-                </div>
-                <nav class="p-4 space-y-2">
-                    <a href="#" class="block p-2 rounded hover:bg-[var(--color-background)]" onclick="pwaNavigate('schedule')"><i class="fas fa-calendar-alt w-6 mr-2"></i>סידור עבודה</a>
-                    <a href="#" class="block p-2 rounded hover:bg-[var(--color-background)]" onclick="pwaNavigate('history')"><i class="fas fa-history w-6 mr-2"></i>היסטוריית נסיעות</a>
-                    <a href="#" class="block p-2 rounded hover:bg-[var(--color-background)]" onclick="showCrmView()"><i class="fas fa-sign-out-alt w-6 mr-2"></i>חזרה ל-CRM</a>
-                </nav>
-            </aside>
-            <header class="pwa-header">
-                <button onclick="toggleSideMenu()"><i class="fas fa-bars text-xl"></i></button>
-                <h2 id="pwa-title" class="font-bold text-lg">סידור עבודה</h2>
-                <button onclick="pwa.requestNotificationPermission()"><i class="fas fa-bell text-xl"></i></button>
-            </header>
-            <main id="pwa-main-content" class="pwa-main bg-[var(--color-background)]"></main>
-            <nav class="pwa-nav">
-                <button class="btn pwa-nav-btn active" onclick="pwaNavigate('schedule')"><i class="fas fa-calendar-alt"></i><span>היום</span></button>
-                <button class="btn pwa-nav-btn" onclick="pwaNavigate('history')"><i class="fas fa-history"></i><span>היסטוריה</span></button>
-                <button class="btn pwa-nav-btn" onclick="pwaNavigate('profile')"><i class="fas fa-user-circle"></i><span>פרופיל</span></button>
-            </nav>
-        </div>
-        <div id="pwa-bottom-bar"></div>
-    </div>
-
-
 <script type="module">
-    // --- GEMINI V2 UPGRADE ---
-    // This entire script has been refactored and upgraded by Gemini.
-    // New features include:
-    // 1. A fully simulated PWA for drivers.
-    // 2. An interactive task management system with drag & drop.
-    // 3. A simulated push notification system.
-    // 4. Enhanced data models to support new features.
-    // 5. Refined UI/UX and code structure.
-    // NOTE: Server-side logic (Google Apps Script) is simulated here.
-    // Search for "SERVER-SIDE SIMULATION" to see where real backend calls would go.
-    // --- END GEMINI V2 UPGRADE ---
+    // --- GEMINI V3 UPGRADE ---
+    // This version adds the full functionality for creating new orders.
+    // 1. A new "Orders" page is the default view.
+    // 2. A "New Order" button opens a modal form.
+    // 3. The form submits data to the `doPost` function in Code.gs.
+    // 4. The orders table refreshes automatically upon success.
+    // --- END GEMINI V3 UPGRADE ---
 
     // --- CONFIGURATION & STATE ---
-    const SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzsF3kzAxfvtuSlZxmj6-Jn6diCj4OMzTsVO2tXPFx3c15x1fh9qjF_iknXxBeqz_of/exec';
-    const OVERDUE_THRESHOLD_DAYS = 10;
+    const SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzsF3kzAxfvtuSlZxmj6-Jn6diCj4OMzTsVO2tXPFx3c15x1fh9qjF_iknXxBeqz_of/exec'; // !!! החלף בכתובת ה-URL שקיבלת מ-Google Apps Script
     
     let allOrders = [];
     let allTasks = [];
     let allDrivers = [];
-    let charts = {}; 
-    let currentPage = 'dashboard';
-    let appColors = {};
-    let pwaState = {
-        currentDriverId: null,
-        currentPage: 'login',
-    };
-
-    // --- MOCK DATA (replaces initial fetch for demonstration) ---
-    function initializeMockData() {
-        allDrivers = [
-            { id: 1, name: 'ישראל ישראלי', phone: '050-1234567' },
-            { id: 2, name: 'משה כהן', phone: '052-7654321' },
-            { id: 3, name: 'דוד לוי', phone: '054-1122333' }
-        ];
-
-        allOrders = [
-            // ... (Your existing order data would go here)
-            // Example structure with new fields:
-            { 'תעודה': '1001', 'שם לקוח': 'אלון גל', 'תאריך הזמנה': '2023-08-10', 'כתובת': 'הרצליה, רחוב סוקולוב 5', 'סוג פעולה': 'הורדה', 'סטטוס': 'פתוח', 'מספר מכולה ירדה': 'C-205', driverId: 1, sheetRow: 1 },
-            { 'תעודה': '1002', 'שם לקוח': 'בנייני העתיד בע"מ', 'תאריך הזמנה': '2023-07-20', 'כתובת': 'תל אביב-יפו, שדרות רוטשילד 10', 'סוג פעולה': 'הורדה', 'סטטוס': 'פתוח', 'מספר מכולה ירדה': 'C-118', driverId: 2, sheetRow: 2 },
-            { 'תעודה': '1003', 'שם לקוח': 'גינות פאר', 'תאריך הזמנה': '2023-08-25', 'כתובת': 'רעננה, אחוזה 120', 'סוג פעולה': 'החלפה', 'סטטוס': 'פתוח', 'מספר מכולה ירדה': 'C-301', 'מספר מכולה עלתה': 'C-112', driverId: 1, sheetRow: 3 },
-            { 'תעודה': '1004', 'שם לקוח': 'אלון גל', 'תאריך הזמנה': '2023-08-01', 'כתובת': 'הרצליה, רחוב סוקולוב 5', 'סוג פעולה': 'העלאה', 'סטטוס': 'סגור', driverId: 3, sheetRow: 4 },
-        ];
-        
-        allTasks = [
-            { id: 1, title: 'להתקשר ללקוח לגבי חריגה', customerName: 'בנייני העתיד בע"מ', assignedTo: 'מנהל', dueDate: '2023-08-30', status: 'pending', priority: 'high', sheetRow: 1 },
-            { id: 2, title: 'לוודא קבלת תשלום', customerName: 'אלון גל', assignedTo: 'מנהל', dueDate: '2023-09-02', status: 'pending', priority: 'medium', sheetRow: 2 },
-            { id: 3, title: 'לתאם פינוי מכולה', customerName: 'גינות פאר', assignedTo: 'מנהל', dueDate: '2023-09-05', status: 'completed', priority: 'low', sheetRow: 3 },
-        ];
-
-        // Process data like in the original app
-        allOrders.forEach(order => {
-            const orderDate = new Date(order['תאריך הזמנה']);
-            const daysPassed = Math.floor((new Date() - orderDate) / (1000 * 60 * 60 * 24));
-            order._daysPassedCalculated = daysPassed;
-            order._effectiveStatus = order['סטטוס'] === 'סגור' ? 'סגור' : (daysPassed >= OVERDUE_THRESHOLD_DAYS ? 'חורג' : 'פתוח');
-        });
-    }
+    let currentPage = 'orders';
 
     // --- UTILITY FUNCTIONS ---
     const getElem = (id) => document.getElementById(id);
@@ -238,75 +143,86 @@
     const formatDate = (dateInput) => dateInput ? new Date(dateInput).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
     const escapeHTML = (str) => String(str || '').replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag));
 
-    // --- NOTIFICATION SYSTEM (SIMULATED) ---
-    function triggerNotification(title, message, icon = 'fa-info-circle', type = 'info') {
-        const container = getElem('notification-container');
-        const notif = document.createElement('div');
-        notif.className = `w-full bg-[var(--color-surface)] rounded-lg shadow-xl p-4 flex items-start gap-3 border-r-4 border-[var(--color-${type})] transition-all duration-300 transform translate-x-full`;
-        notif.innerHTML = `
-            <i class="fas ${icon} text-[var(--color-${type})] text-xl mt-1"></i>
-            <div>
-                <h4 class="font-bold text-[var(--color-text-base)]">${title}</h4>
-                <p class="text-sm text-[var(--color-text-muted)]">${message}</p>
-            </div>
-            <button class="mr-auto text-lg text-[var(--color-text-muted)] hover:text-[var(--color-danger)]" onclick="this.parentElement.remove()">&times;</button>
-        `;
-        container.prepend(notif);
-        setTimeout(() => notif.style.transform = 'translateX(0)', 100);
-        setTimeout(() => { notif.style.transform = 'translateX(120%)'; setTimeout(() => notif.remove(), 300); }, 6000);
+    function showAlert(message, type = 'info', duration = 5000) {
+        const container = getElem('alert-container');
+        const alertItem = document.createElement('div');
+        const themes = {
+            success: { bg: 'bg-green-100', border: 'border-green-500', text: 'text-green-800', icon: 'fa-check-circle' },
+            error: { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', icon: 'fa-times-circle' },
+            info: { bg: 'bg-blue-100', border: 'border-blue-500', text: 'text-blue-800', icon: 'fa-info-circle' }
+        };
+        const theme = themes[type] || themes.info;
+        alertItem.className = `p-4 rounded-lg border-l-4 shadow-lg flex items-center gap-3 transform translate-x-full opacity-0 transition-all duration-500 ease-out ${theme.bg} ${theme.border} ${theme.text}`;
+        alertItem.innerHTML = `<i class="fas ${theme.icon}"></i><p>${message}</p>`;
+        container.prepend(alertItem);
+        setTimeout(() => { alertItem.style.transform = 'translateX(0)'; alertItem.style.opacity = '1'; }, 100);
+        setTimeout(() => { alertItem.style.transform = 'translateX(100%)'; alertItem.style.opacity = '0'; setTimeout(() => alertItem.remove(), 500); }, duration);
     }
 
+
     // --- API & DATA ---
-    async function api(action, params = {}) { // SERVER-SIDE SIMULATION
-        showLoader();
-        console.log(`Simulating API call: ${action}`, params);
-        // In a real app, this would be a fetch call to SCRIPT_WEB_APP_URL
-        return new Promise(resolve => {
-            setTimeout(() => {
-                hideLoader();
-                let data;
-                switch(action) {
-                    case 'listOrders': data = allOrders; break;
-                    case 'listTasks': data = allTasks; break;
-                    case 'updateTaskStatus': 
-                        const task = allTasks.find(t => t.id === params.id);
-                        if (task) task.status = params.status;
-                        data = task;
-                        triggerNotification('משימה עודכנה', `סטטוס המשימה "${task.title}" שונה ל: ${params.status}`);
-                        break;
-                    case 'createTask':
-                        const newId = Math.max(...allTasks.map(t => t.id), 0) + 1;
-                        const newTask = { ...params, id: newId, sheetRow: newId };
-                        allTasks.push(newTask);
-                        data = newTask;
-                        triggerNotification('משימה חדשה נוצרה', `המשימה "${newTask.title}" נוצרה בהצלחה.`, 'fa-check-circle', 'success');
-                        break;
-                    // Add other actions like updateOrderStatus...
-                    default: data = { error: 'Unknown action' };
-                }
-                resolve({ success: true, data });
-            }, 500); // Simulate network delay
-        });
+    async function apiGet(action) {
+        if (SCRIPT_WEB_APP_URL === 'YOUR_WEB_APP_URL_HERE') {
+            showAlert('יש להגדיר את כתובת ה-API בקוד', 'error');
+            throw new Error('API URL not configured');
+        }
+        const url = new URL(SCRIPT_WEB_APP_URL);
+        url.searchParams.append('action', action);
+        
+        try {
+            const response = await fetch(url, { method: 'GET', redirect: 'follow' });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+            if (!data.success) throw new Error(data.message || 'Server operation failed');
+            return data.data;
+        } catch (error) {
+            showAlert(`שגיאת תקשורת: ${error.message}`, 'error');
+            throw error;
+        }
+    }
+
+    async function apiPost(action, payload) {
+        if (SCRIPT_WEB_APP_URL === 'YOUR_WEB_APP_URL_HERE') {
+            showAlert('יש להגדיר את כתובת ה-API בקוד', 'error');
+            throw new Error('API URL not configured');
+        }
+        try {
+            const response = await fetch(SCRIPT_WEB_APP_URL, {
+                method: 'POST',
+                redirect: 'follow',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Required for Apps Script doPost
+                body: JSON.stringify({ action, payload })
+            });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+            if (!data.success) throw new Error(data.message || 'Server operation failed');
+            return data.data;
+        } catch (error) {
+            showAlert(`שגיאת תקשורת בשליחת נתונים: ${error.message}`, 'error');
+            throw error;
+        }
     }
 
     async function loadInitialData() {
         showLoader();
-        initializeMockData(); // Using mock data for demo
-        // In a real app, you would fetch from the server:
-        // [allOrders, allTasks, allDrivers] = await Promise.all([
-        //     api('listOrders').then(res => res.data),
-        //     api('listTasks').then(res => res.data),
-        //     api('listDrivers').then(res => res.data)
-        // ]);
-        hideLoader();
-        showPage(currentPage);
+        try {
+            [allOrders, allTasks, allDrivers] = await Promise.all([
+                apiGet('listOrders'),
+                apiGet('listTasks'),
+                apiGet('listDrivers')
+            ]);
+            showPage(currentPage);
+        } catch (error) {
+            console.error("Failed to load initial data:", error);
+            // Handle error display if needed
+        } finally {
+            hideLoader();
+        }
     }
     
     // --- PAGE NAVIGATION & RENDERING (CRM) ---
     function showPage(pageId) {
         currentPage = pageId;
-        Object.values(charts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
-
         document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
         document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
         
@@ -316,242 +232,166 @@
         getElem(`nav-${pageId}`).classList.add('active');
         
         const renderFunctions = {
-            'dashboard': renderDashboard,
-            'container-inventory': () => {}, // Placeholder for brevity
-            'tasks': renderTasksPage,
-            'customer-analysis': () => {}, // Placeholder for brevity
+            'orders': renderOrdersPage,
+            'tasks': () => { pageContainer.innerHTML = '<h2>דף משימות (בבנייה)</h2>'; },
         };
         if (renderFunctions[pageId]) renderFunctions[pageId]();
     }
     
-    function renderDashboard() {
-        const page = getElem('dashboard-page');
-        page.innerHTML = `<div class="text-center"><h2 class="text-3xl font-bold mb-3">ברוכים הבאים!</h2><p>זוהי גרסה משודרגת של המערכת, לחץ על <i class="fas fa-mobile-alt"></i> למעלה כדי לראות את אפליקציית הנהגים החדשה.</p></div>`;
-    }
-
-    // --- PAGE: TASKS ---
-    function renderTasksPage() {
-        const page = getElem('tasks-page');
+    // --- ORDERS PAGE ---
+    function renderOrdersPage() {
+        const page = getElem('orders-page');
         page.innerHTML = `
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-3xl font-bold">לוח משימות</h2>
-                <button class="btn btn-primary" onclick="openTaskModal()"><i class="fas fa-plus mr-2"></i>משימה חדשה</button>
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                <h2 class="text-3xl font-bold">רשימת הזמנות</h2>
+                <button class="btn btn-primary w-full sm:w-auto" onclick="openOrderModal()"><i class="fas fa-plus mr-2"></i>הזמנה חדשה</button>
             </div>
-            <div id="task-board-container" class="task-board"></div>
-        `;
-        renderTaskBoard();
-    }
-
-    function renderTaskBoard() {
-        const container = getElem('task-board-container');
-        const statuses = {
-            pending: 'לביצוע',
-            'in-progress': 'בטיפול',
-            completed: 'הושלם'
-        };
-        container.innerHTML = Object.keys(statuses).map(statusKey => `
-            <div class="task-column" data-status="${statusKey}">
-                <h3 class="font-bold text-lg mb-3 p-2 border-b-2">${statuses[statusKey]} (${allTasks.filter(t => t.status === statusKey).length})</h3>
-                <div id="task-list-${statusKey}" class="space-y-2 min-h-[300px]">
-                    ${allTasks.filter(t => t.status === statusKey).map(task => `
-                        <div class="task-card priority-${task.priority}" data-id="${task.id}" draggable="true">
-                            <p class="font-bold">${escapeHTML(task.title)}</p>
-                            <p class="text-sm text-[var(--color-text-muted)]"><i class="fas fa-user mr-1"></i> ${escapeHTML(task.customerName)}</p>
-                            <div class="flex justify-between items-center mt-2 text-xs">
-                                <span><i class="fas fa-calendar-alt mr-1"></i> ${formatDate(task.dueDate)}</span>
-                                <span class="font-bold">${escapeHTML(task.assignedTo)}</span>
-                            </div>
-                        </div>
-                    `).join('')}
+            <div id="orders-table-container" class="card p-4">
+                <div class="overflow-x-auto rounded-lg border">
+                    <table id="orders-table" class="w-full text-right table-auto responsive-table"></table>
                 </div>
             </div>
-        `).join('');
-
-        // Initialize drag and drop
-        Object.keys(statuses).forEach(statusKey => {
-            new Sortable(getElem(`task-list-${statusKey}`), {
-                group: 'tasks',
-                animation: 150,
-                onEnd: async (evt) => {
-                    const taskId = parseInt(evt.item.dataset.id);
-                    const newStatus = evt.to.parentElement.dataset.status;
-                    await api('updateTaskStatus', { id: taskId, status: newStatus });
-                    // No need to re-render, Sortable handles the move. Just update the data.
-                    const task = allTasks.find(t => t.id === taskId);
-                    if (task) task.status = newStatus;
-                }
-            });
-        });
-    }
-
-    function openTaskModal(taskId = null) {
-        const form = getElem('task-form');
-        // In a real app, you'd fetch the task if taskId is provided
-        form.innerHTML = `
-            <div><label class="block text-sm mb-1">כותרת המשימה</label><input type="text" id="task-title" required></div>
-            <div><label class="block text-sm mb-1">שיוך ללקוח</label><select id="task-customer">${[...new Set(allOrders.map(o=>o['שם לקוח']))].map(c => `<option>${c}</option>`).join('')}</select></div>
-            <div><label class="block text-sm mb-1">תאריך יעד</label><input type="date" id="task-duedate" required></div>
-            <div><label class="block text-sm mb-1">משויך ל</label><select id="task-assignee"><option>מנהל</option>${allDrivers.map(d=>`<option>${d.name}</option>`).join('')}</select></div>
-            <div><label class="block text-sm mb-1">עדיפות</label><select id="task-priority"><option value="low">נמוכה</option><option value="medium">בינונית</option><option value="high">גבוהה</option></select></div>
-            <div class="flex justify-end pt-4"><button type="submit" class="btn btn-primary">שמור משימה</button></div>
         `;
-        getElem('task-modal-title').textContent = 'יצירת משימה חדשה';
-        openModal('task-modal');
+        renderOrdersTable();
+    }
+
+    function renderOrdersTable() {
+        const table = getElem('orders-table');
+        if (!table) return;
+
+        let tableHTML = `
+            <thead>
+                <tr class="bg-[var(--color-background)]">
+                    <th class="p-3">תאריך</th>
+                    <th class="p-3">לקוח</th>
+                    <th class="p-3">פעולה</th>
+                    <th class="p-3">סטטוס</th>
+                    <th class="p-3">נהג</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        if (allOrders.length === 0) {
+            tableHTML += `<tr><td colspan="5" class="text-center p-8 text-gray-500">אין הזמנות להצגה. לחץ על "הזמנה חדשה" כדי להתחיל.</td></tr>`;
+        } else {
+            // Sort orders by date, newest first
+            const sortedOrders = [...allOrders].sort((a, b) => new Date(b['תאריך הזמנה']) - new Date(a['תאריך הזמנה']));
+            
+            sortedOrders.forEach(order => {
+                const driver = allDrivers.find(d => d.id == order['מזהה נהג משויך']);
+                tableHTML += `
+                    <tr class="border-t hover:bg-[var(--color-background)]">
+                        <td class="p-3" data-label="תאריך">${formatDate(order['תאריך הזמנה'])}</td>
+                        <td class="p-3 font-semibold" data-label="לקוח">${escapeHTML(order['שם לקוח'])}</td>
+                        <td class="p-3" data-label="פעולה">${escapeHTML(order['סוג פעולה'])}</td>
+                        <td class="p-3" data-label="סטטוס">${escapeHTML(order['סטטוס'])}</td>
+                        <td class="p-3" data-label="נהג">${driver ? escapeHTML(driver.name) : 'לא שויך'}</td>
+                    </tr>`;
+            });
+        }
+        table.innerHTML = tableHTML + '</tbody>';
+    }
+
+    // --- NEW ORDER MODAL & LOGIC ---
+    function openOrderModal() {
+        const form = getElem('order-form');
         
-        form.onsubmit = async (e) => {
-            e.preventDefault();
-            const newTaskData = {
-                title: getElem('task-title').value,
-                customerName: getElem('task-customer').value,
-                dueDate: getElem('task-duedate').value,
-                assignedTo: getElem('task-assignee').value,
-                priority: getElem('task-priority').value,
-                status: 'pending'
-            };
-            await api('createTask', newTaskData);
-            closeModal('task-modal');
-            renderTaskBoard();
-        };
+        // Dynamic list of unique customer names for autocomplete suggestion
+        const customerNames = [...new Set(allOrders.map(o => o['שם לקוח']))];
+
+        form.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="order-customer-name" class="block text-sm mb-1">שם לקוח</label>
+                    <input type="text" id="order-customer-name" name="שם לקוח" list="customer-list" required>
+                    <datalist id="customer-list">
+                        ${customerNames.map(name => `<option value="${escapeHTML(name)}"></option>`).join('')}
+                    </datalist>
+                </div>
+                <div>
+                    <label for="order-date" class="block text-sm mb-1">תאריך הזמנה</label>
+                    <input type="date" id="order-date" name="תאריך הזמנה" required>
+                </div>
+                <div>
+                    <label for="order-address" class="block text-sm mb-1">כתובת</label>
+                    <input type="text" id="order-address" name="כתובת" required>
+                </div>
+                 <div>
+                    <label for="order-phone" class="block text-sm mb-1">טלפון לקוח</label>
+                    <input type="tel" id="order-phone" name="טלפון לקוח">
+                </div>
+                <div>
+                    <label for="order-action-type" class="block text-sm mb-1">סוג פעולה</label>
+                    <select id="order-action-type" name="סוג פעולה" required>
+                        <option value="הורדה">הורדה</option>
+                        <option value="החלפה">החלפה</option>
+                        <option value="העלאה">העלאה</option>
+                    </select>
+                </div>
+                 <div>
+                    <label for="order-driver" class="block text-sm mb-1">שייך לנהג</label>
+                    <select id="order-driver" name="מזהה נהג משויך" required>
+                        <option value="">בחר נהג...</option>
+                        ${allDrivers.map(driver => `<option value="${driver.id}">${escapeHTML(driver.name)}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+            <div class="border-t pt-4 mt-4 flex justify-end">
+                <button type="submit" class="btn btn-primary">צור הזמנה</button>
+            </div>
+        `;
+        
+        // Set default date to today
+        getElem('order-date').valueAsDate = new Date();
+
+        form.onsubmit = handleOrderSubmit;
+        openModal('order-modal');
     }
 
-    // --- PWA SIMULATION ---
-    const pwa = {
-        show: () => {
-            getElem('crm-container').classList.add('hidden');
-            getElem('pwa-container').classList.remove('hidden');
-            pwa.render();
-        },
-        hide: () => {
-            getElem('crm-container').classList.remove('hidden');
-            getElem('pwa-container').classList.add('hidden');
-        },
-        render: () => {
-            const main = getElem('pwa-main-content');
-            switch(pwaState.currentPage) {
-                case 'login': main.innerHTML = pwa.views.login(); break;
-                case 'schedule': main.innerHTML = pwa.views.schedule(); break;
-                // Add other pages like history, profile...
-                default: main.innerHTML = pwa.views.schedule();
-            }
-            getElem('pwa-title').textContent = {
-                login: 'בחירת נהג',
-                schedule: 'סידור עבודה'
-            }[pwaState.currentPage] || 'סידור עבודה';
-        },
-        login: (driverId) => {
-            pwaState.currentDriverId = driverId;
-            pwaState.currentPage = 'schedule';
-            const driver = allDrivers.find(d => d.id === driverId);
-            getElem('pwa-driver-name-menu').textContent = driver.name;
-            pwa.render();
-            triggerNotification(`ברוך הבא, ${driver.name}!`, 'סידור העבודה שלך להיום טעון.', 'fa-user-check', 'success');
-        },
-        requestNotificationPermission: () => { // Simulated
-            triggerNotification('התראות מופעלות', 'כעת תקבל עדכונים חיים על משימות.', 'fa-bell', 'success');
-        },
-        views: {
-            login: () => `
-                <div class="p-4 text-center">
-                    <h1 class="text-2xl font-bold mb-6">התחברות למערכת</h1>
-                    <div class="space-y-3">
-                        ${allDrivers.map(driver => `<button class="w-full btn btn-secondary text-lg" onclick="pwa.login(${driver.id})">${driver.name}</button>`).join('')}
-                    </div>
-                </div>`,
-            schedule: () => {
-                const driverTasks = allOrders.filter(o => o.driverId === pwaState.currentDriverId && o._effectiveStatus !== 'סגור');
-                if (driverTasks.length === 0) return `<div class="text-center p-8"><i class="fas fa-check-circle text-5xl text-green-500 mb-4"></i><h2 class="text-xl font-bold">אין משימות להיום!</h2><p>יום חופשי, תהנה!</p></div>`;
-                return driverTasks.map(task => `
-                    <div class="card p-4 mb-3" onclick="pwa.views.renderTaskDetails(${task.sheetRow})">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="font-bold text-lg">${escapeHTML(task['סוג פעולה'])} - ${escapeHTML(task['שם לקוח'])}</p>
-                                <p class="text-sm text-[var(--color-text-muted)]"><i class="fas fa-map-marker-alt mr-1"></i> ${escapeHTML(task['כתובת'])}</p>
-                            </div>
-                            <span class="text-sm font-bold status-${task._effectiveStatus}">${task._effectiveStatus}</span>
-                        </div>
-                    </div>
-                `).join('');
-            },
-            renderTaskDetails: (orderSheetRow) => {
-                const order = allOrders.find(o => o.sheetRow === orderSheetRow);
-                getElem('pwa-main-content').innerHTML = `
-                    <div class="space-y-4">
-                        <div class="card p-4">
-                           <h2 class="text-2xl font-bold mb-2">${escapeHTML(order['שם לקוח'])}</h2>
-                           <p><strong>סוג פעולה:</strong> ${escapeHTML(order['סוג פעולה'])}</p>
-                           <p><i class="fas fa-map-marker-alt mr-1"></i> ${escapeHTML(order['כתובת'])}</p>
-                           <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order['כתובת'])}" target="_blank" class="btn btn-primary w-full mt-4"><i class="fas fa-diamond-turns-right mr-2"></i>נווט לכתובת</a>
-                        </div>
-                        <div class="card p-4">
-                            <h3 class="font-bold mb-2">עדכון סטטוס</h3>
-                            <div class="grid grid-cols-2 gap-2">
-                                <button class="btn btn-secondary">הגעתי</button>
-                                <button class="btn btn-secondary">${order['סוג פעולה'] === 'הורדה' ? 'הורדתי' : 'העליתי'}</button>
-                            </div>
-                        </div>
-                        <div class="card p-4">
-                            <h3 class="font-bold mb-2">תיעוד מצולם (הדמיה)</h3>
-                            <input type="file" id="photo-upload" class="hidden" accept="image/*" onchange="pwa.handlePhotoSelect(event)">
-                            <label for="photo-upload" class="btn btn-secondary w-full"><i class="fas fa-camera mr-2"></i>צלם תמונה</label>
-                            <img id="photo-preview" class="hidden mt-3 rounded-lg w-full">
-                        </div>
-                    </div>
-                `;
-                getElem('pwa-title').textContent = 'פרטי משימה';
-            }
-        },
-        handlePhotoSelect: (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                getElem('photo-preview').src = e.target.result;
-                getElem('photo-preview').classList.remove('hidden');
-                triggerNotification('תמונה נבחרה', 'התמונה מוכנה להעלאה.', 'fa-image', 'info');
-                // SERVER-SIDE SIMULATION: In a real app, you'd now upload the base64 data (e.target.result)
-                // to your Google Apps Script, which would then save it to Google Drive and link it to the sheet.
-            };
-            reader.readAsDataURL(file);
+    async function handleOrderSubmit(event) {
+        event.preventDefault();
+        showLoader();
+        
+        const formData = new FormData(event.target);
+        const newOrderData = Object.fromEntries(formData.entries());
+        
+        // Add default values required by the sheet
+        newOrderData['תעודה'] = 'TEMP-' + Date.now(); // Temporary ID, sheet should generate a real one
+        newOrderData['סטטוס'] = 'פתוח';
+        // Add any other default fields here
+        newOrderData['שם סוכן'] = '';
+        newOrderData['מספר מכולה ירדה'] = '';
+        newOrderData['מספר מכולה עלתה'] = '';
+
+
+        try {
+            const result = await apiPost('addOrder', newOrderData);
+            showAlert('ההזמנה נוצרה בהצלחה!', 'success');
+            closeModal('order-modal');
+            // Refresh data to show the new order
+            allOrders = await apiGet('listOrders');
+            renderOrdersTable();
+        } catch (error) {
+            console.error("Failed to submit order:", error);
+            // Error alert is already shown by apiPost
+        } finally {
+            hideLoader();
         }
-    };
-    window.pwa = pwa; // Make it globally accessible for inline onclicks
-
-    function showPwaView() { pwa.show(); }
-    function showCrmView() { pwa.hide(); }
-    
-    function toggleSideMenu() {
-        getElem('pwa-side-menu').classList.toggle('open');
-        getElem('pwa-menu-overlay').classList.toggle('open');
     }
-    window.toggleSideMenu = toggleSideMenu;
 
-    function pwaNavigate(page) {
-        // A simple router for the PWA
-        pwaState.currentPage = page;
-        pwa.render();
-        if (getElem('pwa-side-menu').classList.contains('open')) {
-            toggleSideMenu();
-        }
-        // Update active button in nav
-        document.querySelectorAll('.pwa-nav-btn').forEach(btn => btn.classList.remove('active'));
-        const activeBtn = Array.from(document.querySelectorAll('.pwa-nav-btn')).find(b => b.textContent.includes({schedule:'היום',history:'היסטוריה',profile:'פרופיל'}[page]));
-        if(activeBtn) activeBtn.classList.add('active');
-    }
-    window.pwaNavigate = pwaNavigate;
 
     // --- INITIALIZATION ---
     document.addEventListener('DOMContentLoaded', () => {
-        // Mock data initialization. Replace with real data loading.
+        // Load data from Google Sheet on startup
         loadInitialData();
         
         getElem('theme-toggle').addEventListener('click', () => {
             document.body.classList.toggle('dark');
-            // Add theme persistence logic if needed
         });
         
         // Expose globally required functions
         window.showPage = showPage;
-        window.openTaskModal = openTaskModal;
+        window.openOrderModal = openOrderModal;
         window.closeModal = closeModal;
     });
 </script>
