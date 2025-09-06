@@ -1,214 +1,626 @@
-/**
- * @fileoverview Google Apps Script for H. Saban VIP System Backend
- * @version 2.1 - Enhanced doPost to be more flexible, resolving 411 errors.
- * @author Gemini & User Collab
- */
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ניהול מכולות</title>
 
-// --- Global Configuration Settings ---
-// This is the ID of your Google Sheet.
-const SPREADSHEET_ID = '1c1HUdSgnd9ZzZ1NGg-dVXo_iKWCdF3rtZWIqFM9aYVg'; 
-
-// These are the exact names of the sheets (tabs) in your Google Sheet file.
-const SHEETS = {
-    USERS: "לקוחות",
-    ORDERS: "הזמנות",
-    PROJECTS: "פרויקטים",
-    CONTAINERS: "מעקב מכולות", // Corrected sheet name
-    CATALOG: "קטלוג מוצרים"
-    // Add other sheets here as needed
-};
-
-/**
- * Main entry point for all POST requests from the client application.
- * This function acts as a router, directing the request to the correct handler.
- */
-function doPost(e) {
-  // Basic validation to ensure the function is called correctly.
-  if (!e || !e.postData || !e.postData.contents) {
-    return createJsonResponse({ success: false, error: "Invalid request structure." });
-  }
-
-  try {
-    const params = JSON.parse(e.postData.contents);
+    <!-- External Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    // --- FIX [v2.1]: Make action handling flexible ---
-    // Get action from the JSON body first, if it exists.
-    // If not, get it from the URL parameter (e.g., ?action=getUserData).
-    // This handles requests from both the app and other potential sources.
-    const action = params.action || e.parameter.action; 
-    
-    if (!action) {
-      return createJsonResponse({ success: false, error: "Action not specified in request." });
-    }
-
-    let result;
-
-    Logger.log(`Action Received: "${action}", Parameters: ${JSON.stringify(params)}`);
-
-    // Route the request to the appropriate function based on the 'action'.
-    switch (action) {
-      case 'getUserData':
-        result = handleGetUserData(params);
-        break;
-      case 'createOrder':
-        result = handleCreateOrder(params);
-        break;
-      case 'getCatalog':
-        result = handleGetCatalog(params); // Pass params for consistency
-        break;
-      default:
-        result = { success: false, error: 'Unknown action requested.' };
-        break;
-    }
-    
-    return createJsonResponse(result);
-
-  } catch (err) {
-    Logger.log(`ERROR: ${err.toString()} \nStack: ${err.stack}`);
-    return createJsonResponse({ success: false, error: `A server error occurred: ${err.message}` });
-  }
-}
-
-// --- Action Handler Functions ---
-
-/**
- * Handles the 'getUserData' action. Finds a user by phone number and returns all their related data.
- * @param {object} params - The request parameters, containing the 'phone' number.
- * @returns {object} - A response object with success status and all user data, or an error.
- */
-function handleGetUserData(params) {
-    const { phone } = params;
-    if (!phone) {
-        return { success: false, error: "Phone number is required." };
-    }
-
-    const users = getData(SHEETS.USERS);
-    // Find the user with the matching phone number.
-    const user = users.find(u => u['מספר טלפון'] == phone);
-
-    if (!user) {
-        return { success: false, error: "מספר טלפון לא נמצא במערכת" };
-    }
-    
-    const customerId = user['מזהה לקוח'];
-    
-    // Fetch all related data for this customer.
-    const projects = getData(SHEETS.PROJECTS).filter(p => p['מזהה לקוח'] == customerId);
-    // IMPORTANT: In the 'Orders' sheet, the column is 'מספר לקוח', not 'מזהה לקוח'.
-    const orders = getData(SHEETS.ORDERS).filter(o => o['מספר לקוח'] == customerId);
-    const containers = getData(SHEETS.CONTAINERS); // In a real app, you would filter this too.
-    
-    return {
-        success: true,
-        data: {
-            user: user,
-            projects: projects,
-            orders: orders,
-            containers: containers
+    <style>
+        :root {
+            --bg-main: #f0f4f8;
+            --bg-surface: #ffffff;
+            --primary: #2c5282;
+            --primary-light: #3b82f6;
+            --text-dark: #1a202c;
+            --text-light: #4a5568;
+            --border-color: #e2e8f0;
+            --danger: #e53e3e;
+            --success: #38a169;
+            --font-main: 'Rubik', sans-serif;
         }
-    };
-}
-
-/**
- * Handles the 'createOrder' action. Creates a new order in the 'Orders' sheet.
- * @param {object} params - The request parameters for the new order.
- * @returns {object} - A response object with success status and the new order ID.
- */
-function handleCreateOrder(params) {
-    const { phone, projectId, type, action, items } = params;
-
-    // First, find the customer ID from the phone number.
-    const users = getData(SHEETS.USERS);
-    const user = users.find(u => u['מספר טלפון'] == phone);
-    if (!user) {
-        return { success: false, error: "Customer not found for this phone number." };
-    }
-    const customerId = user['מזהה לקוח'];
-
-    const ordersSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEETS.ORDERS);
-    
-    const newOrderId = `ORD-${Utilities.getUuid()}`;
-    const now = new Date();
-
-    // Create the new row to be added to the sheet.
-    // The order of items in this array MUST match the order of columns in the 'הזמנות' sheet.
-    const newRow = [
-      newOrderId, // מזהה הזמנה
-      customerId, // מספר לקוח
-      projectId,  // פרויקט
-      '', // כתובת Waze link (optional)
-      type, // סוג הזמנה
-      now, // קטגוריית סטטוס (using order date)
-      action, // סוג פעולה
-      now, // תאריך הזמנה
-      'ממתין לביצוע', // סטטוס
-      JSON.stringify(items), // פריטים (as a JSON string)
-      '', // מס׳ מכולה (optional)
-      0,  // משך שכירות בימים (optional)
-      now, // created_at
-      now, // updated_at
-      user['שם לקוח'] // modified_by
-    ];
-
-    ordersSheet.appendRow(newRow);
-
-    return {
-        success: true,
-        data: {
-            orderId: newOrderId,
-            status: 'ממתין לביצוע'
+        html, body {
+            overscroll-behavior-y: contain;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background-color: #2d3748; /* Dark background for the 'phone' */
         }
+        body { 
+            font-family: var(--font-main); 
+            color: var(--text-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* Samsung S25-like frame */
+        .mobile-frame {
+            width: 100%;
+            height: 100%;
+            max-width: 420px;
+            max-height: 880px;
+            background-color: var(--bg-main);
+            border-radius: 40px;
+            box-shadow: 0 0 40px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            border: 8px solid #1a202c;
+        }
+
+        /* Dynamic content area */
+        #app-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--bg-surface);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        /* Main Content */
+        main {
+            flex-grow: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 1.25rem;
+        }
+
+        /* Login Screen */
+        #login-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, #1a202c 100%);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+        }
+        .logo {
+             width: 100px;
+             height: 100px;
+             border-radius: 20px;
+             margin-bottom: 1.5rem;
+             box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        /* Hamburger Menu */
+        #side-menu {
+            position: absolute;
+            top: 0;
+            right: -300px; /* Start off-screen */
+            width: 280px;
+            height: 100%;
+            background-color: var(--bg-surface);
+            z-index: 2000;
+            transition: right 0.3s ease-in-out;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+        }
+        #side-menu.open {
+            right: 0;
+        }
+        #menu-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1999;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        #menu-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: absolute;
+            inset: 0;
+            background-color: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background-color: var(--bg-surface);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 500px;
+            transform: scale(0.95);
+            transition: transform 0.2s;
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        /* Utility classes */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary {
+            background-color: var(--primary-light);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary);
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+            background-color: #f7fafc;
+        }
+
+        /* Spinner */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-frame">
+        <div id="app-container">
+            <!-- App content will be rendered here -->
+        </div>
+    </div>
+
+    <!-- Modal Template -->
+    <div id="modal-container" class="modal-overlay">
+        <div class="modal-content">
+           <!-- Modal content will be injected here -->
+        </div>
+    </div>
+
+<script>
+    // --- CONFIGURATION & STATE ---
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby801flQ7fxgXV7UwcCF-kYyjb3quGcL_r93zcpyYJpLDIY03ob6yqBqaWB2gTLq_B1/exec';
+    const RENTAL_WARNING_DAYS = 10;
+    
+    let state = {
+        isLoggedIn: false,
+        isLoading: true,
+        userProfile: null,
+        currentContainer: null,
+        orderHistory: [],
+        customerPhone: null,
     };
-}
 
-
-/**
- * Handles the 'getCatalog' action. Returns the entire product catalog.
- * @param {object} params - The request parameters (not used currently, but good practice).
- * @returns {object} - A response object with success status and the catalog data.
- */
-function handleGetCatalog(params) {
-    const catalogData = getData(SHEETS.CATALOG);
-    return { success: true, data: catalogData };
-}
-
-
-// --- Utility Functions ---
-
-/**
- * A generic function to get all data from a sheet and convert it to an array of objects.
- * This makes the data much easier to work with.
- * @param {string} sheetName - The name of the sheet to get data from.
- * @returns {Array<Object>} - An array of objects, where each object represents a row.
- */
-function getData(sheetName) {
-  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(sheetName);
-  if (!sheet) return [];
-  const range = sheet.getDataRange();
-  const values = range.getValues();
-  if (values.length < 2) return []; // No data beyond headers
-
-  const headers = values[0];
-  const data = [];
-
-  for (let i = 1; i < values.length; i++) {
-    let rowObject = {};
-    for (let j = 0; j < headers.length; j++) {
-      rowObject[headers[j]] = values[i][j];
+    // --- API & DATA HANDLING ---
+    
+    /**
+     * Central function for all API calls to the Google Apps Script.
+     * @param {string} action - The 'action' parameter for the script's doGet/doPost.
+     * @param {object} params - An object of parameters for the request.
+     * @param {string} method - 'GET' or 'POST'.
+     * @returns {Promise<any>} - The JSON response data from the script.
+     */
+    async function apiCall(action, params = {}, method = 'GET') {
+        const url = new URL(SCRIPT_URL);
+        
+        try {
+            if (method === 'GET') {
+                url.searchParams.append('action', action);
+                for (const key in params) {
+                    url.searchParams.append(key, params[key]);
+                }
+                const response = await fetch(url, { method: 'GET', redirect: 'follow' });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return await response.json();
+            } else { // POST
+                const payload = { action, ...params };
+                const response = await fetch(url, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Required by Apps Script
+                    body: JSON.stringify(payload),
+                });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return await response.json();
+            }
+        } catch (error) {
+            console.error("API Error:", error);
+            showToast("שגיאת תקשורת. בדוק את החיבור ונסה שוב.", 'error');
+            throw error; // Re-throw to handle it in the calling function
+        }
     }
-    data.push(rowObject);
-  }
-  return data;
-}
 
-/**
- * Creates a standardized JSON response object for the web app.
- * @param {object} obj - The JavaScript object to be returned as JSON.
- * @returns {ContentService.TextOutput} - The JSON response.
- */
-function createJsonResponse(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+    /**
+     * Login function: fetches all data for a given customer phone.
+     * @param {string} phone - The customer's phone number.
+     */
+    async function login(phone) {
+        showLoader(true, 'מאמת נתונים...');
+        try {
+            const response = await apiCall('getCustomerData', { phone });
+            if (response.success && response.data.profile) {
+                state = {
+                    ...state,
+                    isLoggedIn: true,
+                    userProfile: response.data.profile,
+                    currentContainer: response.data.currentContainer,
+                    orderHistory: response.data.orderHistory,
+                    customerPhone: phone,
+                };
+                localStorage.setItem('customerPhone', phone);
+                showToast(`ברוך הבא, ${state.userProfile['שם לקוח']}!`);
+                renderApp();
+            } else {
+                showToast("מספר טלפון לא נמצא במערכת.", 'error');
+                localStorage.removeItem('customerPhone');
+            }
+        } catch (error) {
+            // Error is already logged by apiCall
+        } finally {
+            showLoader(false);
+        }
+    }
 
+    function logout() {
+        localStorage.removeItem('customerPhone');
+        state = { isLoggedIn: false, isLoading: false, userProfile: null, currentContainer: null, orderHistory: [], customerPhone: null };
+        renderApp();
+        showToast("התנתקת בהצלחה.");
+    }
+
+    // --- RENDERING ---
+
+    function renderApp() {
+        const container = document.getElementById('app-container');
+        if (state.isLoading) {
+            container.innerHTML = `<div class="flex justify-center items-center h-full bg-gray-800"><div class="spinner"></div></div>`;
+            return;
+        }
+        if (!state.isLoggedIn) {
+            container.innerHTML = renderLoginScreen();
+            attachLoginListener();
+        } else {
+            container.innerHTML = renderMainLayout();
+            renderDashboardPage(); // Default page
+            attachMainListeners();
+        }
+    }
+
+    function renderLoginScreen() {
+        return `
+            <div id="login-screen">
+                <img src="https://i.postimg.cc/J7JGQYcT/image.jpg" alt="Eco Containers Logo" class="logo">
+                <h1 class="text-3xl font-bold mb-2">ניהול מכולות</h1>
+                <p class="text-lg text-gray-300 mb-8">הזן מספר טלפון לצפייה בנתונים</p>
+                <form id="login-form" class="w-full max-w-sm">
+                    <input type="tel" id="phone-input" class="input-field text-center text-lg mb-4 text-gray-800" placeholder="05X-XXXXXXX" required>
+                    <button type="submit" class="btn btn-primary w-full text-lg">התחבר</button>
+                </form>
+                <div id="loader" class="hidden mt-4"></div>
+            </div>`;
+    }
+
+    function renderMainLayout() {
+        const user = state.userProfile;
+        return `
+            <div id="menu-overlay" onclick="toggleMenu()"></div>
+            <aside id="side-menu" class="p-4">
+                <div class="text-center mb-8">
+                    <img src="https://i.pravatar.cc/100?u=${user['טלפון']}" alt="Avatar" class="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-gray-200">
+                    <h2 class="text-xl font-bold">${user['שם לקוח']}</h2>
+                    <p class="text-sm text-gray-500">${user['איש קשר']}</p>
+                </div>
+                <nav class="flex flex-col space-y-2">
+                    <a href="#" class="menu-item active" data-page="dashboard">
+                        <i class="fas fa-tachometer-alt w-6"></i><span>מצב נוכחי</span>
+                    </a>
+                    <a href="#" class="menu-item" data-page="history">
+                        <i class="fas fa-history w-6"></i><span>היסטוריית הזמנות</span>
+                    </a>
+                </nav>
+                <button id="logout-btn" class="absolute bottom-4 left-4 right-4 text-red-500 hover:bg-red-100 p-2 rounded-lg flex items-center gap-2">
+                    <i class="fas fa-sign-out-alt"></i><span>התנתק</span>
+                </button>
+            </aside>
+            <header class="p-4 flex justify-between items-center">
+                <h1 id="header-title" class="text-xl font-bold text-gray-700">מצב נוכחי</h1>
+                <button id="menu-toggle" class="text-2xl text-gray-600">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </header>
+            <main id="page-content"></main>
+        `;
+    }
+
+    function renderDashboardPage() {
+        const container = document.getElementById('page-content');
+        const { currentContainer } = state;
+
+        if (!currentContainer || Object.keys(currentContainer).length === 0) {
+            container.innerHTML = `
+                <div class="bg-white p-6 rounded-lg shadow text-center">
+                    <i class="fas fa-check-circle text-5xl text-green-500 mb-4"></i>
+                    <h2 class="text-xl font-bold mb-2">אין מכולה פעילה</h2>
+                    <p class="text-gray-600 mb-6">אין לך כרגע מכולה בשכירות. לחץ למטה כדי לבצע הזמנה חדשה.</p>
+                    <button class="btn btn-primary" onclick="openNewOrderModal()">הזמן מכולה חדשה</button>
+                </div>`;
+            return;
+        }
+
+        const orderDate = new Date(currentContainer['תאריך הזמנה']);
+        const daysInRent = Math.floor((new Date() - orderDate) / (1000 * 60 * 60 * 24));
+        const isOverdue = daysInRent >= RENTAL_WARNING_DAYS;
+        
+        container.innerHTML = `
+            <div class="bg-white p-5 rounded-lg shadow-md mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold">מכולה נוכחית</h2>
+                    <span class="text-sm font-semibold px-3 py-1 rounded-full ${isOverdue ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">
+                        ${isOverdue ? `חריגה של ${daysInRent - RENTAL_WARNING_DAYS + 1} ימים` : 'תקין'}
+                    </span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div><strong class="block text-gray-500">תעודה</strong><span>${currentContainer['תעודה'] || 'N/A'}</span></div>
+                    <div><strong class="block text-gray-500">מספר מכולה</strong><span>${currentContainer['מספר מכולה ירדה'] || 'N/A'}</span></div>
+                    <div><strong class="block text-gray-500">תאריך הצבה</strong><span>${orderDate.toLocaleDateString('he-IL')}</span></div>
+                    <div><strong class="block text-gray-500">ימים בשכירות</strong><span>${daysInRent}</span></div>
+                    <div class="col-span-2"><strong class="block text-gray-500">כתובת</strong><span>${currentContainer['כתובת'] || 'N/A'}</span></div>
+                </div>
+            </div>
+             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <button class="action-btn bg-blue-500" onclick="openNewOrderModal('החלפה')"><i class="fas fa-sync-alt"></i><span>החלפת מכולה</span></button>
+                <button class="action-btn bg-green-500" onclick="openNewOrderModal('פינוי')"><i class="fas fa-truck"></i><span>פינוי פסולת</span></button>
+                <button class="action-btn bg-gray-700" onclick="openNewOrderModal('חדשה')"><i class="fas fa-plus"></i><span>הזמנה חדשה</span></button>
+            </div>
+        `;
+    }
+
+    function renderHistoryPage() {
+        const container = document.getElementById('page-content');
+        let content = `<div class="space-y-4">`;
+        if (state.orderHistory.length === 0) {
+            content += `<p class="text-center text-gray-500">אין היסטוריית הזמנות להצגה.</p>`;
+        } else {
+            state.orderHistory.forEach(order => {
+                const orderDate = new Date(order['תאריך הזמנה']);
+                const status = (String(order['סטטוס']).toLowerCase() === 'סגור') ? 
+                    `<span class="text-green-600 font-semibold">סגור</span>` : 
+                    `<span class="text-blue-600 font-semibold">פתוח</span>`;
+                
+                content += `
+                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-bold">${order['סוג פעולה'] || 'הזמנה'}</p>
+                                <p class="text-sm text-gray-500">${order['כתובת']}</p>
+                            </div>
+                            <p class="text-sm text-gray-500">${orderDate.toLocaleDateString('he-IL')}</p>
+                        </div>
+                        <div class="mt-3 pt-3 border-t text-xs flex justify-between">
+                            <span>תעודה: ${order['תעודה']}</span>
+                            <span>סטטוס: ${status}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        content += `</div>`;
+        container.innerHTML = content;
+    }
+
+
+    // --- MODALS & UI ---
+
+    function openNewOrderModal(orderType = 'חדשה') {
+        const modalContainer = document.getElementById('modal-container');
+        const title = {
+            'החלפה': 'בקשה להחלפת מכולה',
+            'פינוי': 'בקשה לפינוי פסולת',
+            'חדשה': 'הזמנת מכולה חדשה'
+        }[orderType];
+
+        modalContainer.innerHTML = `
+            <div class="modal-content">
+                <h3 class="text-xl font-bold mb-4">${title}</h3>
+                <form id="new-order-form">
+                    <input type="hidden" name="orderType" value="${orderType}">
+                    <div class="mb-4">
+                        <label for="address" class="block text-sm font-medium text-gray-700 mb-1">כתובת</label>
+                        <input type="text" name="address" class="input-field" value="${state.currentContainer?.['כתובת'] || ''}" required>
+                    </div>
+                    <div class="mb-4">
+                         <label class="block text-sm font-medium text-gray-700 mb-1">מיקום (אופציונלי)</label>
+                         <button type="button" id="get-location-btn" class="text-sm text-blue-600 hover:underline">שלח מיקום נוכחי</button>
+                         <input type="hidden" name="location">
+                         <p id="location-status" class="text-xs text-gray-500 mt-1"></p>
+                    </div>
+                    <div class="mb-4">
+                        <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">הערות</label>
+                        <textarea name="notes" rows="3" class="input-field" placeholder="לדוגמה: להניח ליד הגדר"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-3 mt-6">
+                        <button type="button" class="btn bg-gray-200 text-gray-700" onclick="closeModal()">ביטול</button>
+                        <button type="submit" class="btn btn-primary">שלח בקשה</button>
+                    </div>
+                </form>
+            </div>`;
+        modalContainer.classList.add('active');
+        attachOrderFormListeners();
+    }
+    
+    function closeModal() {
+        document.getElementById('modal-container').classList.remove('active');
+    }
+
+    function showLoader(show, text = 'טוען...') {
+        const form = document.getElementById('login-form');
+        const loader = document.getElementById('loader');
+        if (!form || !loader) return;
+
+        if (show) {
+            form.style.display = 'none';
+            loader.innerHTML = `<div class="spinner border-t-blue-500"></div><p class="mt-2 text-white">${text}</p>`;
+            loader.classList.remove('hidden');
+        } else {
+            form.style.display = 'block';
+            loader.classList.add('hidden');
+        }
+    }
+    
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `fixed top-5 right-5 p-4 rounded-lg shadow-lg text-white ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
+
+    // --- EVENT LISTENERS ---
+
+    function attachLoginListener() {
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const phone = document.getElementById('phone-input').value;
+            login(phone);
+        });
+    }
+
+    function attachMainListeners() {
+        document.getElementById('menu-toggle').addEventListener('click', toggleMenu);
+        document.getElementById('logout-btn').addEventListener('click', logout);
+        
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = e.currentTarget.dataset.page;
+                
+                document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+
+                const titles = { dashboard: 'מצב נוכחי', history: 'היסטוריית הזמנות' };
+                document.getElementById('header-title').textContent = titles[page];
+                
+                if (page === 'dashboard') renderDashboardPage();
+                else if (page === 'history') renderHistoryPage();
+
+                toggleMenu(false); // Close menu after selection
+            });
+        });
+    }
+    
+    function attachOrderFormListeners() {
+        document.getElementById('get-location-btn').addEventListener('click', async () => {
+            if (!navigator.geolocation) {
+                showToast("דפדפן לא תומך בשירותי מיקום.", 'error');
+                return;
+            }
+            const btn = document.getElementById('get-location-btn');
+            const statusEl = document.getElementById('location-status');
+            btn.disabled = true;
+            statusEl.textContent = 'מאחזר מיקום...';
+            
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    const locationString = `${latitude},${longitude}`;
+                    document.querySelector('input[name="location"]').value = locationString;
+                    statusEl.textContent = 'מיקום נשמר בהצלחה!';
+                    statusEl.style.color = 'green';
+                    btn.disabled = false;
+                },
+                () => {
+                    statusEl.textContent = 'שליחת מיקום נכשלה.';
+                    statusEl.style.color = 'red';
+                    btn.disabled = false;
+                    showToast("לא אישרת גישה למיקום.", 'error');
+                }
+            );
+        });
+        
+        document.getElementById('new-order-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const orderData = Object.fromEntries(formData.entries());
+            orderData.phone = state.customerPhone; // Add customer phone to the request
+
+            showToast("שולח בקשה...", 'success');
+            closeModal();
+            
+            try {
+                const response = await apiCall('createOrder', orderData, 'POST');
+                if (response.success) {
+                    showToast("הבקשה נשלחה בהצלחה!", 'success');
+                    // Refresh data after new order
+                    await login(state.customerPhone);
+                } else {
+                    throw new Error(response.message || 'Unknown error');
+                }
+            } catch (error) {
+                // Error toast is already shown by apiCall
+            }
+        });
+    }
+
+    function toggleMenu(force) {
+        const menu = document.getElementById('side-menu');
+        const overlay = document.getElementById('menu-overlay');
+        const shouldOpen = force !== undefined ? force : !menu.classList.contains('open');
+        menu.classList.toggle('open', shouldOpen);
+        overlay.classList.toggle('open', shouldOpen);
+    }
+    
+
+    // --- INITIALIZATION ---
+    function init() {
+        state.isLoading = true;
+        renderApp();
+        const savedPhone = localStorage.getItem('customerPhone');
+        if (savedPhone) {
+            login(savedPhone);
+        } else {
+            state.isLoading = false;
+            renderApp();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+
+</script>
+</body>
+</html>
