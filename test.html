@@ -128,6 +128,8 @@
 
         /**
          * A wrapper for the fetch API to communicate with the Apps Script backend.
+         * IMPORTANT: This now requires your Apps Script to be deployed with
+         * 'Who has access' set to 'Anyone' or 'Anyone, even anonymous'.
          * @param {string} action The action to perform (e.g., 'login', 'getProjects').
          * @param {object} params The GET parameters.
          * @param {string} method The HTTP method ('GET' or 'POST').
@@ -145,7 +147,8 @@
             const options = {
                 method: method,
                 redirect: 'follow',
-                mode: 'no-cors' // Use no-cors to prevent browser issues
+                // Removed 'mode: no-cors' to allow the browser to read the response.
+                // This requires proper CORS headers from the Apps Script.
             };
             
             if (method === 'POST' && postData) {
@@ -159,24 +162,13 @@
                 showLoading();
                 const response = await fetch(url.toString(), options);
                 
-                // Since we use no-cors, we can't read the response. We rely on the script executing.
-                // In a production environment, you would handle this differently, but for Apps Script,
-                // this is a common and functional approach.
-                if (method === 'POST') {
-                    // For POST, we assume success and refresh the data
-                    return { status: 'success' };
-                } else {
-                    // For GET, we assume success and return the response text
-                    const data = await response.text();
-                    // We must manually parse the JSON due to the no-cors mode, which is not ideal,
-                    // but is a known workaround for Apps Script.
-                    try {
-                        return JSON.parse(data);
-                    } catch (e) {
-                        console.error('Failed to parse JSON response:', data);
-                        return null;
-                    }
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
+                
+                const data = await response.json();
+                return data;
+                
             } catch (error) {
                 console.error('API call failed:', error);
                 return null;
@@ -195,7 +187,7 @@
 
         function renderProjects() {
             projectsContainer.innerHTML = '';
-            if (appState.projects.length === 0) {
+            if (!appState.projects || appState.projects.length === 0) {
                 projectsContainer.innerHTML = '<p class="text-center text-gray-500">לא נמצאו פרויקטים.</p>';
                 return;
             }
@@ -224,7 +216,13 @@
             userNameElement.textContent = appState.currentUser.name;
 
             // Fetch and render projects
-            appState.projects = await apiCall('getProjects', { customerId: appState.currentUser.customerId });
+            const projectsResult = await apiCall('getProjects', { customerId: appState.currentUser.customerId });
+            if (projectsResult && projectsResult.status === 'success') {
+                appState.projects = projectsResult.data;
+            } else {
+                appState.projects = [];
+                console.error('Failed to fetch projects.');
+            }
             renderProjects();
         }
 
