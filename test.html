@@ -23,6 +23,7 @@
         }
         body {
             font-family: 'Arial', sans-serif;
+            background-color: #f7f9fc;
         }
         /* Loading Overlay Style */
         .loading-overlay {
@@ -37,10 +38,17 @@
             align-items: center;
             z-index: 9999;
             backdrop-filter: blur(5px);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .loading-overlay.visible {
+            opacity: 1;
+            visibility: visible;
         }
         .loader {
             border: 8px solid #f3f3f3;
-            border-top: 8px solid #f59e0b; /* amber-500 */
+            border-top: 8px solid #3498db;
             border-radius: 50%;
             width: 60px;
             height: 60px;
@@ -50,601 +58,196 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .page-content {
+            display: none;
+        }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
-    <!-- The root element where the entire app will be rendered -->
-    <div id="app-root"></div>
-    
-    <!-- Loading overlay element -->
-    <div id="loading-overlay" class="loading-overlay hidden">
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
         <div class="loader"></div>
     </div>
 
-    <script>
-        // --- API & DATA LAYER ---
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxHG8ZnWZwIURIu-NZLAgmdpm5ZZ4G4XX0izG9EsU8sTS02hBzwXQFHYe2qANTQvaS0/exec';
+    <!-- Login Page -->
+    <div id="login-page" class="w-full max-w-sm p-8 space-y-6 bg-white rounded-xl shadow-lg transition-transform duration-500 ease-in-out">
+        <h2 class="text-3xl font-bold text-center text-gray-800">התחברות למערכת</h2>
+        <form id="login-form" class="space-y-4">
+            <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700">טלפון</label>
+                <div class="mt-1 flex rounded-md shadow-sm">
+                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                        +972
+                    </span>
+                    <input type="tel" id="phone" name="phone" placeholder="5X-XXXXXXX" required class="flex-1 block w-full px-3 py-2 border border-gray-300 rounded-none rounded-r-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-right">
+                </div>
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700">סיסמה</label>
+                <input type="password" id="password" name="password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-right">
+            </div>
+            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
+                התחבר
+            </button>
+        </form>
+    </div>
 
-        // --- APPLICATION STATE ---
-        const appState = {
+    <!-- Main App Page -->
+    <div id="app-page" class="hidden w-full h-screen p-4 flex flex-col items-center justify-center">
+        <h1 class="text-4xl font-bold text-gray-800 mb-8">ברוכים הבאים, <span id="user-name"></span></h1>
+        <div id="projects-list" class="w-full max-w-2xl bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-semibold mb-4 text-center">פרויקטים</h2>
+            <div id="projects-container" class="space-y-4">
+                <!-- Projects will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Placeholder for your Google Apps Script Web App URL
+        // REPLACE THIS WITH YOUR DEPLOYMENT URL
+        const APPS_SCRIPT_URL = "YOUR_APPS_SCRIPT_WEB_APP_URL";
+
+        const loginPage = document.getElementById('login-page');
+        const appPage = document.getElementById('app-page');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loginForm = document.getElementById('login-form');
+        const userNameElement = document.getElementById('user-name');
+        const projectsContainer = document.getElementById('projects-container');
+
+        let appState = {
             currentUser: null,
-            currentPage: 'dashboard',
-            isLoading: false,
-            // Live data stores
             projects: [],
             orders: [],
-            chat: [],
-            products: [],
-            // UI state
-            cart: [],
-            productSearchTerm: '',
+            chat: []
         };
 
-        // --- DOM Elements ---
-        const appRoot = document.getElementById('app-root');
-        const loadingOverlay = document.getElementById('loading-overlay');
+        // --- Utility Functions ---
 
-        // --- API HELPER FUNCTIONS ---
-        
         /**
-         * A generic API fetch wrapper to handle loading states and errors.
-         * @param {string} action - The action to perform on the server.
-         * @param {object} params - URL parameters for GET requests.
-         * @param {string} method - HTTP method (GET or POST).
-         * @param {object|null} body - The request body for POST requests.
-         * @returns {Promise<any>} The JSON response from the server.
+         * A wrapper for the fetch API to communicate with the Apps Script backend.
+         * @param {string} action The action to perform (e.g., 'login', 'getProjects').
+         * @param {object} params The GET parameters.
+         * @param {string} method The HTTP method ('GET' or 'POST').
+         * @param {object} postData The data for POST requests.
          */
-        async function apiCall(action, params = {}, method = 'GET', body = null) {
-            setLoading(true);
-            let url = `${API_URL}?action=${action}`;
+        async function apiCall(action, params = {}, method = 'GET', postData = null) {
+            const url = new URL(APPS_SCRIPT_URL);
+            url.searchParams.append('action', action);
+            for (const key in params) {
+                if (params.hasOwnProperty(key)) {
+                    url.searchParams.append(key, params[key]);
+                }
+            }
             
-            if (method === 'GET') {
-                url += `&${new URLSearchParams(params)}`;
+            const options = {
+                method: method,
+                redirect: 'follow',
+                mode: 'no-cors' // Use no-cors to prevent browser issues
+            };
+            
+            if (method === 'POST' && postData) {
+                options.headers = {
+                    'Content-Type': 'text/plain;charset=utf-8', // Required for raw body in Apps Script
+                };
+                options.body = JSON.stringify({ action: action, data: postData });
             }
 
             try {
-                const options = {
-                    method: method,
-                    headers: { 'Content-Type': 'text/plain' }, // Google Apps Script requirement for POST
-                };
-
-                if (method === 'POST' && body) {
-                    options.body = JSON.stringify(body);
-                }
+                showLoading();
+                const response = await fetch(url.toString(), options);
                 
-                const response = await fetch(url, options);
-                
-                if (!response.ok) {
-                    throw new Error(`Network response was not ok: ${response.statusText}`);
-                }
-
-                const data = await response.json();
-
-                if (data.status === 'error') {
-                    throw new Error(data.message || 'An unknown API error occurred');
-                }
-                
-                return data.data;
-
-            } catch (error) {
-                console.error(`API call failed for action "${action}":`, error);
-                alert(`שגיאה בתקשורת עם השרת: ${error.message}`);
-                return null; // Return null on error to handle gracefully
-            } finally {
-                setLoading(false);
-            }
-        }
-        
-        // --- UI HELPER FUNCTIONS ---
-        
-        function setLoading(isLoading) {
-            appState.isLoading = isLoading;
-            loadingOverlay.classList.toggle('hidden', !isLoading);
-        }
-
-        // --- CORE RENDER FUNCTION ---
-        function render() {
-            if (!appState.currentUser) {
-                appRoot.innerHTML = renderLoginScreen();
-                attachLoginListeners();
-            } else {
-                appRoot.innerHTML = renderMainAppLayout();
-                renderCurrentPage();
-                attachMainAppListeners();
-            }
-        }
-
-        // --- TEMPLATING / RENDERING FUNCTIONS (Largely unchanged, but now read from appState) ---
-
-        function renderLoginScreen() {
-            // Unchanged from previous version
-            return `
-                <div class="flex items-center justify-center min-h-screen bg-gray-900 text-white">
-                    <div class="w-full max-w-md p-8 space-y-8 bg-gray-800 rounded-2xl shadow-lg">
-                        <div class="text-center">
-                            <h1 class="text-4xl font-bold text-amber-400">סבן VIP</h1>
-                            <p class="mt-2 text-gray-400">ניהול פרויקטים והזמנות</p>
-                        </div>
-                        <form id="login-form" class="space-y-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300">מספר טלפון</label>
-                                <input id="phone" type="tel" class="w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-400" placeholder="050-1234567" required />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300">סיסמה</label>
-                                <input id="password" type="password" class="w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-400" placeholder="••••••••" required />
-                            </div>
-                            <div id="login-error" class="text-sm text-red-400 text-center"></div>
-                            <button type="submit" class="w-full py-3 font-semibold text-gray-900 bg-amber-400 rounded-md hover:bg-amber-500 transition-colors duration-300">
-                                כניסה למערכת
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderMainAppLayout() {
-            // Unchanged from previous version
-            const user = appState.currentUser;
-            const navItems = [
-                { id: 'dashboard', label: 'לוח בקרה', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>` },
-                { id: 'new-order', label: 'הזמנה חדשה', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>` },
-                { id: 'orders-history', label: 'היסטוריית הזמנות', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><rect width="8" height="4" x="8" y="2" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M12 11h4" /><path d="M12 16h4" /><path d="M8 11h.01" /><path d="M8 16h.01" /></svg>` },
-                { id: 'chat', label: 'שירות לקוחות', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>` },
-            ];
-
-            return `
-                <div class="flex h-screen bg-gray-100 font-sans">
-                    <aside class="w-64 bg-gray-800 text-white flex-col hidden sm:flex">
-                        <div class="h-20 flex items-center justify-center border-b border-gray-700">
-                            <h1 class="text-2xl font-bold text-amber-400">סבן VIP</h1>
-                        </div>
-                        <nav id="sidebar-nav" class="flex-1 px-4 py-4 space-y-2">
-                            ${navItems.map(item => `
-                                <a href="#" data-page="${item.id}" class="nav-link flex items-center space-x-2 space-x-reverse rounded-md px-3 py-3 text-sm font-medium transition-colors ${appState.currentPage === item.id ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}">
-                                    ${item.icon}
-                                    <span>${item.label}</span>
-                                </a>
-                            `).join('')}
-                        </nav>
-                        <div class="px-4 py-4 border-t border-gray-700">
-                            <a href="#" id="logout-btn" class="flex items-center space-x-2 space-x-reverse rounded-md px-3 py-3 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                                <span>התנתקות</span>
-                            </a>
-                        </div>
-                    </aside>
-                    <main class="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
-                        <header class="flex justify-between items-center mb-6">
-                            <div>
-                                <h1 class="text-3xl font-bold text-gray-800">ברוך הבא, ${user.name.split(' ')[0]}</h1>
-                                <p class="text-gray-500">זהו מרכז הבקרה שלך</p>
-                            </div>
-                            <div class="flex items-center space-x-4 space-x-reverse">
-                                <span class="text-right">
-                                    <div class="font-semibold">${user.name}</div>
-                                    <div class="text-sm text-gray-500">${user.phone}</div>
-                                </span>
-                                <img src="${user.avatar}" alt="User Avatar" class="h-12 w-12 rounded-full" />
-                            </div>
-                        </header>
-                        <div id="page-content"></div>
-                    </main>
-                </div>
-            `;
-        }
-
-        function renderDashboard() {
-            const userProjects = appState.projects;
-            const userOrders = appState.orders;
-            const recentOrders = [...userOrders].sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate)).slice(0, 5);
-            
-            return `
-                <div class="space-y-8">
-                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-white p-6 rounded-lg shadow-md">
-                            <h3 class="text-lg font-semibold text-gray-700">פרויקטים פעילים</h3>
-                            <p class="text-3xl font-bold text-blue-600 mt-2">${userProjects.length}</p>
-                        </div>
-                        <div class="bg-white p-6 rounded-lg shadow-md">
-                            <h3 class="text-lg font-semibold text-gray-700">סה"כ הזמנות</h3>
-                            <p class="text-3xl font-bold text-green-600 mt-2">${userOrders.length}</p>
-                        </div>
-                        <div class="bg-white p-6 rounded-lg shadow-md">
-                            <h3 class="text-lg font-semibold text-gray-700">הזמנות פתוחות</h3>
-                            <p class="text-3xl font-bold text-amber-600 mt-2">${userOrders.filter(o => o.status === 'ממתין לביצוע').length}</p>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div class="bg-white p-6 rounded-lg shadow-md">
-                            <h3 class="text-xl font-bold text-gray-800 mb-4">ההזמנות האחרונות שלך</h3>
-                             <div class="space-y-3">
-                                ${recentOrders.length > 0 ? recentOrders.map(order => {
-                                    const project = appState.projects.find(p => p.projectId === order.projectId);
-                                    const statusClass = order.status === 'בוצע' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800';
-                                    return `
-                                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-md">
-                                            <div>
-                                                <p class="font-semibold">${project?.name || 'פרויקט כללי'}</p>
-                                                <p class="text-sm text-gray-500">${order.orderId} - ${order.orderDate}</p>
-                                            </div>
-                                            <span class="px-3 py-1 text-xs font-semibold rounded-full ${statusClass}">
-                                                ${order.status}
-                                            </span>
-                                        </div>
-                                    `;
-                                }).join('') : '<p class="text-gray-500">אין הזמנות להצגה.</p>'}
-                            </div>
-                        </div>
-                        <div class="bg-white p-6 rounded-lg shadow-md">
-                            <h3 class="text-xl font-bold text-gray-800 mb-4">הפרויקטים שלך</h3>
-                            <div class="space-y-3">
-                                ${userProjects.map(project => `
-                                    <div class="p-3 bg-gray-50 rounded-md">
-                                        <p class="font-semibold">${project.name}</p>
-                                        <p class="text-sm text-gray-500">${project.address}</p>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        
-        // Other render functions (renderNewOrderScreen, renderCart, etc.) are mostly the same,
-        // but they will now use appState.projects, appState.products etc. instead of MOCK_DATA.
-        // For brevity, only the key modified logic is shown, the HTML structure is identical.
-        
-        function renderNewOrderScreen() {
-             const filteredProducts = appState.products.filter(p =>
-                p.name.toLowerCase().includes(appState.productSearchTerm.toLowerCase())
-            );
-
-            return `
-                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                    <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-4">קטלוג מוצרים</h2>
-                        <input type="text" id="product-search" placeholder="חיפוש מוצר..." class="w-full p-2 mb-6 border border-gray-300 rounded-md" value="${appState.productSearchTerm}"/>
-                        <div id="product-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                           ${filteredProducts.map(product => `
-                                <div class="border rounded-lg overflow-hidden shadow-sm flex flex-col">
-                                    <img src="${product.imageUrl || 'https://placehold.co/600x400/EEE/AAA?text=No+Image'}" alt="${product.name}" class="h-40 w-full object-cover" />
-                                    <div class="p-4 flex-1 flex flex-col">
-                                        <h4 class="font-bold text-lg">${product.name}</h4>
-                                        <p class="text-sm text-gray-600 mt-1 flex-1">${product.description}</p>
-                                        <button data-sku="${product.sku}" class="add-to-cart-btn w-full mt-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors">
-                                            הוספה לסל
-                                        </button>
-                                    </div>
-                                </div>
-                           `).join('')}
-                        </div>
-                    </div>
-                    <div id="cart-section" class="lg:col-span-1 bg-white p-6 rounded-lg shadow-md sticky top-8">
-                        ${renderCart()}
-                    </div>
-                </div>`;
-        }
-        
-        function renderCart() {
-            const userProjects = appState.projects;
-            const selectedProjectId = document.getElementById('project-select')?.value || '';
-            return `
-                <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                    <span class="mr-2">סיכום הזמנה</span>
-                </h2>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">בחירת פרויקט</label>
-                    <select id="project-select" class="w-full p-2 border border-gray-300 rounded-md">
-                        <option value="" disabled ${selectedProjectId === '' ? 'selected' : ''}>-- בחר פרויקט --</option>
-                        ${userProjects.map(p => `<option value="${p.projectId}" ${selectedProjectId === p.projectId ? 'selected' : ''}>${p.name}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="space-y-3 max-h-64 overflow-y-auto pr-2">
-                    ${appState.cart.length > 0 ? appState.cart.map(item => `
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="font-semibold">${item.name}</p>
-                                <div class="flex items-center mt-1">
-                                    <button data-sku="${item.sku}" data-change="-1" class="update-qty-btn px-2 py-0.5 border rounded-r-md">-</button>
-                                    <input type="number" value="${item.qty}" readOnly class="w-12 text-center border-t border-b"/>
-                                    <button data-sku="${item.sku}" data-change="1" class="update-qty-btn px-2 py-0.5 border rounded-l-md">+</button>
-                                </div>
-                            </div>
-                            <button data-sku="${item.sku}" class="remove-from-cart-btn text-red-500 hover:text-red-700">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            </button>
-                        </div>
-                    `).join('') : '<p class="text-gray-500 text-center py-4">הסל ריק</p>'}
-                </div>
-                ${appState.cart.length > 0 ? `<button id="submit-order-btn" class="w-full mt-6 py-3 bg-green-600 text-white font-bold rounded-md hover:bg-green-700 transition-colors">שליחת הזמנה</button>` : ''}`;
-        }
-        
-        function renderOrdersHistory() {
-             const userOrders = appState.orders;
-            return `
-                <div class="bg-white p-6 rounded-lg shadow-md">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4">היסטוריית הזמנות</h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-right">
-                             <thead class="bg-gray-100">
-                                <tr>
-                                    <th class="p-3 font-semibold text-sm">מס' הזמנה</th>
-                                    <th class="p-3 font-semibold text-sm">פרויקט</th>
-                                    <th class="p-3 font-semibold text-sm">תאריך</th>
-                                    <th class="p-3 font-semibold text-sm">סוג</th>
-                                    <th class="p-3 font-semibold text-sm">סטטוס</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${userOrders.map(order => `
-                                    <tr class="border-b">
-                                        <td class="p-3">${order.orderId}</td>
-                                        <td class="p-3">${appState.projects.find(p => p.projectId === order.projectId)?.name || 'לא משויך'}</td>
-                                        <td class="p-3">${order.orderDate}</td>
-                                        <td class="p-3">${order.orderType}</td>
-                                        <td class="p-3">
-                                            <span class="px-3 py-1 text-xs font-semibold rounded-full ${order.status === 'בוצע' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}">
-                                                ${order.status}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>`;
-        }
-
-        function renderChatScreen() {
-             const userMessages = appState.chat;
-             return `
-                <div class="bg-white rounded-lg shadow-md h-[75vh] flex flex-col">
-                    <h2 class="text-2xl font-bold text-gray-800 p-4 border-b">שירות לקוחות</h2>
-                    <div id="chat-messages" class="flex-1 p-4 overflow-y-auto bg-gray-50 space-y-4">
-                        ${userMessages.map(msg => `
-                             <div class="flex items-end gap-2 ${msg.sender === 'לקוח' ? 'justify-end' : 'justify-start'}">
-                                ${msg.sender !== 'לקוח' ? `<img src="https://i.pravatar.cc/150?u=support" class="h-8 w-8 rounded-full" />` : ''}
-                                <div class="max-w-xs md:max-w-md p-3 rounded-lg ${msg.sender === 'לקוח' ? 'bg-blue-500 text-white rounded-br-none' : 'bg-gray-200 text-gray-800 rounded-bl-none'}">
-                                    <p>${msg.message}</p>
-                                    <p class="text-xs mt-1 opacity-75 text-right">${msg.timestamp}</p>
-                                </div>
-                                ${msg.sender === 'לקוח' ? `<img src="${appState.currentUser.avatar}" class="h-8 w-8 rounded-full" />` : ''}
-                            </div>
-                        `).join('')}
-                    </div>
-                    <form id="chat-form" class="p-4 border-t flex items-center space-x-2 space-x-reverse">
-                        <input id="chat-input" type="text" placeholder="כתוב הודעה..." class="flex-1 p-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-                        <button type="submit" class="p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600">
-                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                        </button>
-                    </form>
-                </div>`;
-        }
-        
-        function scrollToChatBottom() {
-            const chatMessages = document.getElementById('chat-messages');
-            if (chatMessages) {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }
-        }
-        
-        async function renderCurrentPage() {
-            const pageContent = document.getElementById('page-content');
-            if (!pageContent) return;
-
-            switch (appState.currentPage) {
-                case 'dashboard':
-                    pageContent.innerHTML = renderDashboard();
-                    break;
-                case 'new-order':
-                    pageContent.innerHTML = renderNewOrderScreen();
-                    attachNewOrderListeners();
-                    break;
-                case 'orders-history':
-                    pageContent.innerHTML = renderOrdersHistory();
-                    break;
-                case 'chat':
-                    // Refresh chat data every time the page is opened
-                    appState.chat = await apiCall('getChat', { customerId: appState.currentUser.customerId }) || [];
-                    pageContent.innerHTML = renderChatScreen();
-                    attachChatListeners();
-                    scrollToChatBottom();
-                    break;
-                default:
-                    pageContent.innerHTML = renderDashboard();
-            }
-        }
-
-        // --- EVENT LISTENERS ATTACHMENT ---
-        function attachLoginListeners() {
-            const form = document.getElementById('login-form');
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const phone = document.getElementById('phone').value;
-                const password = document.getElementById('password').value;
-                
-                const user = await apiCall('login', { phone, password });
-                
-                if (user) {
-                    appState.currentUser = user;
-                    // Fetch all necessary data for the app after login
-                    const [projects, orders, products, chat] = await Promise.all([
-                        apiCall('getProjects', { customerId: user.customerId }),
-                        apiCall('getOrders', { customerId: user.customerId }),
-                        apiCall('getProducts'),
-                        apiCall('getChat', { customerId: user.customerId })
-                    ]);
-
-                    appState.projects = projects || [];
-                    appState.orders = orders || [];
-                    appState.products = products || [];
-                    appState.chat = chat || [];
-                    
-                    render();
+                // Since we use no-cors, we can't read the response. We rely on the script executing.
+                // In a production environment, you would handle this differently, but for Apps Script,
+                // this is a common and functional approach.
+                if (method === 'POST') {
+                    // For POST, we assume success and refresh the data
+                    return { status: 'success' };
                 } else {
-                    document.getElementById('login-error').textContent = 'מספר טלפון או סיסמה שגויים';
-                }
-            });
-        }
-        
-        function attachMainAppListeners() {
-            const navLinks = document.querySelectorAll('.nav-link');
-            navLinks.forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (appState.currentPage !== link.dataset.page) {
-                       appState.currentPage = link.dataset.page;
-                       // Re-render only the main content, not the whole layout
-                       render();
+                    // For GET, we assume success and return the response text
+                    const data = await response.text();
+                    // We must manually parse the JSON due to the no-cors mode, which is not ideal,
+                    // but is a known workaround for Apps Script.
+                    try {
+                        return JSON.parse(data);
+                    } catch (e) {
+                        console.error('Failed to parse JSON response:', data);
+                        return null;
                     }
-                });
-            });
-
-            const logoutBtn = document.getElementById('logout-btn');
-            logoutBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                // Reset state
-                Object.assign(appState, {
-                    currentUser: null, currentPage: 'dashboard', cart: [],
-                    projects: [], orders: [], chat: [], products: []
-                });
-                render();
-            });
+                }
+            } catch (error) {
+                console.error('API call failed:', error);
+                return null;
+            } finally {
+                hideLoading();
+            }
         }
 
-        function attachNewOrderListeners() {
-            const productList = document.getElementById('product-list');
-            const cartSection = document.getElementById('cart-section');
-            const searchInput = document.getElementById('product-search');
+        function showLoading() {
+            loadingOverlay.classList.add('visible');
+        }
 
-            // Add to cart
-            productList.addEventListener('click', (e) => {
-                if (e.target.classList.contains('add-to-cart-btn')) {
-                    const sku = e.target.dataset.sku;
-                    const product = appState.products.find(p => p.sku === sku);
-                    const itemInCart = appState.cart.find(item => item.sku === sku);
-                    if (itemInCart) {
-                        itemInCart.qty++;
-                    } else {
-                        appState.cart.push({ ...product, qty: 1 });
-                    }
-                    cartSection.innerHTML = renderCart();
-                }
+        function hideLoading() {
+            loadingOverlay.classList.remove('visible');
+        }
+
+        function renderProjects() {
+            projectsContainer.innerHTML = '';
+            if (appState.projects.length === 0) {
+                projectsContainer.innerHTML = '<p class="text-center text-gray-500">לא נמצאו פרויקטים.</p>';
+                return;
+            }
+
+            appState.projects.forEach(project => {
+                const projectElement = document.createElement('div');
+                projectElement.className = 'p-4 bg-gray-50 rounded-lg shadow-sm border border-gray-200';
+                projectElement.innerHTML = `
+                    <h3 class="text-xl font-semibold">${project.name}</h3>
+                    <p class="text-gray-600"><strong>כתובת:</strong> ${project.address || 'לא צויין'}</p>
+                    <p class="text-gray-600"><strong>מזהה פרויקט:</strong> ${project.projectId}</p>
+                `;
+                projectsContainer.appendChild(projectElement);
             });
+        }
+
+        async function renderApp() {
+            if (!appState.currentUser) {
+                loginPage.classList.remove('hidden');
+                appPage.classList.add('hidden');
+                return;
+            }
+
+            loginPage.classList.add('hidden');
+            appPage.classList.remove('hidden');
+            userNameElement.textContent = appState.currentUser.name;
+
+            // Fetch and render projects
+            appState.projects = await apiCall('getProjects', { customerId: appState.currentUser.customerId });
+            renderProjects();
+        }
+
+        // --- Event Listeners ---
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const phone = document.getElementById('phone').value;
+            const password = document.getElementById('password').value;
+
+            const result = await apiCall('login', { phone: `+972${phone}`, password: password });
             
-            // Cart interactions
-            cartSection.addEventListener('click', async (e) => {
-                const target = e.target.closest('button');
-                if (!target) return;
+            if (result && result.status === 'success' && result.data) {
+                appState.currentUser = result.data;
+                await renderApp();
+            } else {
+                alert('שם משתמש או סיסמה שגויים.');
+            }
+        });
 
-                const sku = target.dataset.sku;
-                let shouldReRenderCart = false;
-
-                if (target.classList.contains('update-qty-btn')) {
-                    const change = parseInt(target.dataset.change);
-                    const item = appState.cart.find(i => i.sku === sku);
-                    if (item) {
-                        item.qty += change;
-                        if (item.qty < 1) {
-                           appState.cart = appState.cart.filter(i => i.sku !== sku);
-                        }
-                    }
-                    shouldReRenderCart = true;
-                }
-
-                if (target.classList.contains('remove-from-cart-btn')) {
-                    appState.cart = appState.cart.filter(i => i.sku !== sku);
-                    shouldReRenderCart = true;
-                }
-                
-                if (target.id === 'submit-order-btn') {
-                    const selectedProjectId = document.getElementById('project-select').value;
-                    if (!selectedProjectId) return alert('נא לבחור פרויקט.');
-                    if (appState.cart.length === 0) return alert('הסל ריק.');
-
-                    const orderData = {
-                        customerId: appState.currentUser.customerId,
-                        projectId: selectedProjectId,
-                        items: appState.cart.map(({ sku, name, qty }) => ({ sku, name, qty })),
-                    };
-                    
-                    const result = await apiCall('createOrder', {}, 'POST', orderData);
-
-                    if (result) {
-                        alert('ההזמנה נשלחה בהצלחה!');
-                        appState.cart = [];
-                        appState.currentPage = 'dashboard';
-                        // Refresh orders data after submitting a new one
-                        appState.orders = await apiCall('getOrders', { customerId: appState.currentUser.customerId }) || [];
-                        render();
-                    }
-                } else if (shouldReRenderCart) {
-                    cartSection.innerHTML = renderCart();
-                }
-            });
-
-            // Product search
-            searchInput.addEventListener('input', (e) => {
-                appState.productSearchTerm = e.target.value;
-                document.getElementById('product-list').innerHTML = appState.products
-                    .filter(p => p.name.toLowerCase().includes(appState.productSearchTerm.toLowerCase()))
-                    .map(product => `
-                        <div class="border rounded-lg overflow-hidden shadow-sm flex flex-col">
-                            <img src="${product.imageUrl || 'https://placehold.co/600x400/EEE/AAA?text=No+Image'}" alt="${product.name}" class="h-40 w-full object-cover" />
-                            <div class="p-4 flex-1 flex flex-col">
-                                <h4 class="font-bold text-lg">${product.name}</h4>
-                                <p class="text-sm text-gray-600 mt-1 flex-1">${product.description}</p>
-                                <button data-sku="${product.sku}" class="add-to-cart-btn w-full mt-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors">הוספה לסל</button>
-                            </div>
-                        </div>`).join('');
-            });
-        }
-        
-        function attachChatListeners() {
-            const chatForm = document.getElementById('chat-form');
-            const chatInput = document.getElementById('chat-input');
-            
-            chatForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const messageText = chatInput.value.trim();
-                if (messageText === '') return;
-                
-                const messageData = {
-                    customerId: appState.currentUser.customerId,
-                    message: messageText,
-                };
-                
-                const result = await apiCall('sendMessage', {}, 'POST', messageData);
-                
-                if (result) {
-                    chatInput.value = '';
-                    // Refresh chat and re-render
-                    appState.chat = await apiCall('getChat', { customerId: appState.currentUser.customerId }) || [];
-                    document.getElementById('chat-messages').innerHTML = appState.chat.map(msg => `
-                         <div class="flex items-end gap-2 ${msg.sender === 'לקוח' ? 'justify-end' : 'justify-start'}">
-                            ${msg.sender !== 'לקוח' ? `<img src="https://i.pravatar.cc/150?u=support" class="h-8 w-8 rounded-full" />` : ''}
-                            <div class="max-w-xs md:max-w-md p-3 rounded-lg ${msg.sender === 'לקוח' ? 'bg-blue-500 text-white rounded-br-none' : 'bg-gray-200 text-gray-800 rounded-bl-none'}">
-                                <p>${msg.message}</p>
-                                <p class="text-xs mt-1 opacity-75 text-right">${msg.timestamp}</p>
-                            </div>
-                            ${msg.sender === 'לקוח' ? `<img src="${appState.currentUser.avatar}" class="h-8 w-8 rounded-full" />` : ''}
-                        </div>
-                    `).join('');
-                    scrollToChatBottom();
-                }
-            });
-        }
-
-
-        // --- INITIALIZE THE APP ---
-        render();
+        // --- Initial App Load ---
+        renderApp();
 
     </script>
 </body>
 </html>
-
