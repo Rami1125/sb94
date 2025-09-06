@@ -147,13 +147,11 @@
             const options = {
                 method: method,
                 redirect: 'follow',
-                // Removed 'mode: no-cors' to allow the browser to read the response.
-                // This requires proper CORS headers from the Apps Script.
             };
             
             if (method === 'POST' && postData) {
                 options.headers = {
-                    'Content-Type': 'text/plain;charset=utf-8', // Required for raw body in Apps Script
+                    'Content-Type': 'text/plain;charset=utf-8', 
                 };
                 options.body = JSON.stringify({ action: action, data: postData });
             }
@@ -205,6 +203,16 @@
         }
 
         async function renderApp() {
+            // --- LOGIC CHANGE: Bypass login for testing ---
+            // Set a dummy user to simulate a successful login.
+            appState.currentUser = {
+                customerId: '601233', // This ID matches a customer in your CSV for testing
+                name: 'א.ערן אזולאי בע"מ',
+                phone: '050-8860896',
+                avatar: 'https://img.icons8.com/?size=100&id=O9K5DaypaVKw&format=png&color=000000'
+            };
+            // --- END OF LOGIC CHANGE ---
+
             if (!appState.currentUser) {
                 loginPage.classList.remove('hidden');
                 appPage.classList.add('hidden');
@@ -228,6 +236,8 @@
 
         // --- Event Listeners ---
 
+        // The login form listener is now bypassed by the `renderApp` function's logic change.
+        // It's kept here for future reference if you decide to re-enable login functionality.
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const phone = document.getElementById('phone').value;
