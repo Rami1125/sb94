@@ -205,8 +205,10 @@
         async function renderApp() {
             // --- LOGIC CHANGE: Bypass login for testing ---
             // Set a dummy user to simulate a successful login.
+            // The customerId and phone are taken from your 'Vip1 - לקוחות.csv'
+            // and the 'מזהה לקוח' and 'שם לקוח' from 'Vip1 - פרויקטים.csv'
             appState.currentUser = {
-                customerId: '601233', // This ID matches a customer in your CSV for testing
+                customerId: '601233', 
                 name: 'א.ערן אזולאי בע"מ',
                 phone: '050-8860896',
                 avatar: 'https://img.icons8.com/?size=100&id=O9K5DaypaVKw&format=png&color=000000'
