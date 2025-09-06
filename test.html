@@ -1,549 +1,306 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ח. סבן — Dashboard (Mockup)</title>
-  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --bg:#f8fafc;
-      --card:#ffffff;
-      --glass: rgba(255,255,255,0.6);
-      --primary:#1e3a8a; /* כחול כהה */
-      --primary-light:#3b82f6; /* תכלת */
-      --muted:#6b7280;
-      --success:#10b981;
-      --danger:#ef4444;
-      --radius:14px;
-      --shadow: 0 6px 18px rgba(16,24,40,0.06);
-      font-family: 'Rubik', system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    }
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#ffffff 60%);color:#0f172a}
-    .app{max-width:980px;margin:18px auto;padding:18px}
-    .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:16px}
-    header.app-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 6px}
-    .brand{display:flex;align-items:center;gap:12px}
-    .brand .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--primary-light));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:18px;box-shadow:0 6px 18px rgba(59,130,246,0.15)}
-    .brand h1{margin:0;font-size:18px}
-    .user-area{display:flex;align-items:center;gap:12px}
-    .avatar{width:48px;height:48px;border-radius:12px;overflow:hidden;border:2px solid rgba(15,23,42,0.06)}
-    .avatar img{width:100%;height:100%;object-fit:cover;display:block}
-    .tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:12px}
-    .tile{padding:18px;border-radius:12px;background:linear-gradient(180deg,var(--glass), #fff);backdrop-filter: blur(6px);display:flex;flex-direction:column;gap:8px;align-items:flex-start}
-    .tile h3{margin:0;font-size:16px}
-    .tile .big{font-size:28px;font-weight:700;color:var(--primary)}
-    .actions{display:flex;gap:8px;flex-wrap:wrap}
-    .btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:600}
-    .btn-primary{background:var(--primary);color:white}
-    .btn-ghost{background:transparent;border:1px solid #e6eefc;color:var(--primary)}
-    .orders-list{display:flex;flex-direction:column;gap:10px;margin-top:12px}
-    .order-item{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px;border-radius:10px;border:1px solid #eef2ff;background:linear-gradient(180deg,#fff,#fbfdff)}
-    .order-meta{display:flex;flex-direction:column;gap:4px}
-    .order-id{font-weight:700;color:#0f172a}
-    .order-actions{display:flex;gap:8px;align-items:center}
-    .muted{color:var(--muted);font-size:13px}
-    /* Modal */
-    .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.5);display:none;align-items:center;justify-content:center;padding:20px;z-index:60}
-    .modal{width:100%;max-width:640px;background:var(--card);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
-    .row{display:flex;gap:12px;align-items:center}
-    label{display:block;font-size:13px;margin-bottom:6px}
-    input[type="text"], input[type="tel"], select, textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #e6eef9;background:#fff;box-sizing:border-box}
-    textarea{min-height:90px}
-    .small{font-size:13px;color:var(--muted)}
-    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:#111827;color:white;padding:12px 16px;border-radius:10px;display:none;z-index:80}
-    /* login */
-    .login-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfdff);max-width:480px;margin:40px auto;box-shadow:var(--shadow)}
-    .login-avatar{width:96px;height:96px;border-radius:16px;overflow:hidden}
-    .hint{font-size:13px;color:var(--muted)}
-    /* confirmation screen */
-    .confirm{display:none;padding:18px;border-radius:12px;background:linear-gradient(180deg,#ffffffcc,#f8fbff);box-shadow:var(--shadow);text-align:center}
-    .confirm .ok{font-size:36px;color:var(--success);font-weight:700}
-    @media (max-width:720px){
-      .tiles{grid-template-columns:1fr}
-      header.app-header{flex-direction:column;align-items:flex-start;gap:8px}
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ח. סבן VIP</title>
+
+    <!-- External Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-main: #f0f4f8;
+            --bg-surface: #ffffff;
+            --primary: #2c5282;
+            --primary-light: #3b82f6;
+            --text-dark: #1a202c;
+            --text-light: #4a5568;
+            --border-color: #e2e8f0;
+            --danger: #e53e3e;
+            --success: #38a169;
+            --font-main: 'Rubik', sans-serif;
+        }
+        html, body {
+            overscroll-behavior-y: contain;
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-main);
+            background-color: var(--bg-main);
+        }
+        .login-bg {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-main); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-light); }
+    </style>
 </head>
-<body>
-  <div class="app" id="app">
+<body class="bg-gray-100">
 
-    <!-- LOGIN -->
-    <div id="loginScreen" class="card login-wrap" aria-hidden="false">
-      <div class="login-avatar">
-        <img id="loginAvatar" src="https://images.unsplash.com/photo-1603415526960-f7e0328b7b58?q=80&w=400&auto=format&fit=crop" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:12px">
-      </div>
-      <h2 style="margin:0">התחבר למערכת VIP — ח. סבן</h2>
-      <p class="hint">הזן מספר טלפון או מזהה לקוח + סיסמה</p>
-      <div style="width:100%;max-width:420px">
-        <label>מספר טלפון / מזהה</label>
-        <input id="identifier" type="tel" placeholder="0508860896 / 601233" />
-      </div>
-      <div style="width:100%;max-width:420px">
-        <label>סיסמה</label>
-        <input id="password" type="text" placeholder="הקלד סיסמה" />
-      </div>
-      <div class="actions" style="margin-top:8px">
-        <button class="btn btn-primary" id="btnLogin">התחבר</button>
-        <button class="btn btn-ghost" id="btnDemo">כניסה לדמו</button>
-      </div>
-      <p class="small" style="margin-top:6px">שימו לב: ניסוי זה מתחבר ישירות ל־Apps Script שלכם בכתובת שניתנה.</p>
+    <div id="app" class="h-full w-full">
+        <!-- This is where the app will be rendered -->
     </div>
 
-    <!-- APP MAIN -->
-    <div id="mainApp" style="display:none">
-      <header class="app-header card">
-        <div class="brand">
-          <div class="logo">סבן</div>
-          <div>
-            <h1>ח. סבן — VIP Dashboard</h1>
-            <div class="muted">מבט על ללקוח ולמכולות</div>
-          </div>
-        </div>
-
-        <div class="user-area">
-          <div style="text-align:right">
-            <div id="clientName" style="font-weight:700">—</div>
-            <div class="muted" id="clientId">מזהה: —</div>
-          </div>
-          <div class="avatar" title="Client avatar">
-            <img id="clientAvatar" src="https://images.unsplash.com/photo-1603415526960-f7e0328b7b58?q=80&w=400&auto=format&fit=crop" alt="avatar">
-          </div>
-        </div>
-      </header>
-
-      <section class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
-          <div>
-            <h2 style="margin:0">מבט מהיר</h2>
-            <div class="muted">ניהול חומרים ומכולות — גישה מהירה לפעולות נפוצות</div>
-          </div>
-          <div class="actions">
-            <button class="btn btn-ghost" id="btnRefresh">רענן</button>
-            <button class="btn btn-primary" id="btnNewOrder">+ הזמנה חדשה</button>
-          </div>
-        </div>
-
-        <div class="tiles" style="margin-top:14px">
-          <div class="tile">
-            <h3>מכולות פעילות</h3>
-            <div class="big" id="containersCount">—</div>
-            <div class="muted">מכולות כרגע בלקוח</div>
-            <div style="margin-top:8px" class="actions">
-              <button class="btn btn-primary" id="btnViewContainers">צפה במכולות</button>
-              <button class="btn btn-ghost" id="btnRequestContainer">בקש מכולה</button>
-            </div>
-          </div>
-
-          <div class="tile">
-            <h3>הזמנות חומרים</h3>
-            <div class="big" id="ordersCount">—</div>
-            <div class="muted">הזמנות פתוחות / בזמן</div>
-            <div style="margin-top:8px" class="actions">
-              <button class="btn btn-primary" id="btnViewOrders">צפה בהזמנות</button>
-              <button class="btn btn-ghost" id="btnRepeatOrder">הזמנה חוזרת</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="card">
-        <h3 style="margin-top:0">הזמנות אחרונות</h3>
-        <div id="ordersList" class="orders-list">
-          <!-- orders rendered here -->
-        </div>
-      </section>
-
-      <section class="card" style="display:flex;gap:12px;align-items:center;justify-content:space-between">
-        <div>
-          <h3 style="margin:0">דוחות מהירים</h3>
-          <div class="muted">גרפים ומדדים זמינים בפיתוח — דוגמה</div>
-        </div>
-        <div>
-          <button class="btn btn-ghost" id="btnOpenReports">פתח דוחות</button>
-        </div>
-      </section>
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300">
+        <p id="toast-message"></p>
     </div>
 
-    <!-- CONFIRM SCREEN -->
-    <div id="confirmScreen" class="card confirm">
-      <div class="ok">✔</div>
-      <h2 id="confirmTitle">הזמנתך התקבלה בהצלחה!</h2>
-      <p id="confirmOrderId" class="muted">מס' הזמנה: —</p>
-      <div id="confirmSummary" style="margin-top:12px;text-align:right"></div>
-      <div style="margin-top:14px" class="actions">
-        <button class="btn btn-primary" id="btnBackHome">חזרה למסך הראשי</button>
-        <button class="btn btn-ghost" id="btnViewAllOrders">צפייה בכל ההזמנות</button>
-        <button class="btn btn-ghost" id="btnContact">צור קשר לגבי הזמנה</button>
-      </div>
-    </div>
+<script>
+    // --- Application State ---
+    const state = {
+        isLoading: true,
+        isLoggedIn: false,
+        customerPhone: null,
+        userData: null,
+        catalog: [],
+    };
 
-  </div>
+    // --- API Configuration ---
+    // This MUST be the deployment URL of your Google Apps Script Web App
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwVx10n61lVBHHp8Icsp-7oNUOiq2w5yL72Mg8ZdV8cZ5IcSyk1wB_4WmkLAwZUALY/exec';
 
-  <!-- Modal Backdrop -->
-  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-hidden="true">
-    <div class="modal" role="document">
-      <h3 id="modalTitle">הזמנה חדשה</h3>
-      <div style="margin-top:8px" class="row">
-        <div style="flex:1">
-          <label>פרויקט</label>
-          <select id="selectProject"></select>
-        </div>
-        <div style="width:140px">
-          <label>סוג פעולה</label>
-          <select id="selectAction">
-            <option value="הורדה">הורדה</option>
-            <option value="החלפה" selected>החלפה</option>
-            <option value="פינוי">פינוי</option>
-          </select>
-        </div>
-      </div>
-
-      <div style="margin-top:12px" class="row">
-        <div style="flex:1">
-          <label>סוג/גודל מכולה (או פרטי חומרים)</label>
-          <input id="inputContainerType" placeholder="מכולה 8 קוב / קוד מוצר" type="text" />
-        </div>
-        <div style="width:180px">
-          <label>תאריך מבוקש</label>
-          <input id="inputDate" type="date" />
-        </div>
-      </div>
-
-      <div style="margin-top:12px">
-        <label>הערות</label>
-        <textarea id="inputNotes" placeholder="הערות נוספות..."></textarea>
-      </div>
-
-      <div style="margin-top:12px;display:flex;justify-content:flex-start;gap:8px">
-        <button class="btn btn-primary" id="modalSubmit">שלח הזמנה</button>
-        <button class="btn btn-ghost" id="modalCancel">בטל</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="toast" class="toast"></div>
-
-  <script>
-    // ==========================
-    // Configuration
-    // ==========================
-    const API_BASE = 'https://script.google.com/macros/s/AKfycbwVx10n61lVBHHp8Icsp-7oNUOiq2w5yL72Mg8ZdV8cZ5IcSyk1wB_4WmkLAwZUALY/exec';
-    // ==========================
-
-    // Elements
-    const loginScreen = document.getElementById('loginScreen');
-    const mainApp = document.getElementById('mainApp');
-    const confirmScreen = document.getElementById('confirmScreen');
-    const identifierInput = document.getElementById('identifier');
-    const passwordInput = document.getElementById('password');
-    const btnLogin = document.getElementById('btnLogin');
-    const btnDemo = document.getElementById('btnDemo');
-    const clientName = document.getElementById('clientName');
-    const clientId = document.getElementById('clientId');
-    const clientAvatar = document.getElementById('clientAvatar');
-    const containersCount = document.getElementById('containersCount');
-    const ordersCount = document.getElementById('ordersCount');
-    const ordersList = document.getElementById('ordersList');
-    const toast = document.getElementById('toast');
-    const modalBackdrop = document.getElementById('modalBackdrop');
-    const selectProject = document.getElementById('selectProject');
-    const inputContainerType = document.getElementById('inputContainerType');
-    const inputDate = document.getElementById('inputDate');
-    const inputNotes = document.getElementById('inputNotes');
-    const modalSubmit = document.getElementById('modalSubmit');
-    const modalCancel = document.getElementById('modalCancel');
-
-    let session = { loggedIn: false, user: null, projects: [], orders: [] };
-
-    // Utility: show toast
-    function showToast(msg, ms = 3500) {
-      toast.innerText = msg;
-      toast.style.display = 'block';
-      setTimeout(()=> toast.style.display='none', ms);
-    }
-
-    // Generic API caller
-    async function apiCall(action, body) {
-      try {
-        const url = API_BASE + '?action=' + encodeURIComponent(action);
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body || {})
-        });
-        const data = await res.json();
-        return data;
-      } catch (err) {
-        console.error('API error', err);
-        throw new Error('שגיאת תקשורת עם השרת: ' + (err.message || err));
-      }
-    }
-
-    // ----- LOGIN -----
-    btnLogin.addEventListener('click', async () => {
-      const identifier = identifierInput.value.trim();
-      const password = passwordInput.value.trim();
-      if (!identifier || !password) { showToast('יש למלא מספר מזהה וסיסמה'); return; }
-      btnLogin.disabled = true;
-      try {
-        const resp = await apiCall('login', { identifier, password });
-        if (!resp || !resp.success) {
-          showToast(resp && resp.error ? resp.error : 'התחברות נכשלה');
-          return;
+    // --- Core API Communication Function ---
+    /**
+     * Handles all communication with the Google Apps Script backend.
+     * @param {string} action - The action to perform (e.g., 'getUserData').
+     * @param {object} data - The payload to send with the request.
+     * @param {string} method - The HTTP method ('GET' or 'POST').
+     * @returns {Promise<object>} - The JSON response from the server.
+     */
+    async function apiCall(action, data = {}, method = 'POST') {
+        const url = `${API_URL}?action=${action}`; // Pass action in URL for flexibility
+        
+        const options = {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            redirect: 'follow', // Important for Google Scripts
+        };
+        
+        // Only add body for POST requests
+        if (method === 'POST') {
+             options.body = JSON.stringify(data);
         }
-        // store session
-        session.loggedIn = true;
-        session.user = resp.data.user;
-        session.projects = resp.data.projects || [];
-        session.orders = resp.data.orders || [];
-        localStorage.setItem('vip_session', JSON.stringify({identifier,password}));
+
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                throw new Error(`שגיאת רשת: ${response.statusText}`);
+            }
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.error || 'שגיאה לא ידועה מהשרת');
+            }
+            return result;
+        } catch (error) {
+            console.error('API Call Error:', error);
+            showToast(`שגיאת תקשורת: ${error.message}`, 'danger');
+            throw error; // Re-throw the error to be caught by the calling function
+        }
+    }
+
+    // --- UI Rendering ---
+
+    /**
+     * The main render function. It decides what to show based on the application state.
+     */
+    function renderApp() {
+        const appContainer = document.getElementById('app');
+        if (state.isLoading) {
+            appContainer.innerHTML = renderLoading();
+        } else if (!state.isLoggedIn) {
+            appContainer.innerHTML = renderLoginScreen();
+            attachLoginListener();
+        } else {
+            appContainer.innerHTML = renderMainDashboard();
+            attachDashboardListeners();
+        }
+    }
+
+    function renderLoading() {
+        return `
+            <div class="flex items-center justify-center h-full bg-white">
+                <div class="text-center">
+                    <i class="fas fa-spinner fa-spin text-4xl text-blue-800"></i>
+                    <p class="mt-2 text-lg font-semibold text-gray-700">טוען נתונים...</p>
+                </div>
+            </div>`;
+    }
+
+    function renderLoginScreen() {
+        return `
+            <div class="login-bg h-full flex flex-col items-center justify-center p-4">
+                <div class="text-center mb-8">
+                    <h1 class="text-4xl font-bold text-white">ח. סבן VIP</h1>
+                    <p class="text-white text-opacity-80 mt-2">ניהול הזמנות חכם ללקוחות</p>
+                </div>
+                <div class="w-full max-w-sm bg-white rounded-lg shadow-xl p-6">
+                    <form id="login-form">
+                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">מספר טלפון</label>
+                        <input type="tel" id="phone" name="phone" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="05X-XXXXXXX">
+                        <button type="submit" class="w-full mt-4 bg-blue-800 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-300">
+                            כניסה
+                        </button>
+                    </form>
+                </div>
+            </div>`;
+    }
+
+    function renderMainDashboard() {
+        const user = state.userData.user;
+        const projects = state.userData.projects;
+        const orders = state.userData.orders;
+
+        return `
+            <div class="h-full flex flex-col">
+                <!-- Header -->
+                <header class="bg-white shadow-md p-4 flex justify-between items-center z-10">
+                    <div class="flex items-center">
+                        <img src="${user['קישור לאווטאר'] || ''}" class="w-10 h-10 rounded-full object-cover border-2 border-blue-700">
+                        <span class="font-semibold text-lg ml-3">${user['שם לקוח']}</span>
+                    </div>
+                    <button id="logout-btn" class="text-gray-600 hover:text-red-500">
+                        <i class="fas fa-sign-out-alt fa-lg"></i>
+                    </button>
+                </header>
+
+                <!-- Main Content -->
+                <main class="flex-grow p-4 overflow-y-auto">
+                    <h2 class="text-xl font-bold mb-4">הפרויקטים שלי</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${projects.map(p => `
+                            <div class="bg-white rounded-lg shadow p-4">
+                                <p class="font-bold text-blue-800">${p['שם פרויקט']}</p>
+                                <p class="text-sm text-gray-600">${p['כתובת'] || 'לא צוינה כתובת'}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <h2 class="text-xl font-bold mt-6 mb-4">הזמנות אחרונות</h2>
+                    <div class="space-y-3">
+                        ${orders.map(o => `
+                            <div class="bg-white rounded-lg shadow p-4">
+                                <p class="font-semibold">הזמנה: ${o['מזהה הזמנה']}</p>
+                                <p>סוג: ${o['סוג הזמנה']} - ${o['סוג פעולה']}</p>
+                                <span class="text-sm font-medium py-1 px-2 rounded-full ${o['סטטוס'] === 'ממתין לביצוע' ? 'bg-yellow-200 text-yellow-800' : 'bg-green-200 text-green-800'}">
+                                    ${o['סטטוס']}
+                                </span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </main>
+
+                <!-- Floating Action Button -->
+                <button id="fab-new-order" class="absolute bottom-6 left-6 bg-blue-800 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>`;
+    }
+
+    // --- Event Listeners ---
+    
+    function attachLoginListener() {
+        const loginForm = document.getElementById('login-form');
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const phone = document.getElementById('phone').value;
+            if (phone) {
+                await login(phone);
+            }
+        });
+    }
+
+    function attachDashboardListeners() {
+        const logoutBtn = document.getElementById('logout-btn');
+        logoutBtn.addEventListener('click', logout);
+
+        // Add listener for new order button later
+        // const fab = document.getElementById('fab-new-order');
+        // fab.addEventListener('click', showNewOrderModal);
+    }
+    
+
+    // --- Application Logic ---
+
+    /**
+     * Handles the login process.
+     * @param {string} phone - The user's phone number.
+     */
+    async function login(phone) {
+        state.isLoading = true;
         renderApp();
-        showToast('התחברת בהצלחה');
-      } catch (err) {
-        showToast(err.message);
-      } finally {
-        btnLogin.disabled = false;
-      }
-    });
 
-    // Demo login (local mock) - uses real API only if available
-    btnDemo.addEventListener('click', async () => {
-      identifierInput.value = '0508860896';
-      passwordInput.value = 'סבן';
-      btnLogin.click();
-    });
-
-    // Render app after login
-    async function renderApp() {
-      loginScreen.style.display = 'none';
-      confirmScreen.style.display = 'none';
-      mainApp.style.display = 'block';
-
-      // populate header
-      clientName.innerText = session.user['שם לקוח'] || session.user['שם_לקוח'] || 'לקוח VIP';
-      clientId.innerText = 'מזהה: ' + (session.user['מזהה לקוח'] || session.user['מזהה_לקוח'] || '—');
-      clientAvatar.src = session.user['קישור לאווטאר'] || session.user['קישור_לאווטאר'] || clientAvatar.src;
-
-      // populate projects
-      selectProject.innerHTML = '';
-      if (session.projects && session.projects.length) {
-        session.projects.forEach(p => {
-          const opt = document.createElement('option');
-          opt.value = p['מזהה פרויקט'] || p['מזהה_פרויקט'] || p['projectId'] || p['פרויקט'];
-          opt.innerText = `${p['שם פרויקט'] || p['שם_פרויקט'] || p['שם פרויקט'] || p['projectName']} — ${p['כתובת'] || p['address'] || ''}`;
-          selectProject.appendChild(opt);
-        });
-      } else {
-        const opt = document.createElement('option');
-        opt.value = '';
-        opt.innerText = 'אין פרויקטים זמינים';
-        selectProject.appendChild(opt);
-      }
-
-      // load containers and orders counts
-      await refreshData();
+        try {
+            const response = await apiCall('getUserData', { phone: phone }, 'POST');
+            state.userData = response.data;
+            state.isLoggedIn = true;
+            state.customerPhone = phone;
+            localStorage.setItem('customerPhone', phone); // Save phone for auto-login
+            showToast(`ברוך הבא, ${state.userData.user['שם לקוח']}`, 'success');
+        } catch (error) {
+            state.isLoggedIn = false;
+            // The error toast is already shown by apiCall
+        } finally {
+            state.isLoading = false;
+            renderApp();
+        }
+    }
+    
+    function logout() {
+        state.isLoggedIn = false;
+        state.customerPhone = null;
+        state.userData = null;
+        localStorage.removeItem('customerPhone');
+        showToast("התנתקת בהצלחה", "success");
+        renderApp();
     }
 
-    // Refresh containers and orders from API
-    async function refreshData() {
-      // get containers
-      try {
-        const customerId = session.user['מזהה לקוח'] || session.user['מזהה_לקוח'];
-        const cResp = await apiCall('getContainerStatus', { customerId });
-        const containers = (cResp && cResp.data) ? cResp.data : [];
-        containersCount.innerText = containers.length || 0;
-      } catch (err) {
-        containersCount.innerText = '—';
-        console.warn(err);
-      }
 
-      // orders (we expect login returned some orders already)
-      try {
-        // try fetching fresh list via API action getOrders (if implemented)
-        const customerId = session.user['מזהה לקוח'] || session.user['מזהה_לקוח'];
-        let oResp;
-        try { oResp = await apiCall('getOrders', { customerId }); } catch(e) { oResp = null; }
-        const orders = (oResp && oResp.data) ? oResp.data : (session.orders || []);
-        ordersCount.innerText = orders.length || 0;
-        renderOrders(orders.slice(0,8));
-      } catch (err) {
-        ordersCount.innerText = (session.orders && session.orders.length) || '—';
-        console.warn(err);
-      }
-    }
+    // --- Utility Functions ---
 
-    // Render list of orders
-    function renderOrders(list) {
-      ordersList.innerHTML = '';
-      if (!list || !list.length) {
-        ordersList.innerHTML = '<div class="muted">אין הזמנות להצגה כרגע</div>';
-        return;
-      }
-      list.forEach(ord => {
-        const el = document.createElement('div');
-        el.className = 'order-item';
-        const meta = document.createElement('div');
-        meta.className = 'order-meta';
-        const idLine = document.createElement('div');
-        idLine.className = 'order-id';
-        idLine.innerText = ord['מזהה הזמנה'] || ord['orderId'] || ord['id'] || 'ORD-?';
-        const sub = document.createElement('div');
-        sub.className = 'muted';
-        const proj = ord['פרויקט'] || ord['project'] || ord['מזהה פרויקט'] || '-';
-        sub.innerText = `${ord['סוג הזמנה'] || ord['orderType'] || '-'} • ${proj}`;
-        meta.appendChild(idLine);
-        meta.appendChild(sub);
-
-        const actions = document.createElement('div');
-        actions.className = 'order-actions';
-        const viewBtn = document.createElement('button');
-        viewBtn.className = 'btn btn-ghost';
-        viewBtn.innerText = 'צפה';
-        viewBtn.addEventListener('click',()=> openOrderDetail(ord));
-        const dupBtn = document.createElement('button');
-        dupBtn.className = 'btn btn-primary';
-        dupBtn.innerText = 'שכפל';
-        dupBtn.addEventListener('click',()=> duplicateOrder(ord));
-        actions.appendChild(viewBtn);
-        actions.appendChild(dupBtn);
-
-        el.appendChild(meta);
-        el.appendChild(actions);
-        ordersList.appendChild(el);
-      });
-    }
-
-    // Open order detail (simple drawer alternative: alert / confirm)
-    function openOrderDetail(ord) {
-      const lines = [];
-      for (const k of ['מזהה הזמנה','פרויקט','סוג הזמנה','סטטוס','תאריך']) {
-        if (ord[k]) lines.push(`<b>${k}:</b> ${ord[k]}`);
-      }
-      alert('פרטי הזמנה:\n' + (lines.length ? lines.join('\n') : JSON.stringify(ord,null,2)));
-    }
-
-    // Duplicate order -> open modal prefilled
-    function duplicateOrder(ord) {
-      // prefill modal
-      if (selectProject.options.length) {
-        const target = ord['פרויקט'] || ord['project'] || selectProject.options[0].value;
-        selectProject.value = target;
-      }
-      inputContainerType.value = ord['סוג הזמנה'] || ord['orderType'] || '';
-      inputNotes.value = 'שכפול מההזמנה: ' + (ord['מזהה הזמנה'] || ord['orderId'] || '');
-      // open modal
-      openModal();
-    }
-
-    // Open modal
-    function openModal() {
-      modalBackdrop.style.display = 'flex';
-      modalBackdrop.setAttribute('aria-hidden','false');
-    }
-    function closeModal() {
-      modalBackdrop.style.display = 'none';
-      modalBackdrop.setAttribute('aria-hidden','true');
-    }
-    modalCancel.addEventListener('click', closeModal);
-
-    // Submit new order
-    modalSubmit.addEventListener('click', async () => {
-      modalSubmit.disabled = true;
-      const customerId = session.user['מזהה לקוח'] || session.user['מזהה_לקוח'];
-      const projectId = selectProject.value;
-      const orderType = inputContainerType.value || 'חומרים';
-      const items = [{ sku: orderType, qty: 1 }];
-      const deliveryAddress = (session.projects.find(p=> (p['מזהה פרויקט']||p['מזהה_פרויקט'])==projectId) || {})['כתובת'] || '';
-      const body = { customerId, projectId, orderType, items, deliveryAddress, notes: inputNotes.value, preferredDate: inputDate.value };
-
-      try {
-        const resp = await apiCall('createOrder', body);
-        if (resp && resp.success) {
-          closeModal();
-          // show confirmation screen
-          showConfirmation(resp.data.orderId, body);
-          // refresh data
-          await refreshData();
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+        
+        toast.classList.remove('bg-green-500', 'bg-red-500');
+        if (type === 'danger') {
+            toast.classList.add('bg-red-500');
         } else {
-          showToast(resp && resp.error ? resp.error : 'שגיאה ביצירת הזמנה');
+            toast.classList.add('bg-green-500');
         }
-      } catch (err) {
-        showToast(err.message);
-      } finally {
-        modalSubmit.disabled = false;
-      }
-    });
+        
+        toastMessage.textContent = message;
+        toast.classList.remove('translate-x-full');
 
-    function showConfirmation(orderId, body) {
-      mainApp.style.display = 'none';
-      confirmScreen.style.display = 'block';
-      document.getElementById('confirmOrderId').innerText = 'מספר הזמנה: ' + (orderId || '—');
-      document.getElementById('confirmSummary').innerHTML = `
-        <div style="text-align:right">
-          <div><b>פרויקט:</b> ${selectProject.options[selectProject.selectedIndex]?.text || '-'}</div>
-          <div><b>מה הוזמן:</b> ${body.orderType}</div>
-          <div><b>תאריך מבוקש:</b> ${body.preferredDate || '-'}</div>
-          <div style="margin-top:8px;color:var(--muted)"><b>הערות:</b> ${body.notes || '-'}</div>
-        </div>
-      `;
+        setTimeout(() => {
+            toast.classList.add('translate-x-full');
+        }, 3000);
+    }
+    
+
+    // --- INITIALIZATION ---
+    function init() {
+        const savedPhone = localStorage.getItem('customerPhone');
+        if (savedPhone) {
+            login(savedPhone);
+        } else {
+            state.isLoading = false;
+            renderApp();
+        }
     }
 
-    // Back to main
-    document.getElementById('btnBackHome').addEventListener('click', ()=> {
-      confirmScreen.style.display = 'none';
-      mainApp.style.display = 'block';
-    });
-    document.getElementById('btnViewAllOrders').addEventListener('click', async ()=> {
-      // try to fetch all orders (if endpoint exists)
-      try {
-        const customerId = session.user['מזהה לקוח'] || session.user['מזהה_לקוח'];
-        const resp = await apiCall('getOrders', { customerId });
-        if (resp && resp.success) {
-          renderOrders(resp.data || []);
-          mainApp.style.display = 'block';
-          confirmScreen.style.display = 'none';
-        } else {
-          showToast('לא ניתן למשוך הזמנות: ' + (resp.error||''));
-        }
-      } catch (err) {
-        showToast(err.message);
-      }
-    });
+    // Start the application once the DOM is fully loaded.
+    document.addEventListener('DOMContentLoaded', init);
 
-    // quick interactions
-    document.getElementById('btnNewOrder').addEventListener('click', openModal);
-    document.getElementById('btnRefresh').addEventListener('click', ()=> refreshData().then(()=>showToast('עודכן')) );
-    document.getElementById('btnViewOrders').addEventListener('click', async ()=> {
-      try {
-        const customerId = session.user['מזהה לקוח'] || session.user['מזהה_לקוח'];
-        const resp = await apiCall('getOrders', { customerId });
-        if (resp && resp.success) renderOrders(resp.data || []);
-        else showToast('אין נתונים חדשים');
-      } catch (err) { showToast(err.message); }
-    });
-    document.getElementById('btnViewContainers').addEventListener('click', async ()=> {
-      try {
-        const customerId = session.user['מזהה לקוח'] || session.user['מזהה_לקוח'];
-        const resp = await apiCall('getContainerStatus', { customerId });
-        if (resp && resp.success) {
-          const html = (resp.data||[]).map(c=> `${c['מספר מכולה'] || c.id} — ${c['סטטוס'] || ''} — ${c['תאריך הצבה']||''}`).join('\n');
-          alert('מכולות:\n' + (html || 'אין מכולות'));
-        } else showToast('לא נמצאו מכולות');
-      } catch (err) { showToast(err.message); }
-    });
-
-    // If there's saved session in localStorage, auto-fill (but still require click login for security)
-    (function init(){
-      try {
-        const saved = JSON.parse(localStorage.getItem('vip_session') || 'null');
-        if (saved) {
-          identifierInput.value = saved.identifier || '';
-          passwordInput.value = saved.password || '';
-        }
-      } catch(e){}
-    })();
-
-  </script>
+</script>
 </body>
 </html>
