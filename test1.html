@@ -4,673 +4,755 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>לוח בקרה - מעקב</title>
+
+<!-- PWA Manifest and Theme -->
+<meta name="theme-color" content="#0b72b9">
+<link rel="manifest" id="manifestLink">
+<link rel="apple-touch-icon" href="https://placehold.co/192x192/0b72b9/white?text=Saban">
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
 /* =============================================================================
    GEMINI-COMMAND (read this comment):
-   - This file is the frontend UI.
-   - The API_URL constant in the <script> tag below MUST be updated with
-     the Apps Script Web App deployment URL.
-   - Visual customizations can be made by changing the values in the :root
-     CSS variables below (colors, radius, sizes).
+   - צור/הדבק את הקבצים הבאים:
+     1) Code.gs (כפי שסופק) בפרויקט Apps Script שמחובר ל-SHEET ID הנתון.
+     2) index.html (הקובץ הזה) כעמוד סטטי (github.io) או הכן לארח בתוך Apps Script.
+   - וודא לפרוס Web App כ-"Anyone" ולקחת את ה-DEPLOY URL.
+   - עדכן את הערך API_URL ב-JS למטה עם הכתובת.
+   - ה-CSS למטה כולל הוראות עיצוב; שינויים ב-CSS כאן יושמו ישירות על ה־UI.
    =============================================================================*/
 
-/* :root - values for colors and sizes */
+/* :root - ערכי צבעים וגדלים שניתן לשנות */
 :root{
   --brand:#0b72b9;
   --accent:#ff9f1c;
-  --success: #28a745;
-  --danger: #dc3545;
-  --warning: #ffc107;
   --bg:#f4f7fb;
   --card:#ffffff;
-  --text: #333;
   --muted:#6b7280;
   --radius:10px;
   --shadow: 0 6px 18px rgba(10,25,47,0.08);
-  --rtl: 1; /* Do not change */
-}
-
-/* --- Base & Layout --- */
-*,*::before,*::after{ box-sizing:border-box; }
-body{
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  direction:rtl;
-  text-align:right;
-  background-color:var(--bg);
-  color: var(--text);
-  margin:0;
-  padding: 20px;
+  --rtl: 1;
   font-size: 16px;
-  line-height:1.6;
-}
-.container{
-  max-width:1600px;
-  margin:0 auto;
-  padding:0 15px;
 }
 
-/* --- Header & Title --- */
-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:25px;
-  flex-wrap: wrap;
-}
-header h1{
-  color: var(--brand);
-  font-size:2.2rem;
-  margin: 0;
+*{box-sizing:border-box}
+body{
+  margin:0; padding:18px; font-family: "Heebo", "Alef", Arial, sans-serif;
+  background:var(--bg); color:#0b1721; direction:rtl;
 }
 
-/* --- KPI Cards --- */
-.kpi-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
-  gap:20px;
-  margin-bottom:25px;
+/* Header */
+.header{
+  display:flex; gap:12px; align-items:center; justify-content:space-between;
+  margin-bottom:16px;
 }
-.kpi-card{
-  background:var(--card);
-  padding:20px;
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  border-left: 5px solid var(--brand);
+.brand { display:flex; gap:12px; align-items:center; }
+.logo{
+  width:56px; height:56px; background:linear-gradient(135deg,var(--brand),#0369a1);
+  border-radius:12px; box-shadow:var(--shadow); color:white; display:flex;
+  align-items:center; justify-content:center; font-weight:700;
 }
-.kpi-card h3{ margin:0 0 10px; font-size:1rem; color:var(--muted); }
-.kpi-card .value{ font-size:2.5rem; font-weight:700; color:var(--brand); }
-.kpi-card.overdue .value { color: var(--danger); }
-.kpi-card.overdue { border-left-color: var(--danger); }
-.kpi-card.closed-today .value { color: var(--success); }
-.kpi-card.closed-today { border-left-color: var(--success); }
+.controls { display:flex; gap:8px; align-items:center; }
 
-/* --- Controls & Toolbar --- */
-.toolbar{
-  display:flex;
-  gap:15px;
-  margin-bottom:20px;
-  flex-wrap: wrap;
-}
-.search-box{
-  flex-grow:1;
-  position:relative;
-}
-#globalSearch{
-  width:100%;
-  padding:12px 15px 12px 40px;
-  border:1px solid #ddd;
-  border-radius:var(--radius);
-  font-size:1rem;
-}
-.search-box::after{
-  content:'🔍';
-  position:absolute;
-  left:15px;
-  top:50%;
-  transform:translateY(-50%);
-  opacity:0.5;
-}
-.btn{
-  padding:12px 20px;
-  border-radius:var(--radius);
-  border:none;
-  cursor:pointer;
-  font-weight:600;
-  font-size:1rem;
-  transition: all 0.2s;
-}
-.btn-primary{ background-color:var(--brand); color:white; }
-.btn-primary:hover{ background-color: #0a619e; }
-.btn-secondary{ background-color:var(--accent); color:white; }
-.btn-secondary:hover{ background-color: #e68e0a; }
+/* layout */
+.container { display:grid; grid-template-columns: 320px 1fr 380px; gap:16px; align-items:start; }
+@media (max-width:1200px){ .container { grid-template-columns: 1fr 380px; .left {display:none;}} }
+@media (max-width:1000px){ .container { grid-template-columns: 1fr; } .right, .left { order:99 } }
 
-/* --- Table Styles --- */
-.table-wrapper{
-  overflow-x:auto;
-  background:var(--card);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  padding:15px;
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-  white-space:nowrap;
-}
-th, td{
-  padding:12px 15px;
-  text-align:right;
-  border-bottom:1px solid #eee;
-}
-th{
-  background-color:#f8f9fa;
-  font-weight:600;
-  color:var(--muted);
-  font-size:0.9rem;
-  text-transform:uppercase;
-}
-tbody tr:hover{ background-color:#f4f7fb; }
-.status{
-  padding: 5px 10px;
-  border-radius: 15px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  text-align: center;
-  display: inline-block;
-}
-.status-open{ background-color: #ffc1072e; color: #b98b00; }
-.status-closed{ background-color: #28a7452e; color: #1c7430; }
-.status-overdue{ background-color: #dc35452e; color: #a71d2a; }
-.actions-cell button{
-  background:transparent;
-  border:none;
-  cursor:pointer;
-  margin: 0 5px;
-  font-size:1.2rem;
-  opacity:0.7;
-  transition: opacity 0.2s;
-}
-.actions-cell button:hover{ opacity:1; }
+/* left panel (filters) */
+.left { background:var(--card); padding:12px; border-radius:var(--radius); box-shadow:var(--shadow); }
+.kpi { display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+.kpi-card { background:var(--card); padding:12px; border-radius:8px; box-shadow:0 4px 10px rgba(12,28,52,0.04); text-align:center; }
+.kpi-number { font-size:20px; font-weight:700; }
 
-/* --- Modal --- */
-.modal{
-  display:none;
-  position:fixed;
-  z-index:1000;
-  left:0; top:0;
-  width:100%; height:100%;
-  overflow:auto;
-  background-color:rgba(0,0,0,0.5);
-  align-items:center;
-  justify-content:center;
+/* center - main table */
+.main { background:var(--card); padding:12px; border-radius:var(--radius); box-shadow:var(--shadow); overflow-x: auto; }
+.toolbar { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
+.search { flex:1; padding:8px 12px; border-radius:8px; border:1px solid #e6eef8; background:#fbfdff; }
+.table { width:100%; border-collapse:collapse; }
+.table th, .table td { padding:8px 10px; border-bottom:1px solid #eef5fb; text-align:right; font-size:14px; white-space: nowrap;}
+.table th { background:#f8fbff; font-weight:700; color:var(--brand); text-align: right;}
+.table tr:hover { background-color: #f9fafb; }
+
+/* right panel - notifications & tools */
+.right { background:var(--card); padding:12px; border-radius:var(--radius); box-shadow:var(--shadow); }
+.alert { background:#fff4f0; border:1px solid #ffe5d9; border-right:4px solid #ff8a4b; padding:8px 12px; border-radius:6px; margin-bottom:8px; }
+.note-area { width:100%; min-height:120px; padding:8px; border-radius:8px; border:1px solid #e6eef8; margin-top:8px; }
+
+/* Charts */
+.charts-container {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 16px;
+    margin-bottom: 16px;
 }
-.modal-content{
-  background-color:var(--card);
-  margin:auto;
-  padding:25px;
-  border-radius:var(--radius);
-  width:90%;
-  max-width:600px;
-  position:relative;
+.chart-card {
+    background: var(--card);
+    padding: 16px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
 }
-.modal-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  border-bottom:1px solid #eee;
-  padding-bottom:15px;
-  margin-bottom:20px;
+.chart-title {
+    font-weight: 700;
+    margin-bottom: 12px;
 }
-.modal-header h2{ margin:0; }
-.close-button{
-  font-size:2rem;
-  font-weight:bold;
-  cursor:pointer;
-  line-height:1;
-}
-.modal-body .form-group{
-  margin-bottom:15px;
-}
-.modal-body label{
-  display:block;
-  margin-bottom:5px;
-  font-weight:600;
-  color:var(--muted);
-}
-.modal-body input{
-  width:100%;
-  padding:10px;
-  border:1px solid #ccc;
-  border-radius:var(--radius);
-}
-.modal-footer{
-  text-align:left;
-  padding-top:15px;
-  border-top:1px solid #eee;
-  margin-top:20px;
+@media (max-width: 768px) {
+    .charts-container { grid-template-columns: 1fr; }
 }
 
-/* --- Loader --- */
-.loader-wrapper{
-  text-align: center;
-  padding: 50px;
+
+/* side-detail overlay */
+.side-detail {
+  position:fixed; top:0; left:0; width:420px; background:var(--card);
+  padding:14px; box-shadow:var(--shadow);
+  height: 100%;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease-in-out;
+  max-height:100vh; overflow:auto; z-index:60;
 }
-.loader {
-  border: 8px solid #f3f3f3;
-  border-radius: 50%;
-  border-top: 8px solid var(--brand);
-  width: 60px;
-  height: 60px;
-  animation: spin 1s linear infinite;
-  margin: auto;
-}
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.side-detail.open {
+    transform: translateX(0);
 }
 
-/* --- Dev Notes Section --- */
-.dev-notes-container {
+
+/* Toast Notifications */
+#toast-container {
     position: fixed;
-    bottom: 20px;
+    top: 20px;
     left: 20px;
-    width: 300px;
-    background-color: white;
-    box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
-    border-radius: var(--radius);
-    overflow: hidden;
-    z-index: 999;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
-.dev-notes-header {
-    background-color: var(--muted);
+.toast {
+    padding: 12px 16px;
+    background-color: #333;
     color: white;
-    padding: 10px;
-    font-weight: bold;
-    cursor: pointer;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    opacity: 0;
+    transform: translateX(-100%);
+    animation: slideIn 0.3s forwards;
 }
-.dev-notes-content {
-    padding: 15px;
-    display: none; /* Initially hidden */
-}
-.dev-notes-content textarea {
-    width: 100%;
-    min-height: 100px;
-    border: 1px solid #ddd;
-    border-radius: var(--radius);
-    padding: 8px;
-    margin-bottom: 10px;
-    resize: vertical;
+.toast.success { background-color: #28a745; }
+.toast.error { background-color: #dc3545; }
+@keyframes slideIn {
+    to { opacity: 1; transform: translateX(0); }
 }
 
+/* small helpers */
+.btn { background:var(--brand); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight: 600; }
+.btn.secondary{ background:#e6f1fb; color:var(--brand); }
+.btn.danger { background: #fbe6e6; color: #dc2626; }
+
+/* Status visualization */
+.status-cell { display: flex; align-items: center; gap: 8px; }
+.status-dot { width: 10px; height: 10px; border-radius: 50%; }
+.status-dot.פתוחה { background-color: #3b82f6; }
+.status-dot.סגורה { background-color: #16a34a; }
+.status-dot.חורגת { background-color: #ef4444; }
+.status-dot.בתהליך { background-color: #f97316; }
+
+
+/* Roadmap Styles */
+.roadmap-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  border-bottom: 1px solid #f0f3f7;
+}
+.roadmap-item:last-child {
+  border-bottom: none;
+}
+.roadmap-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #eef5fb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand);
+}
+.roadmap-item.done .roadmap-icon {
+    background-color: #dcfce7;
+    color: #16a34a;
+}
+.roadmap-content {
+  flex-grow: 1;
+}
+.roadmap-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+.roadmap-status {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 99px;
+}
+.roadmap-status.done {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+.roadmap-status.in-progress {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+.roadmap-status.next-up {
+  background-color: #eef2ff;
+  color: #4f46e5;
+}
+.roadmap-status.future {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+
+/* mobile adjustments */
+@media (max-width:600px){
+  .header { flex-direction:column; align-items:stretch; gap:10px; }
+  .container { grid-template-columns: 1fr; }
+  .side-detail { position:fixed; left:0; right:0; top:0; width:100%; height:100%; border-radius: 0;}
+}
 </style>
 </head>
 <body>
+  <div id="toast-container"></div>
 
-<div class="container">
-  <header>
-    <h1>לוח בקרה למעקב</h1>
-    <div class="dev-notes-container">
-      <div class="dev-notes-header" onclick="toggleDevNotes()">הערות פיתוח</div>
-      <div class="dev-notes-content">
-        <textarea id="devNote" placeholder="הערות אחרונות..."></textarea>
-        <button class="btn btn-primary" style="width:100%;" onclick="saveDevNote()">שמור הערה</button>
+  <div class="header">
+    <div class="brand">
+      <div class="logo">ח.סבן</div>
+      <div>
+        <div style="font-weight:700;font-size:18px">לוח בקרה - מעקב מכולות</div>
+        <div style="color:var(--muted);font-size:13px" id="sheet-connection-status">מתחבר לגליון...</div>
       </div>
     </div>
-  </header>
 
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <h3>סך הכל פתוחות</h3>
-      <div class="value" id="kpi-open">0</div>
-    </div>
-    <div class="kpi-card overdue">
-      <h3>באיחור (חריגה)</h3>
-      <div class="value" id="kpi-overdue">0</div>
-    </div>
-    <div class="kpi-card closed-today">
-      <h3>נסגרו היום</h3>
-      <div class="value" id="kpi-closed-today">0</div>
-    </div>
-    <div class="kpi-card">
-      <h3>סה"כ רשומות</h3>
-      <div class="value" id="kpi-total">0</div>
+    <div class="controls">
+      <input id="globalSearch" class="search" placeholder="חפש (מספר הזמנה, לקוח, כתובת...)" oninput="applyFilter()" />
+      <button class="btn" onclick="refresh()">רענן</button>
+      <button class="btn secondary" onclick="openNewOrder()">הזמנה חדשה</button>
     </div>
   </div>
 
-  <div class="toolbar">
-    <div class="search-box">
-      <input type="text" id="globalSearch" placeholder="חיפוש כללי..." onkeyup="applyFilter()" />
-    </div>
-    <button class="btn btn-primary" onclick="openAddModal()">הוסף רשומה חדשה</button>
+  <div class="charts-container">
+      <div class="chart-card">
+          <div class="chart-title">סטטוס הזמנות</div>
+          <canvas id="statusChart"></canvas>
+      </div>
+      <div class="chart-card">
+          <div class="chart-title">חריגות לפי לקוח</div>
+          <canvas id="overdueChart"></canvas>
+      </div>
   </div>
 
-  <div class="table-wrapper" id="table-container">
-      <div class="loader-wrapper"><div class="loader"></div><p>טוען נתונים...</p></div>
+  <div class="container">
+    <div class="left">
+      <div style="font-weight:700;margin-bottom:8px">KPIs</div>
+      <div class="kpi">
+          <div class="kpi-card"><div style="color:var(--muted)">סה״כ הזמנות</div><div id="kTotal" class="kpi-number">—</div></div>
+          <div class="kpi-card"><div style="color:var(--muted)">פתוחות</div><div id="kOpen" class="kpi-number">—</div></div>
+          <div class="kpi-card"><div style="color:var(--muted)">חורגות</div><div id="kOver" class="kpi-number">—</div></div>
+          <div class="kpi-card"><div style="color:var(--muted)">סגורות</div><div id="kClosed" class="kpi-number">—</div></div>
+      </div>
+
+      <hr style="margin:12px 0" />
+      <div style="font-weight:700;margin-bottom:6px">כלים לפיתוח</div>
+      <div style="font-size:13px;color:var(--muted)">
+        כאן תוכל לכתוב רעיונות, משימות או טיקט מהיר לצוות הפיתוח — לשמור ישירות בגליון כתזכורת.
+      </div>
+      <textarea id="devNote" class="note-area" placeholder="כתוב הערה/רשימת משימות..."></textarea>
+      <div style="margin-top:8px; display:flex; gap:8px">
+        <button class="btn" onclick="saveDevNote()">שמור הערה</button>
+        <button class="btn secondary" onclick="loadDevNotes()">טען הערות</button>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="toolbar">
+        <div style="font-weight:700">טבלת הזמנות</div>
+        <div style="flex:1"></div>
+        <div id="statusMsg" style="color:var(--muted);font-size:13px"></div>
+      </div>
+
+      <table class="table" id="ordersTable">
+        <thead id="tHead"></thead>
+        <tbody id="tBody"></tbody>
+      </table>
+    </div>
+
+    <div class="right">
+      <div style="font-weight:700;margin-bottom:8px">התראות</div>
+      <div id="alerts"></div>
+
+      <hr style="margin:12px 0" />
+      <div style="font-weight:700; margin-bottom: 8px;">תוכנית פיתוח - הצעדים הבאים</div>
+      <div id="roadmap">
+        <div class="roadmap-item done">
+          <div class="roadmap-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <div class="roadmap-content">
+            <div class="roadmap-title">שילוב בזמן אמת</div>
+          </div>
+          <div class="roadmap-status done">הושלם</div>
+        </div>
+        <div class="roadmap-item">
+          <div class="roadmap-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          </div>
+          <div class="roadmap-content">
+            <div class="roadmap-title">אימות והרשאות</div>
+          </div>
+          <div class="roadmap-status next-up">הבא בתור</div>
+        </div>
+        <div class="roadmap-item">
+          <div class="roadmap-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="14 2 18 6 7 17 3 17 3 13 14 2"></polygon><line x1="3" y1="22" x2="21" y2="22"></line></svg>
+          </div>
+          <div class="roadmap-content">
+            <div class="roadmap-title">שיפורי UI/UX</div>
+          </div>
+           <div class="roadmap-status future">בעתיד</div>
+        </div>
+        <div class="roadmap-item">
+          <div class="roadmap-icon">
+             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          </div>
+          <div class="roadmap-content">
+            <div class="roadmap-title">יצוא PDF וחתימה</div>
+          </div>
+           <div class="roadmap-status future">בעתיד</div>
+        </div>
+        <div class="roadmap-item">
+           <div class="roadmap-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          </div>
+          <div class="roadmap-content">
+            <div class="roadmap-title">שילוב מפות וניווט</div>
+          </div>
+           <div class="roadmap-status future">בעתיד</div>
+        </div>
+      </div>
+    </div>
   </div>
 
-</div>
-
-
-<!-- Edit/Add Modal -->
-<div id="editModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2 id="modalTitle">עריכת רשומה</h2>
-      <span class="close-button" onclick="closeModal()">&times;</span>
-    </div>
-    <div class="modal-body" id="modalForm">
-      <!-- Form fields will be generated by JavaScript -->
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal()">ביטול</button>
-      <button class="btn btn-primary" onclick="saveRow()">שמור שינויים</button>
-    </div>
-  </div>
-</div>
-
+  <!-- side detail -->
+  <div id="sideDetail" class="side-detail" style="display:none"></div>
 
 <script>
-// =========================================================================
-// !!! IMPORTANT !!!
-// REPLACE THE VALUE BELOW WITH YOUR GOOGLE APPS SCRIPT WEB APP URL
-// =========================================================================
-const API_URL = "https://script.google.com/macros/s/AKfycbydmQ1jF7rL19QS_NY84Rgvzddv2awOlPyjwW4QOic1qGairdmMjJFMG0FzsFu4blqlSw/exec"; 
-// =========================================================================
+/* ========== CONFIG ========== */
+const API_URL = "YOUR_DEPLOYMENT_URL_HERE"; // <-- החלף כאן בכתובת ה־WebApp שלך
 
-
+/* ========== State & Chart Instances ========== */
 let rawData = [];
 let headers = [];
-let editRowIndex = null;
+let isRefreshing = false;
+let statusChartInstance = null;
+let overdueChartInstance = null;
 
-document.addEventListener("DOMContentLoaded", () => {
-    if (API_URL === "PASTE_YOUR_APPS_SCRIPT_DEPLOYMENT_URL_HERE") {
-        document.getElementById('table-container').innerHTML = `<div style="text-align:center; padding: 40px; background-color:#fff3cd; border:1px solid #ffeeba; border-radius:var(--radius);">
-            <h2>הגדרה נדרשת</h2>
-            <p>עליך לעדכן את הקבוע <strong>API_URL</strong> בקובץ index.html עם כתובת ה-URL של ה-Web App שפרסת ב-Google Apps Script.</p>
-        </div>`;
-        return;
-    }
-    loadTableData();
-    loadDevNotes();
-});
+/* ========== PWA Setup ========== */
+function setupPWA() {
+    const manifest = {
+        "name": "לוח בקרה - מעקב",
+        "short_name": "מעקב",
+        "start_url": ".",
+        "display": "standalone",
+        "background_color": "#f4f7fb",
+        "theme_color": "#0b72b9",
+        "description": "לוח בקרה למעקב מכולות",
+        "icons": [{
+            "src": "https://placehold.co/192x192/0b72b9/white?text=Saban",
+            "sizes": "192x192",
+            "type": "image/png"
+        }, {
+            "src": "https://placehold.co/512x512/0b72b9/white?text=Saban",
+            "sizes": "512x512",
+            "type": "image/png"
+        }]
+    };
+    const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(manifestBlob);
+    document.querySelector('#manifestLink').setAttribute('href', manifestURL);
 
-/* --- API Communication --- */
-async function apiRequest(method, params = {}) {
-  const url = new URL(API_URL);
-  let options = {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      redirect: 'follow',
-  };
-  
-  if (method.toUpperCase() === 'POST') {
-      options.method = 'POST';
-      options.body = JSON.stringify(params);
-      // This part is for CORS compatibility with Apps Script POST requests
-      options.mode = 'no-cors'; 
-      // Because of 'no-cors', we won't get a real response object, so we send a text/plain payload
-      options.body = JSON.stringify(params);
-      options.headers = {'Content-Type': 'text/plain;charset=utf-8'};
-      
-      // We perform the post, but then we will need to re-fetch data to see changes
-      await fetch(url, options);
-      // Return a simulated success as no-cors prevents reading the actual response
-      return { status: "success", message: "POST request sent. Refreshing data." };
-
-  } else { // GET
-      Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
-      const response = await fetch(url, options);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return await response.json();
-  }
-}
-
-/* --- Data Loading and Rendering --- */
-async function loadTableData() {
-    try {
-        const response = await apiRequest('GET', { action: 'getData' });
-        if (response && response.status === 'success') {
-            rawData = response.data;
-            headers = response.headers;
-            renderTable(rawData);
-            updateKPIs(rawData);
-        } else {
-            throw new Error(response.message || "Failed to load data.");
-        }
-    } catch (error) {
-        console.error("Error loading data:", error);
-        document.getElementById('table-container').innerHTML = `<p style="color:var(--danger);text-align:center;">שגיאה בטעינת הנתונים: ${error.message}</p>`;
+    // Service Worker
+    if ('serviceWorker' in navigator) {
+        const swCode = `
+            const CACHE_NAME = 'saban-dashboard-cache-v1';
+            const urlsToCache = [
+                '/',
+                'https://cdn.jsdelivr.net/npm/chart.js'
+            ];
+            self.addEventListener('install', event => {
+                event.waitUntil(
+                    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+                );
+            });
+            self.addEventListener('fetch', event => {
+                event.respondWith(
+                    caches.match(event.request).then(response => {
+                        return response || fetch(event.request);
+                    })
+                );
+            });
+        `;
+        const swBlob = new Blob([swCode], {type: 'application/javascript'});
+        const swURL = URL.createObjectURL(swBlob);
+        navigator.serviceWorker.register(swURL).then(reg => {
+            console.log('Service Worker registered successfully.');
+        }).catch(error => {
+            console.error('Service Worker registration failed:', error);
+        });
     }
 }
 
-function renderTable(data) {
-  const container = document.getElementById("table-container");
-  if (!data || data.length === 0) {
-    container.innerHTML = "<p>לא נמצאו נתונים.</p>";
+
+/* ========== Toast Notifications ========== */
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.remove();
+    }, 4000);
+}
+
+
+/* ========== API Wrappers ========== */
+async function apiGet(action) {
+  const res = await fetch(`${API_URL}?action=${action}`);
+  if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+  return await res.json();
+}
+async function apiPost(body) {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+  return await res.json();
+}
+
+/* ========== Date Formatting ========== */
+function formatDateTime(value) {
+  if (!value && value !== 0) return "";
+  let d = (value instanceof Date) ? value : new Date(value);
+  if (isNaN(d.getTime())) return value;
+  try {
+    const dateStr = d.toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit", year: "numeric" });
+    const timeStr = d.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
+    if (d.getHours() === 0 && d.getMinutes() === 0 && d.getSeconds() === 0) return dateStr;
+    return `${dateStr}, ${timeStr}`;
+  } catch (e) { return value; }
+}
+
+function looksLikeDateHeader(h) {
+  if (!h) return false;
+  const s = String(h).toLowerCase();
+  return s.includes("תאריך") || s.includes("date") || s.includes("סיום");
+}
+
+/* ========== Renderers ========== */
+function renderTable(data, hdrs) {
+  const scrollY = window.scrollY;
+  const thead = document.getElementById("tHead");
+  const tbody = document.getElementById("tBody");
+  thead.innerHTML = "";
+  tbody.innerHTML = "";
+
+  if (!hdrs || hdrs.length === 0) {
+    thead.innerHTML = "<tr><th>אין נתונים להצגה. יש לוודא שהוגדרו כותרות בגליון 'מעקב'.</th></tr>";
     return;
   }
-
-  let tableHtml = `<table><thead><tr>`;
-  headers.forEach(h => { tableHtml += `<th>${h}</th>`; });
-  tableHtml += `<th>פעולות</th></tr></thead><tbody>`;
-
-  data.forEach(row => {
-    tableHtml += `<tr data-row-index="${row.rowIndex}">`;
-    headers.forEach(header => {
-      let value = row[header] || "";
-      if (header.toLowerCase().includes("תאריך")) {
-          value = formatDate(value);
-      }
-      if (header === "סטטוס") {
-          value = `<span class="status ${getStatusClass(row)}">${value}</span>`;
-      }
-      tableHtml += `<td>${value}</td>`;
-    });
-    // Actions cell
-    tableHtml += `<td class="actions-cell">
-        <button title="ערוך" onclick="openEditModal(${row.rowIndex})">✏️</button>
-        <button title="שלח וואטסאפ" onclick="sendWhatsApp(${row.rowIndex})">💬</button>
-        <button title="מחק" onclick="deleteRowPrompt(${row.rowIndex})">🗑️</button>
-    </td>`;
-    tableHtml += `</tr>`;
-  });
-
-  tableHtml += `</tbody></table>`;
-  container.innerHTML = tableHtml;
-}
-
-/* --- KPIs --- */
-function updateKPIs(data) {
-    const today = new Date().toISOString().split('T')[0];
-    const openStatus = data.filter(r => r['סטטוס']?.toLowerCase() === 'פתוח').length;
-    const closedToday = data.filter(r => r['תאריך סגירה'] === today).length;
-    
-    // Find overdue items (status is open and expected end date is in the past)
-    const overdue = data.filter(row => {
-        const status = row['סטטוס'];
-        const dueDateStr = row['תאריך סיום צפוי'];
-        if (!dueDateStr || status?.toLowerCase() !== 'פתוח') return false;
-        
-        const dueDate = new Date(dueDateStr);
-        const todayDate = new Date();
-        todayDate.setHours(0, 0, 0, 0); // Compare dates only
-        return dueDate < todayDate;
-    }).length;
-
-    document.getElementById('kpi-open').innerText = openStatus;
-    document.getElementById('kpi-overdue').innerText = overdue;
-    document.getElementById('kpi-closed-today').innerText = closedToday;
-    document.getElementById('kpi-total').innerText = data.length;
-}
-
-
-/* --- Modal & Editing --- */
-function openAddModal() {
-    editRowIndex = null;
-    document.getElementById('modalTitle').innerText = 'הוספת רשומה חדשה';
-    const formContainer = document.getElementById('modalForm');
-    let formHtml = '';
-    headers.forEach(header => {
-        formHtml += `<div class="form-group">
-            <label for="field-${header}">${header}</label>
-            <input type="text" id="field-${header}" name="${header}">
-        </div>`;
-    });
-    formContainer.innerHTML = formHtml;
-    document.getElementById('editModal').style.display = 'flex';
-}
-
-function openEditModal(rowIndex) {
-    const rowData = rawData.find(r => r.rowIndex === rowIndex);
-    if (!rowData) {
-      alert("Row not found!");
-      return;
-    }
-    editRowIndex = rowIndex;
-    document.getElementById('modalTitle').innerText = 'עריכת רשומה';
-    const formContainer = document.getElementById('modalForm');
-    let formHtml = '';
-    headers.forEach(header => {
-        formHtml += `<div class="form-group">
-            <label for="field-${header}">${header}</label>
-            <input type="text" id="field-${header}" name="${header}" value="${rowData[header] || ''}">
-        </div>`;
-    });
-    formContainer.innerHTML = formHtml;
-    document.getElementById('editModal').style.display = 'flex';
-}
-
-function closeModal() {
-    document.getElementById('editModal').style.display = 'none';
-}
-
-async function saveRow() {
-    const form = document.getElementById('modalForm');
-    const inputs = form.getElementsByTagName('input');
-    const rowData = Array.from(inputs).map(input => input.value);
-    
-    let action;
-    let params;
-
-    if (editRowIndex) { // Update existing row
-        action = 'updateRow';
-        params = { action: action, rowIndex: editRowIndex, rowData: rowData };
-    } else { // Add new row
-        action = 'addRow';
-        params = { action: action, rowData: rowData };
-    }
-    
-    try {
-        const response = await apiRequest('POST', params);
-        // Because of no-cors, we don't get a meaningful response, so we just reload
-        closeModal();
-        loadTableData(); // Refresh data from the server
-    } catch (error) {
-        console.error(`Error saving row:`, error);
-        alert(`Failed to save: ${error.message}`);
-    }
-}
-
-async function deleteRowPrompt(rowIndex) {
-    // Custom confirm dialog since native confirm() can be blocked.
-    if (window.confirm('האם אתה בטוח שברצונך למחוק את הרשומה?')) {
-        try {
-            await apiRequest('POST', { action: 'deleteRow', rowIndex: rowIndex });
-            loadTableData(); // Refresh data
-        } catch (error) {
-            console.error(`Error deleting row:`, error);
-            alert(`Failed to delete: ${error.message}`);
-        }
-    }
-}
-
-/* --- Utilities --- */
-function formatDate(dateString) {
-    if (!dateString) return "";
-    try {
-        const date = new Date(dateString);
-        // Use Israeli locale for dd/mm/yyyy format
-        return date.toLocaleDateString('he-IL', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-    } catch (e) {
-        return dateString; // Return original if invalid
-    }
-}
-
-function getStatusClass(row) {
-    const status = row['סטטוס']?.toLowerCase();
-    if (status === 'סגור') return 'status-closed';
-
-    const dueDateStr = row['תאריך סיום צפוי'];
-    if (status === 'פתוח' && dueDateStr) {
-        const dueDate = new Date(dueDateStr);
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        if (dueDate < today) {
-            return 'status-overdue';
-        }
-    }
-    return 'status-open';
-}
-
-function sendWhatsApp(rowIndex) {
-  const row = rawData.find(r => r.rowIndex === rowIndex);
-  if (!row) return;
-
-  const phoneField = headers.find(h => h.toLowerCase().includes("טלפון"));
-  const clientField = headers.find(h => h.toLowerCase().includes("לקוח"));
   
+  const statusField = hdrs.find(h => String(h).includes("סטטוס"));
+
+  thead.innerHTML = "<tr>" + hdrs.map(h => `<th>${h}</th>`).join("") + "<th>פעולות</th></tr>";
+
+  data.forEach((rowObj, idx) => {
+    const cells = hdrs.map(h => {
+      const v = rowObj[h];
+      if (h === statusField) {
+          return `<td><div class="status-cell"><span class="status-dot ${v}"></span> ${v || ''}</div></td>`;
+      }
+      if (looksLikeDateHeader(h)) return `<td>${formatDateTime(v)}</td>`;
+      if (String(h).includes("טלפון") && v) return `<td><a href="tel:${v}">${v}</a></td>`;
+      if (String(h).includes("כתובת") && v) return `<td><button class="btn secondary" style="padding: 4px 8px; font-size: 12px;" onclick="openMap('${encodeURIComponent(v)}')">מפה</button></td>`;
+      return `<td>${v === null || v === undefined ? "" : v}</td>`;
+    }).join("");
+
+    const actionCell = `<td style="display: flex; gap: 4px;">
+      <button class="btn secondary" onclick="showDetail(${idx})">פרטים</button>
+      <button class="btn" onclick="editRowPrompt(${idx})">ערוך</button>
+      <button class="btn danger" onclick="deleteRowByIdx(${idx})">מחק</button>
+      </td>`;
+
+    tbody.innerHTML += `<tr>${cells}${actionCell}</tr>`;
+  });
+  window.scrollTo(0, scrollY);
+}
+
+function renderCharts(data, hdrs) {
+    const statusField = hdrs.find(h => String(h).includes("סטטוס"));
+    const clientField = hdrs.find(h => String(h).includes("לקוח"));
+    const dateField = hdrs.find(h => String(h).includes("סיום"));
+
+    // Status Chart (Pie)
+    if (statusField) {
+        const statusCounts = data.reduce((acc, row) => {
+            const status = row[statusField] || 'לא ידוע';
+            acc[status] = (acc[status] || 0) + 1;
+            return acc;
+        }, {});
+        
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        if (statusChartInstance) statusChartInstance.destroy();
+        statusChartInstance = new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(statusCounts),
+                datasets: [{
+                    data: Object.values(statusCounts),
+                    backgroundColor: ['#3b82f6', '#16a34a', '#ef4444', '#f97316', '#6b7280'],
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    // Overdue by Client Chart (Bar)
+    if (clientField && dateField && statusField) {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const overdueByClient = data.reduce((acc, row) => {
+            const d = new Date(row[dateField]); d.setHours(0,0,0,0);
+            const isOpen = (String(row[statusField] || "").toLowerCase() !== "סגורה");
+            if (isOpen && d < today) {
+                const client = row[clientField] || 'לא ידוע';
+                acc[client] = (acc[client] || 0) + 1;
+            }
+            return acc;
+        }, {});
+
+        const overdueCtx = document.getElementById('overdueChart').getContext('2d');
+        if(overdueChartInstance) overdueChartInstance.destroy();
+        overdueChartInstance = new Chart(overdueCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(overdueByClient),
+                datasets: [{
+                    label: 'הזמנות חורגות',
+                    data: Object.values(overdueByClient),
+                    backgroundColor: '#ef4444',
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' }
+        });
+    }
+}
+
+
+function computeKPIs(data, hdrs) {
+  const total = data.length;
+  const statusField = hdrs.find(h => String(h).includes("סטטוס"));
+  const dateField = hdrs.find(h => String(h).includes("סיום"));
+
+  const open = data.filter(r => String(r[statusField] || "").toLowerCase() === "פתוחה").length;
+  const closed = data.filter(r => String(r[statusField] || "").toLowerCase() === "סגורה").length;
+  
+  let overdue = [];
+  if (dateField) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    overdue = data.filter(r => {
+      const d = new Date(r[dateField]); d.setHours(0,0,0,0);
+      const isOpen = (String(r[statusField] || "").toLowerCase() !== "סגורה");
+      return isOpen && d < today;
+    });
+  }
+
+  document.getElementById("kTotal").innerText = total;
+  document.getElementById("kOpen").innerText = open;
+  document.getElementById("kClosed").innerText = closed;
+  document.getElementById("kOver").innerText = overdue.length;
+
+  const alerts = document.getElementById("alerts");
+  alerts.innerHTML = "";
+  if (overdue.length === 0) {
+    alerts.innerHTML = "<div style='color:var(--muted)'>אין חריגות</div>";
+  } else {
+    overdue.slice(0, 6).forEach(o => {
+      const title = (o["שם לקוח"] || o["לקוח"] || "לקוח לא ידוע");
+      const end = formatDateTime(o[dateField]);
+      alerts.innerHTML += `<div class="alert"><div style="font-weight:700">${title}</div><div style="font-size:13px">תאריך סיום חורג: ${end}</div></div>`;
+    });
+  }
+}
+
+/* ========== Actions ========== */
+async function refresh() {
+  if (isRefreshing) return;
+  isRefreshing = true;
+  const statusMsg = document.getElementById("statusMsg");
+  statusMsg.innerText = "מרענן...";
+  try {
+    const resp = await apiGet("getData");
+    if (resp.status === "success") {
+      rawData = resp.data || [];
+      headers = resp.headers || (rawData.length > 0 ? Object.keys(rawData[0]) : []);
+      
+      applyFilter(); // This calls renderTable internally
+      computeKPIs(rawData, headers);
+      renderCharts(rawData, headers);
+      
+      statusMsg.innerText = `עודכן לאחרונה: ${new Date().toLocaleTimeString('he-IL')}`;
+      document.getElementById("sheet-connection-status").innerText = `מחובר לגליון: ${resp.sheetName}`;
+    } else {
+      statusMsg.innerText = "שגיאה: " + resp.message;
+      showToast(resp.message, 'error');
+    }
+  } catch (err) {
+    statusMsg.innerText = "שגיאת רשת: " + err.message;
+    showToast("שגיאת רשת, בדוק את החיבור", 'error');
+  } finally {
+    isRefreshing = false;
+  }
+}
+
+function showDetail(idx) {
+  const data = rawData.filter(r => {
+    const q = document.getElementById("globalSearch").value.trim().toLowerCase();
+    if (!q) return true;
+    return Object.values(r).some(v => String(v || "").toLowerCase().includes(q));
+  })[idx];
+
+  if (!data) return;
+  const side = document.getElementById("sideDetail");
+  let html = `<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:700">פרטי הזמנה</div><button onclick="closeDetail()" style="background:none;border:none;font-size:24px;cursor:pointer;">&times;</button></div><hr/>`;
+  for (const k in data) {
+    const v = looksLikeDateHeader(k) ? formatDateTime(data[k]) : data[k];
+    html += `<div style="margin-bottom:6px"><div style="color:var(--muted);font-size:13px">${k}</div><div style="font-weight:600">${v || ''}</div></div>`;
+  }
+  const originalIndex = rawData.findIndex(item => item === data);
+  html += `<div style="margin-top:12px;display:flex;gap:8px;"><button class="btn" onclick="sendWhatsApp(${originalIndex})">שלח WhatsApp</button> <button class="btn secondary" onclick="closeDetail()">סגור</button></div>`;
+  side.innerHTML = html;
+  side.style.display = "block";
+}
+function closeDetail(){ document.getElementById("sideDetail").style.display = "none" }
+
+function openMap(q) {
+  window.open(`https://www.google.com/maps/search/?api=1&query=${q}`, "_blank");
+}
+
+function editRowPrompt(idx) {
+  const filteredData = rawData.filter(r => {
+    const q = document.getElementById("globalSearch").value.trim().toLowerCase();
+    if (!q) return true;
+    return Object.values(r).some(v => String(v || "").toLowerCase().includes(q));
+  });
+  const originalRow = filteredData[idx];
+  if (!originalRow) return;
+
+  const newRowData = {};
+  for(const header of headers) {
+      const val = prompt(`ערוך שדה "${header}"`, originalRow[header] || "");
+      if (val === null) return;
+      newRowData[header] = val;
+  }
+  
+  const newRowArray = headers.map(h => newRowData[h]);
+  const originalIndex = rawData.findIndex(item => item === originalRow);
+
+  apiPost({ action: "updateRow", index: originalIndex, row: newRowArray }).then(r => {
+    showToast(r.message, 'success');
+    refresh();
+  }).catch(e => showToast("שגיאה בעדכון: " + e.message, 'error'));
+}
+function openNewOrder() {
+  if (!headers || headers.length === 0) {
+      showToast("לא ניתן להוסיף הזמנה. יש להגדיר כותרות בגליון תחילה.", 'error');
+      return;
+  }
+  const row = headers.map(c => prompt(`הזן ערך עבור: ${c}`, ""));
+  if (row.some(val => val === null)) return;
+
+  apiPost({ action: "addRow", row: row }).then(r => { showToast(r.message, 'success'); refresh(); }).catch(e => showToast(e.message, 'error'));
+}
+
+function deleteRowByIdx(idx) {
+  const filteredData = rawData.filter(r => {
+    const q = document.getElementById("globalSearch").value.trim().toLowerCase();
+    if (!q) return true;
+    return Object.values(r).some(v => String(v || "").toLowerCase().includes(q));
+  });
+  const rowToDelete = filteredData[idx];
+  const identifier = rowToDelete[headers[0]] || `שורה ${idx+1}`;
+  if (!confirm(`האם למחוק את "${identifier}"?`)) return;
+  
+  const originalIndex = rawData.findIndex(item => item === rowToDelete);
+  apiPost({ action: "deleteRow", index: originalIndex }).then(r => { 
+      showToast(r.message, 'success');
+      refresh(); 
+  }).catch(e => showToast(e.message, 'error'));
+}
+
+function sendWhatsApp(idx) {
+  const row = rawData[idx];
+  if (!row) return;
+  const phoneField = headers.find(h => h.includes("טלפון") || h.includes("phone"));
+  const clientField = headers.find(h => h.includes("שם") || h.includes("לקוח"));
   const phone = phoneField ? row[phoneField] : "";
   const client = clientField ? row[clientField] : "לקוח";
   const text = encodeURIComponent(`שלום ${client}, בדיקת סטטוס הזמנה.`);
-  if (!phone) { alert("אין שדה טלפון"); return; }
-  window.open(`https://wa.me/${phone.replace(/[^0-9]/g,'')}?text=${text}`, "_blank");
+  if (!phone) { showToast("לא נמצא מספר טלפון עבור הזמנה זו.", 'error'); return; }
+  const cleanPhone = String(phone).replace(/[^0-9]/g,'');
+  window.open(`https://wa.me/972${cleanPhone.substring(cleanPhone.length-9)}?text=${text}`, "_blank");
 }
 
 /* Dev notes */
 async function saveDevNote(){
   const text = document.getElementById("devNote").value.trim();
-  if (!text) { alert("כתוב הערה"); return; }
-  const note = { author: "Admin", text: text };
-  try {
-    await apiRequest('POST', { action: "saveDevNote", note: note });
-    document.getElementById("devNote").value = "";
-    loadDevNotes(); // Refresh notes
-  } catch(e) {
-    alert("Failed to save note.");
-  }
+  if (!text) { showToast("יש לכתוב תוכן להערה.", 'error'); return; }
+  const note = { author: "מנהל", text: text };
+  const resp = await apiPost({ action: "saveDevNote", note: note });
+  showToast(resp.message || "ההערה נשמרה", 'success');
+  document.getElementById("devNote").value = "";
 }
-
 async function loadDevNotes(){
-  try {
-    const resp = await apiRequest('GET', { action: "getDevNotes" });
-    if (resp.status === "success" && resp.notes && resp.notes.length) {
-      const latest = resp.notes.reverse().map(n => {
-          const d = new Date(n.timestamp);
-          const formattedDate = `${d.toLocaleDateString('he-IL')} ${d.toLocaleTimeString('he-IL')}`;
-          return `${formattedDate} — ${n.author}: ${n.note}`;
-      }).join("\n\n");
-      document.getElementById("devNote").value = latest;
-    }
-  } catch(e) {
-     console.error("Could not load dev notes", e);
+  const resp = await apiGet("getDevNotes");
+  if (resp.status === "success" && resp.notes && resp.notes.length) {
+    const latest = resp.notes.slice(-5).reverse().map(n => `${formatDateTime(n.timestamp)} — ${n.author}: ${n.note}`).join("\n\n");
+    document.getElementById("devNote").value = latest;
+  } else {
+    document.getElementById("devNote").value = "";
+    showToast("לא נמצאו הערות קודמות.", 'info');
   }
 }
-
-function toggleDevNotes() {
-    const content = document.querySelector('.dev-notes-content');
-    content.style.display = content.style.display === 'block' ? 'none' : 'block';
-}
-
 
 /* search filter */
 function applyFilter(){
   const q = document.getElementById("globalSearch").value.trim().toLowerCase();
-  if (!q) {
-    renderTable(rawData);
-    return;
-  }
-  const filteredData = rawData.filter(row => {
-    return Object.values(row).some(val => 
-      String(val).toLowerCase().includes(q)
-    );
+  const filtered = rawData.filter(r => {
+    if (!q) return true;
+    return Object.values(r).some(v => String(v || "").toLowerCase().includes(q));
   });
-  renderTable(filteredData);
+  renderTable(filtered, headers);
 }
 
-// Close modal if clicked outside the content
-window.onclick = function(event) {
-    const modal = document.getElementById('editModal');
-    if (event.target == modal) {
-        closeModal();
-    }
-}
+/* initial load */
+document.addEventListener('DOMContentLoaded', () => {
+  setupPWA();
+  refresh(); 
+  setInterval(refresh, 30000); 
+});
 </script>
-
 </body>
 </html>
+
