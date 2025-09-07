@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת ניהול מכולות</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Heebo', sans-serif; }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        /* Style for the loading spinner */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Hide scrollbar for number inputs */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+          -webkit-appearance: none; 
+          margin: 0; 
+        }
+        input[type=number] {
+          -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div id="app" class="flex flex-col h-screen">
+
+        <!-- Header -->
+        <header class="bg-white shadow-md p-4 flex justify-between items-center z-20">
+            <div class="flex items-center gap-4">
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                <h1 class="text-xl font-bold text-gray-700 hidden md:block">ניהול מכולות</h1>
+            </div>
+            <div class="flex-1 max-w-lg mx-4">
+                <input type="text" id="searchInput" placeholder="חיפוש לפי מספר הזמנה, שם לקוח, כתובת..." class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button id="newOrderBtn" class="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                <span class="hidden md:inline">הזמנה חדשה</span>
+            </button>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 md:p-6 overflow-y-auto">
+            
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-lg shadow flex items-center gap-4">
+                     <div class="bg-blue-100 p-3 rounded-full"><svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg></div>
+                    <div>
+                        <div id="totalOrders" class="text-2xl font-bold">0</div>
+                        <div class="text-gray-500">סה"כ הזמנות</div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow flex items-center gap-4">
+                    <div class="bg-green-100 p-3 rounded-full"><svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                    <div>
+                        <div id="openOrders" class="text-2xl font-bold">0</div>
+                        <div class="text-gray-500">פתוחות</div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow flex items-center gap-4">
+                    <div class="bg-red-100 p-3 rounded-full"><svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                    <div>
+                        <div id="overdueOrders" class="text-2xl font-bold text-red-600">0</div>
+                        <div class="text-gray-500">חורגות</div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow flex items-center gap-4">
+                     <div class="bg-yellow-100 p-3 rounded-full"><svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2 2h8a1 1 0 001-1zM3 11h10"></path></svg></div>
+                    <div>
+                        <div id="activeContainers" class="text-2xl font-bold">0</div>
+                        <div class="text-gray-500">מכולות בעבודה</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overdue Notifications & Main Table -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <!-- Notifications Panel (Desktop) -->
+                <div class="lg:col-span-1 bg-white p-4 rounded-lg shadow hidden lg:block">
+                    <h2 class="font-bold text-lg mb-4">התראות על חריגות</h2>
+                    <div id="notificationsContainer" class="space-y-3 max-h-96 overflow-y-auto">
+                        <!-- Notifications will be injected here -->
+                        <p class="text-gray-500 text-center py-4">אין התראות חדשות.</p>
+                    </div>
+                </div>
+
+                <!-- Main Data Table -->
+                <div class="lg:col-span-3 bg-white rounded-lg shadow overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-right">
+                            <thead class="bg-gray-50 border-b">
+                                <tr>
+                                    <th class="p-3 font-semibold">מס' הזמנה</th>
+                                    <th class="p-3 font-semibold">שם לקוח</th>
+                                    <th class="p-3 font-semibold">סוג פעולה</th>
+                                    <th class="p-3 font-semibold hidden md:table-cell">תאריך הזמנה</th>
+                                    <th class="p-3 font-semibold hidden md:table-cell">סיום צפוי</th>
+                                    <th class="p-3 font-semibold">סטטוס</th>
+                                    <th class="p-3 font-semibold">פעולות</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTableBody">
+                                <!-- Table rows will be injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="loader" class="flex justify-center items-center p-10">
+                        <div class="loader"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Bottom Navigation (Mobile) -->
+        <nav class="md:hidden bg-white shadow-t border-t fixed bottom-0 w-full flex justify-around p-2 z-20">
+             <button class="flex flex-col items-center text-blue-600">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
+                <span class="text-xs">ראשי</span>
+             </button>
+             <button class="flex flex-col items-center text-gray-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                <span class="text-xs">הזמנות</span>
+             </button>
+              <button id="mobileAlertsBtn" class="flex flex-col items-center text-gray-500 relative">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                 <span id="mobileAlertsBadge" class="absolute top-0 right-0 -mt-1 -mr-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">0</span>
+                <span class="text-xs">התראות</span>
+             </button>
+        </nav>
+    </div>
+
+    <!-- Order Modal -->
+    <div id="orderModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-30 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg m-4" id="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="modalTitle" class="text-xl font-bold">הזמנה חדשה</h2>
+                <button id="closeModalBtn" class="text-gray-500 hover:text-gray-800">&times;</button>
+            </div>
+            <form id="orderForm" class="space-y-4">
+                <input type="hidden" id="orderId">
+                <div>
+                    <label for="customerName" class="block text-sm font-medium text-gray-700">שם לקוח</label>
+                    <input type="text" id="customerName" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                 <div>
+                    <label for="orderType" class="block text-sm font-medium text-gray-700">סוג פעולה</label>
+                    <select id="orderType" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option>הצבה</option>
+                        <option>החלפה</option>
+                        <option>העלאה</option>
+                        <option>הורדה</option>
+                        <option>הזזה</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="orderDate" class="block text-sm font-medium text-gray-700">תאריך הזמנה</label>
+                        <input type="date" id="orderDate" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                    </div>
+                     <div>
+                        <label for="endDate" class="block text-sm font-medium text-gray-700">תאריך סיום צפוי</label>
+                        <input type="date" id="endDate" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                    </div>
+                </div>
+                 <div>
+                    <label for="orderStatus" class="block text-sm font-medium text-gray-700">סטטוס</label>
+                    <select id="orderStatus" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option>פתוח</option>
+                        <option>סגור</option>
+                        <option>חורג</option>
+                         <option>מבוטל</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-4 pt-4">
+                    <button type="button" id="cancelBtn" class="bg-gray-200 text-gray-800 font-semibold px-4 py-2 rounded-lg hover:bg-gray-300">ביטול</button>
+                    <button type="submit" class="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700">שמירה</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+     <!-- Mobile Alerts Modal -->
+    <div id="mobileAlertsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-30 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-4 w-full max-w-md m-4">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold">התראות על חריגות</h2>
+                <button id="closeMobileAlertsBtn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            </div>
+            <div id="mobileNotificationsContainer" class="space-y-3 max-h-[60vh] overflow-y-auto">
+                <!-- Mobile notifications will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Row Template -->
+    <template id="orderRowTemplate">
+        <tr class="border-b hover:bg-gray-50">
+            <td class="p-3 font-medium" data-label="מס' הזמנה"></td>
+            <td class="p-3" data-label="שם לקוח"></td>
+            <td class="p-3" data-label="סוג פעולה"></td>
+            <td class="p-3 hidden md:table-cell" data-label="תאריך הזמנה"></td>
+            <td class="p-3 hidden md:table-cell" data-label="סיום צפוי"></td>
+            <td class="p-3" data-label="סטטוס"><span class="px-2 py-1 text-xs font-semibold rounded-full"></span></td>
+            <td class="p-3">
+                <button class="text-blue-600 hover:text-blue-800 p-1 edit-btn">
+                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                </button>
+            </td>
+        </tr>
+    </template>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- CONFIGURATION ---
+            // IMPORTANT: Replace this URL with your deployed Apps Script Web App URL
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw-EtzvG6ktSu-CHbOsU8ezYHN9-wLWTlqEbL39vd-GGwXqbhbvOjHNxJShycgbVmBU/exec'; 
+
+            // --- STATE ---
+            let allOrders = [];
+
+            // --- DOM ELEMENTS ---
+            const loader = document.getElementById('loader');
+            const tableBody = document.getElementById('ordersTableBody');
+            const searchInput = document.getElementById('searchInput');
+            const orderModal = document.getElementById('orderModal');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const newOrderBtn = document.getElementById('newOrderBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const orderForm = document.getElementById('orderForm');
+            const modalTitle = document.getElementById('modalTitle');
+            const mobileAlertsBtn = document.getElementById('mobileAlertsBtn');
+            const mobileAlertsModal = document.getElementById('mobileAlertsModal');
+            const closeMobileAlertsBtn = document.getElementById('closeMobileAlertsBtn');
+            
+            // --- API FUNCTIONS ---
+            async function googleScriptFetch(action, method = 'GET', body = null) {
+                const url = `${WEB_APP_URL}?action=${action}`;
+                const options = {
+                    method: method,
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                };
+                if (method === 'POST') {
+                    options.body = JSON.stringify(body);
+                     // This is required for Apps Script doPost
+                    options.redirect = 'follow'; 
+                }
+                
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return await response.json();
+                } catch (error) {
+                    console.error(`Error during fetch for action '${action}':`, error);
+                    alert(`שגיאה בתקשורת עם השרת: ${error.message}`);
+                    return { success: false, data: [], message: error.message };
+                }
+            }
+            
+            // --- RENDERING FUNCTIONS ---
+            const getStatusBadge = (status) => {
+                switch (status.toLowerCase()) {
+                    case 'פתוח': return 'bg-green-100 text-green-800';
+                    case 'סגור': return 'bg-gray-200 text-gray-800';
+                    case 'חורג': return 'bg-red-100 text-red-800';
+                    default: return 'bg-yellow-100 text-yellow-800';
+                }
+            };
+
+            function renderTable(orders) {
+                tableBody.innerHTML = '';
+                if (!orders || orders.length === 0) {
+                     loader.style.display = 'none';
+                     tableBody.innerHTML = `<tr><td colspan="7" class="text-center p-6 text-gray-500">לא נמצאו הזמנות.</td></tr>`;
+                     return;
+                }
+
+                const template = document.getElementById('orderRowTemplate');
+                orders.forEach(order => {
+                    const clone = template.content.cloneNode(true);
+                    const cells = clone.querySelectorAll('td');
+                    
+                    cells[0].textContent = order['תעודה'] || 'N/A';
+                    cells[1].textContent = order['שם לקוח'] || '';
+                    cells[2].textContent = order['סוג פעולה'] || '';
+                    cells[3].textContent = order['תאריך הזמנה'] ? new Date(order['תאריך הזמנה']).toLocaleDateString('he-IL') : '';
+                    cells[4].textContent = order['תאריך סיום צפוי'] ? new Date(order['תאריך סיום צפוי']).toLocaleDateString('he-IL') : '';
+                    
+                    const statusSpan = cells[5].querySelector('span');
+                    statusSpan.textContent = order['סטטוס'] || 'לא ידוע';
+                    statusSpan.className = `px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(order['סטטוס'] || '')}`;
+                    
+                    clone.querySelector('.edit-btn').dataset.id = order['תעודה'];
+                    tableBody.appendChild(clone);
+                });
+                loader.style.display = 'none';
+            }
+
+            function renderKPIs(orders) {
+                const open = orders.filter(o => o['סטטוס']?.toLowerCase() === 'פתוח').length;
+                const overdue = orders.filter(o => o['סטטוס']?.toLowerCase() === 'חורג').length;
+                const activeContainers = orders.filter(o => o['סטטוס']?.toLowerCase() !== 'סגור' && o['מספרי מכולות']).length;
+
+                document.getElementById('totalOrders').textContent = orders.length;
+                document.getElementById('openOrders').textContent = open;
+                document.getElementById('overdueOrders').textContent = overdue;
+                document.getElementById('activeContainers').textContent = activeContainers;
+            }
+
+            function renderAlerts(alerts) {
+                const desktopContainer = document.getElementById('notificationsContainer');
+                const mobileContainer = document.getElementById('mobileNotificationsContainer');
+                const badge = document.getElementById('mobileAlertsBadge');
+                
+                desktopContainer.innerHTML = '';
+                mobileContainer.innerHTML = '';
+                
+                if (!alerts || alerts.length === 0) {
+                    const noAlertsMsg = `<p class="text-gray-500 text-center py-4">אין התראות חדשות.</p>`;
+                    desktopContainer.innerHTML = noAlertsMsg;
+                    mobileContainer.innerHTML = noAlertsMsg;
+                    badge.classList.add('hidden');
+                    return;
+                }
+
+                badge.textContent = alerts.length;
+                badge.classList.remove('hidden');
+
+                alerts.forEach(alert => {
+                    const alertHtml = `
+                        <div class="bg-red-50 border-r-4 border-red-500 p-3 rounded">
+                            <p class="font-semibold text-sm">${alert.customerName}</p>
+                            <p class="text-xs text-gray-600">הזמנה חורגת ב-${alert.daysOverdue} ימים.</p>
+                        </div>
+                    `;
+                    desktopContainer.insertAdjacentHTML('beforeend', alertHtml);
+                    mobileContainer.insertAdjacentHTML('beforeend', alertHtml);
+                });
+            }
+
+
+            // --- MODAL & FORM HANDLING ---
+            function showModal(order = null) {
+                orderForm.reset();
+                if (order) {
+                    modalTitle.textContent = `עריכת הזמנה ${order['תעודה']}`;
+                    document.getElementById('orderId').value = order['תעודה'];
+                    document.getElementById('customerName').value = order['שם לקוח'] || '';
+                    document.getElementById('orderType').value = order['סוג פעולה'] || 'החלפה';
+                    document.getElementById('orderDate').value = order['תאריך הזמנה'] || '';
+                    document.getElementById('endDate').value = order['תאריך סיום צפוי'] || '';
+                    document.getElementById('orderStatus').value = order['סטטוס'] || 'פתוח';
+                } else {
+                    modalTitle.textContent = 'הזמנה חדשה';
+                    document.getElementById('orderId').value = '';
+                }
+                orderModal.classList.remove('hidden');
+            }
+
+            function hideModal() {
+                orderModal.classList.add('hidden');
+            }
+
+            async function handleFormSubmit(e) {
+                e.preventDefault();
+                const id = document.getElementById('orderId').value;
+                const orderData = {
+                    'תעודה': id || `ORD-${Date.now()}`, // Generate new ID if creating
+                    'שם לקוח': document.getElementById('customerName').value,
+                    'סוג פעולה': document.getElementById('orderType').value,
+                    'תאריך הזמנה': document.getElementById('orderDate').value,
+                    'תאריך סיום צפוי': document.getElementById('endDate').value,
+                    'סטטוס': document.getElementById('orderStatus').value,
+                };
+                
+                let result;
+                if (id) { // Update existing order
+                    result = await googleScriptFetch('updateOrder', 'POST', { action: 'updateOrder', id: id, fields: orderData });
+                } else { // Add new order
+                    result = await googleScriptFetch('addOrder', 'POST', { action: 'addOrder', order: orderData });
+                }
+
+                if (result.success) {
+                    hideModal();
+                    await initializeApp(); // Refresh all data
+                } else {
+                    alert('שגיאה בשמירת ההזמנה: ' + result.message);
+                }
+            }
+
+
+            // --- INITIALIZATION & EVENT LISTENERS ---
+            async function initializeApp() {
+                loader.style.display = 'flex';
+                tableBody.innerHTML = '';
+
+                const [ordersResult, alertsResult] = await Promise.all([
+                    googleScriptFetch('getOrders'),
+                    googleScriptFetch('checkOverdue')
+                ]);
+
+                if (ordersResult.success) {
+                    allOrders = ordersResult.data;
+                    renderTable(allOrders);
+                    renderKPIs(allOrders);
+                } else {
+                     loader.style.display = 'none';
+                     tableBody.innerHTML = `<tr><td colspan="7" class="text-center p-6 text-red-500">שגיאה בטעינת הנתונים.</td></tr>`;
+                }
+
+                if(alertsResult.success){
+                    renderAlerts(alertsResult.data);
+                }
+            }
+
+            // Search functionality
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredOrders = allOrders.filter(order =>
+                    (order['תעודה']?.toString().toLowerCase().includes(searchTerm)) ||
+                    (order['שם לקוח']?.toLowerCase().includes(searchTerm)) ||
+                    (order['כתובת']?.toLowerCase().includes(searchTerm))
+                );
+                renderTable(filteredOrders);
+            });
+
+            // Modal listeners
+            newOrderBtn.addEventListener('click', () => showModal());
+            closeModalBtn.addEventListener('click', hideModal);
+            cancelBtn.addEventListener('click', hideModal);
+            orderForm.addEventListener('submit', handleFormSubmit);
+            
+            // Edit button listener (using event delegation)
+            tableBody.addEventListener('click', (e) => {
+                const editBtn = e.target.closest('.edit-btn');
+                if (editBtn) {
+                    const orderId = editBtn.dataset.id;
+                    const orderToEdit = allOrders.find(o => o['תעודה'] == orderId);
+                    if (orderToEdit) {
+                        showModal(orderToEdit);
+                    }
+                }
+            });
+            
+             // Mobile alerts modal
+            mobileAlertsBtn.addEventListener('click', () => mobileAlertsModal.classList.remove('hidden'));
+            closeMobileAlertsBtn.addEventListener('click', () => mobileAlertsModal.classList.add('hidden'));
+
+
+            // Initial load
+            initializeApp();
+        });
+    </script>
+</body>
+</html>
