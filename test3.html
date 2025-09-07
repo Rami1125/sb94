@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>מערכת מעקב</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: #f9fbfd;
+      margin: 0;
+      padding: 20px;
+      direction: rtl;
+      text-align: right;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    button {
+      background: #0078d7;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      margin: 5px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #005a9e;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background: #0078d7;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background: #f2f2f2;
+    }
+    .controls {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>📊 מערכת מעקב</h1>
+
+  <div class="controls">
+    <button onclick="loadData()">רענן נתונים</button>
+    <button onclick="addDemoRow()">➕ הוסף שורה לדוגמה</button>
+    <button onclick="updateDemoRow()">✏️ עדכן שורה ראשונה</button>
+    <button onclick="deleteDemoRow()">🗑️ מחק שורה שנייה</button>
+  </div>
+
+  <table id="dataTable">
+    <thead id="tableHead"></thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbw-EtzvG6ktSu-CHbOsU8ezYHN9-wLWTlqEbL39vd-GGwXqbhbvOjHNxJShycgbVmBU/exec";
+
+    async function loadData() {
+      try {
+        const res = await fetch(API_URL + "?action=getData");
+        const json = await res.json();
+
+        if (json.status === "success") {
+          renderTable(json.data);
+        } else {
+          alert("שגיאה בשליפת נתונים: " + json.message);
+        }
+      } catch (err) {
+        alert("שגיאת רשת: " + err.message);
+      }
+    }
+
+    function renderTable(data) {
+      const head = document.getElementById("tableHead");
+      const body = document.getElementById("tableBody");
+      head.innerHTML = "";
+      body.innerHTML = "";
+
+      if (!data || data.length === 0) {
+        body.innerHTML = "<tr><td colspan='5'>אין נתונים</td></tr>";
+        return;
+      }
+
+      // כותרות
+      const headers = Object.keys(data[0]);
+      head.innerHTML = "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
+
+      // שורות
+      data.forEach(row => {
+        body.innerHTML += "<tr>" + headers.map(h => `<td>${row[h]}</td>`).join("") + "</tr>";
+      });
+    }
+
+    async function addDemoRow() {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "addRow",
+          row: ["123", "לקוח חדש", "כתובת תל אביב", "הערה אוטומטית"]
+        })
+      });
+      const json = await res.json();
+      alert(json.message);
+      loadData();
+    }
+
+    async function updateDemoRow() {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "updateRow",
+          index: 1, // שורה ראשונה אחרי הכותרות
+          row: ["999", "עודכן לקוח", "ירושלים", "שורה עודכנה"]
+        })
+      });
+      const json = await res.json();
+      alert(json.message);
+      loadData();
+    }
+
+    async function deleteDemoRow() {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "deleteRow", index: 2 }) // שורה שנייה
+      });
+      const json = await res.json();
+      alert(json.message);
+      loadData();
+    }
+
+    // טען נתונים בהתחלה
+    loadData();
+  </script>
+</body>
+</html>
