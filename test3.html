@@ -117,8 +117,18 @@ body{
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 99px;
+}
+.roadmap-status.in-progress {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+.roadmap-status.next-up {
   background-color: #eef2ff;
   color: #4f46e5;
+}
+.roadmap-status.future {
+  background-color: #f3f4f6;
+  color: #4b5563;
 }
 
 
@@ -200,7 +210,7 @@ body{
           <div class="roadmap-content">
             <div class="roadmap-title">שילוב בזמן אמת</div>
           </div>
-          <div class="roadmap-status">Next Up</div>
+          <div class="roadmap-status in-progress">בתהליך</div>
         </div>
         <div class="roadmap-item">
           <div class="roadmap-icon">
@@ -209,7 +219,7 @@ body{
           <div class="roadmap-content">
             <div class="roadmap-title">אימות והרשאות</div>
           </div>
-          <div class="roadmap-status">Future</div>
+          <div class="roadmap-status next-up">הבא בתור</div>
         </div>
         <div class="roadmap-item">
           <div class="roadmap-icon">
@@ -218,7 +228,7 @@ body{
           <div class="roadmap-content">
             <div class="roadmap-title">שיפורי UI/UX</div>
           </div>
-           <div class="roadmap-status">Future</div>
+           <div class="roadmap-status future">בעתיד</div>
         </div>
         <div class="roadmap-item">
           <div class="roadmap-icon">
@@ -227,7 +237,7 @@ body{
           <div class="roadmap-content">
             <div class="roadmap-title">יצוא PDF וחתימה</div>
           </div>
-           <div class="roadmap-status">Future</div>
+           <div class="roadmap-status future">בעתיד</div>
         </div>
         <div class="roadmap-item">
            <div class="roadmap-icon">
@@ -236,7 +246,7 @@ body{
           <div class="roadmap-content">
             <div class="roadmap-title">שילוב מפות וניווט</div>
           </div>
-           <div class="roadmap-status">Future</div>
+           <div class="roadmap-status future">בעתיד</div>
         </div>
       </div>
     </div>
@@ -292,9 +302,12 @@ function looksLikeDateHeader(h) {
 /* ========== State ========== */
 let rawData = [];
 let headers = [];
+let isRefreshing = false;
+
 
 /* ========== UI renderers ========== */
 function renderTable(data, hdrs) {
+  const scrollY = window.scrollY; // Preserve scroll position
   headers = hdrs;
   const thead = document.getElementById("tHead");
   const tbody = document.getElementById("tBody");
@@ -329,6 +342,7 @@ function renderTable(data, hdrs) {
 
     tbody.innerHTML += `<tr>${cells}${actionCell}</tr>`;
   });
+  window.scrollTo(0, scrollY); // Restore scroll position
 }
 
 /* ========== KPI + Alerts ========== */
@@ -376,28 +390,39 @@ function computeKPIs(data, hdrs) {
 
 /* ========== Actions ========== */
 async function refresh() {
+  if (isRefreshing) return; // Prevent multiple refreshes at once
+  isRefreshing = true;
+
   const statusMsg = document.getElementById("statusMsg");
-  statusMsg.innerText = "טוען...";
+  statusMsg.innerText = "מרענן...";
   try {
     const resp = await apiGet("getData");
     if (resp.status === "success") {
-      rawData = resp.data || [];
-      const currentHeaders = resp.headers || (rawData[0] ? Object.keys(rawData[0]) : []);
-      renderTable(rawData, currentHeaders);
-      computeKPIs(rawData, currentHeaders);
-      statusMsg.innerText = `נטענו ${rawData.length} שורות. עודכן לאחרונה: ${new Date().toLocaleTimeString('he-IL')}`;
+      const searchVal = document.getElementById("globalSearch").value;
+      // Only re-render if data has actually changed, unless there's a search query
+      if (JSON.stringify(rawData) !== JSON.stringify(resp.data) || searchVal) {
+          rawData = resp.data || [];
+          applyFilter(); // Apply current filter to new data
+      }
+      computeKPIs(rawData, resp.headers || (rawData[0] ? Object.keys(rawData[0]) : []));
+      statusMsg.innerText = `עודכן לאחרונה: ${new Date().toLocaleTimeString('he-IL')}`;
     } else {
       statusMsg.innerText = "שגיאה: " + resp.message;
-      alert("שגיאה בטעינת הנתונים: " + resp.message);
     }
   } catch (err) {
     statusMsg.innerText = "שגיאת רשת: " + err.message;
-    alert("שגיאת רשת. ודא שה-API_URL נכון והשרת פועל.\n" + err.message);
+  } finally {
+    isRefreshing = false;
   }
 }
 
 function showDetail(idx) {
-  const data = rawData[idx];
+  const data = rawData.filter(r => {
+    const q = document.getElementById("globalSearch").value.trim().toLowerCase();
+    if (!q) return true;
+    return Object.values(r).some(v => String(v || "").toLowerCase().includes(q));
+  })[idx];
+
   if (!data) return;
   const side = document.getElementById("sideDetail");
   let html = `<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:700">פרטי הזמנה</div><button onclick="closeDetail()" style="background:none;border:none;font-size:24px;cursor:pointer;">&times;</button></div><hr/>`;
@@ -405,7 +430,8 @@ function showDetail(idx) {
     const v = looksLikeDateHeader(k) ? formatDateTime(data[k]) : data[k];
     html += `<div style="margin-bottom:6px"><div style="color:var(--muted);font-size:13px">${k}</div><div style="font-weight:600">${v || ''}</div></div>`;
   }
-  html += `<div style="margin-top:12px;display:flex;gap:8px;"><button class="btn" onclick="sendWhatsApp(${idx})">שלח WhatsApp</button> <button class="btn secondary" onclick="closeDetail()">סגור</button></div>`;
+  const originalIndex = rawData.findIndex(item => item === data);
+  html += `<div style="margin-top:12px;display:flex;gap:8px;"><button class="btn" onclick="sendWhatsApp(${originalIndex})">שלח WhatsApp</button> <button class="btn secondary" onclick="closeDetail()">סגור</button></div>`;
   side.innerHTML = html;
   side.style.display = "block";
 }
@@ -416,7 +442,12 @@ function openMap(q) {
 }
 
 function editRowPrompt(idx) {
-  const originalRow = rawData[idx];
+  const filteredData = rawData.filter(r => {
+    const q = document.getElementById("globalSearch").value.trim().toLowerCase();
+    if (!q) return true;
+    return Object.values(r).some(v => String(v || "").toLowerCase().includes(q));
+  });
+  const originalRow = filteredData[idx];
   if (!originalRow) return;
 
   const newRowData = {};
@@ -426,10 +457,10 @@ function editRowPrompt(idx) {
       newRowData[header] = val;
   }
   
-  // Convert object back to array in the correct order
   const newRowArray = headers.map(h => newRowData[h]);
+  const originalIndex = rawData.findIndex(item => item === originalRow);
 
-  apiPost({ action: "updateRow", index: idx, row: newRowArray }).then(r => {
+  apiPost({ action: "updateRow", index: originalIndex, row: newRowArray }).then(r => {
     alert(r.message);
     refresh();
   }).catch(e => alert("שגיאה בעדכון: " + e.message));
@@ -446,12 +477,17 @@ function openNewOrder() {
 }
 
 function deleteRowByIdx(idx) {
-  const rowToDelete = rawData[idx];
+  const filteredData = rawData.filter(r => {
+    const q = document.getElementById("globalSearch").value.trim().toLowerCase();
+    if (!q) return true;
+    return Object.values(r).some(v => String(v || "").toLowerCase().includes(q));
+  });
+  const rowToDelete = filteredData[idx];
   const identifier = rowToDelete[headers[0]] || `שורה ${idx+1}`;
   if (!confirm(`האם למחוק את "${identifier}"?`)) return;
   
-  // The backend needs a 0-based index for deletion logic based on data array
-  apiPost({ action: "deleteRow", index: idx }).then(r => { 
+  const originalIndex = rawData.findIndex(item => item === rowToDelete);
+  apiPost({ action: "deleteRow", index: originalIndex }).then(r => { 
       alert(r.message); 
       refresh(); 
   }).catch(e => alert(e.message));
@@ -459,6 +495,7 @@ function deleteRowByIdx(idx) {
 
 function sendWhatsApp(idx) {
   const row = rawData[idx];
+  if (!row) return;
   const phoneField = headers.find(h => h.includes("טלפון") || h.includes("phone"));
   const clientField = headers.find(h => h.includes("שם") || h.includes("לקוח"));
   const phone = phoneField ? row[phoneField] : "";
@@ -492,18 +529,18 @@ async function loadDevNotes(){
 /* search filter */
 function applyFilter(){
   const q = document.getElementById("globalSearch").value.trim().toLowerCase();
-  if (!q) { 
-      renderTable(rawData, headers); 
-      return; 
-  }
   const filtered = rawData.filter(r => {
+    if (!q) return true; // show all if search is empty
     return Object.values(r).some(v => String(v || "").toLowerCase().includes(q));
   });
   renderTable(filtered, headers);
 }
 
 /* initial load */
-document.addEventListener('DOMContentLoaded', refresh);
+document.addEventListener('DOMContentLoaded', () => {
+  refresh(); // Load data on start
+  setInterval(refresh, 30000); // And refresh every 30 seconds
+});
 </script>
 </body>
 </html>
