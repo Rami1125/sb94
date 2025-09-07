@@ -122,7 +122,25 @@
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(12, 28, 52, 0.04);
             text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
         }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(12, 28, 52, 0.08);
+        }
+
+        .kpi-card.active {
+            background: var(--brand);
+            color: white;
+            transform: translateY(-3px);
+        }
+
+        .kpi-card.active .kpi-number, .kpi-card.active div {
+            color: white;
+        }
+
 
         .kpi-number {
             font-size: 22px;
@@ -199,6 +217,11 @@
             background: transparent;
             font-weight: 700;
             color: var(--brand);
+        }
+        
+        .table tbody tr.highlight-marker {
+            background-color: #fffde7 !important; /* Yellow marker effect */
+            box-shadow: 0 0 0 2px var(--accent);
         }
         
         /* Conditional Row Styling */
@@ -713,6 +736,27 @@
             grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
+        
+        .overdue-management-page-grid {
+             padding: 24px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+        .overdue-section {
+            background: var(--card);
+            padding: 16px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        .overdue-section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--brand);
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--brand);
+            padding-bottom: 8px;
+        }
 
 
     </style>
@@ -730,6 +774,7 @@
         <div class="controls">
             <input id="globalSearch" class="search" placeholder="חפש הזמנה..." oninput="renderFilteredData()" />
             <button class="btn" onclick="showReportsPage()">דוחות</button>
+            <button class="btn" onclick="showOverdueManagementPage()">ניהול חריגות</button>
             <button class="btn" onclick="refresh()">רענן</button>
             <button class="btn secondary" onclick="openNewOrder()">הזמנה חדשה</button>
             <button class="btn secondary" id="installButton" style="display:none;">התקן אפליקציה</button>
@@ -740,10 +785,10 @@
         <div class="left">
             <div style="font-weight:700;margin-bottom:8px">מדדי ביצוע (KPIs)</div>
             <div class="kpi">
-                <div class="kpi-card"><div style="color:var(--muted)">סה״כ הזמנות</div><div id="kTotal" class="kpi-number">—</div></div>
-                <div class="kpi-card"><div style="color:var(--muted)">הזמנות פתוחות</div><div id="kOpen" class="kpi-number">—</div></div>
-                <div class="kpi-card"><div style="color:var(--muted)">הזמנות חורגות</div><div id="kOver" class="kpi-number">—</div></div>
-                <div class="kpi-card"><div style="color:var(--muted)">לקוחות פעילים</div><div id="kActiveCustomers" class="kpi-number">—</div></div>
+                <div class="kpi-card" id="kpi-total" onclick="filterByKpi('total')"><div style="color:var(--muted)">סה״כ הזמנות</div><div id="kTotal" class="kpi-number">—</div></div>
+                <div class="kpi-card" id="kpi-open" onclick="filterByKpi('open')"><div style="color:var(--muted)">הזמנות פתוחות</div><div id="kOpen" class="kpi-number">—</div></div>
+                <div class="kpi-card" id="kpi-overdue" onclick="filterByKpi('overdue')"><div style="color:var(--muted)">הזמנות חורגות</div><div id="kOver" class="kpi-number">—</div></div>
+                <div class="kpi-card" id="kpi-active" onclick="filterByKpi('active')"><div style="color:var(--muted)">לקוחות פעילים</div><div id="kActiveCustomers" class="kpi-number">—</div></div>
                 <div class="kpi-card" style="grid-column: 1 / -1;"><div style="color:var(--muted)">מכולות בשימוש</div><div id="kContainers" class="kpi-number">—</div></div>
             </div>
         </div>
@@ -840,11 +885,25 @@
         let deferredPrompt = null;
         let realTimeInterval = null;
         let showClosedOrders = false;
+        let activeKpiFilter = null;
         const alertSettings = {
             overdue: true,
             newOrder: true,
             statusChange: false
         };
+
+        const whatsappTemplates = [
+            { title: "בחר תבנית...", text: "" },
+            { title: "אישור קבלת הזמנה", text: "שלום {{clientName}}, הזמנתך מספר {{orderId}} התקבלה בהצלחה ותסופק עד לתאריך {{endDate}}." },
+            { title: "תזכורת לפינוי מכולה", text: "שלום {{clientName}}, תזכורת קטנה לגבי הזמנה {{orderId}}. המכולה אמורה להתפנות בתאריך {{endDate}}. נשמח לעדכון." },
+            { title: "הודעת חריגה - יום 1", text: "שלום {{clientName}}, אנו רואים שהמכולה הקשורה להזמנה {{orderId}} עדיין אצלך, יום לאחר תאריך הפינוי המתוכנן ({{endDate}}). אנא צור קשר לעדכון." },
+            { title: "הודעת חריגה - דחופה", text: "שלום {{clientName}}, פנייה דחופה בנוגע להזמנה {{orderId}}. המכולה חורגת משמעותית מתאריך הפינוי {{endDate}}. אנא צור עמנו קשר מיידי בטלפון." },
+            { title: "עדכון על איסוף", text: "שלום {{clientName}}, הנהג שלנו בדרך לאסוף את המכולה מהזמנה {{orderId}}." },
+            { title: "תודה וסיום שירות", text: "שלום {{clientName}}, המכולה מהזמנה {{orderId}} נאספה בהצלחה. תודה שבחרת בנו!" },
+            { title: "בדיקת שביעות רצון", text: "שלום {{clientName}}, נשמח לשמוע איך היה השירות שקיבלת בהזמנה {{orderId}}. המשוב שלך חשוב לנו!"},
+            { title: "הצעה מיוחדת", text: "שלום {{clientName}}, כלקוח ותיק שלנו, נשמח להציע לך הנחה על ההזמנה הבאה. צור קשר לפרטים."}
+        ];
+
 
         // ========== PWA SETUP ==========
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -1129,20 +1188,55 @@
 
 
         // ========== API HELPERS ==========
+        function showApiErrorModal() {
+            const title = '🚨 שגיאת חיבור ל-API';
+            const body = `
+                <div style="text-align: right; line-height: 1.6;">
+                    <p>המערכת לא הצליחה להתחבר ל-Google Sheets. לרוב, הבעיה נובעת מהרשאות שגויות ב-Google Apps Script.</p>
+                    <strong>יש לבצע את הצעדים הבאים:</strong>
+                    <ol style="padding-right: 20px;">
+                        <li>פתח את קובץ ה-Google Sheets המקושר.</li>
+                        <li>בתפריט העליון, לחץ על <strong>הרחבות (Extensions) &rarr; Apps Script</strong>.</li>
+                        <li>בחלון עורך הסקריפט שנפתח, לחץ על הכפתור הכחול <strong>Deploy &rarr; Manage deployments</strong>.</li>
+                        <li>מצא את הפריסה הפעילה שלך, ולחץ על סמל העיפרון (עריכה).</li>
+                        <li>תחת "Web app", ודא שהאפשרות <strong>"Who has access"</strong> מוגדרת ל-<strong>"Anyone"</strong>.</li>
+                        <li>שמור את השינויים.</li>
+                    </ol>
+                    <p><strong>חשוב:</strong> אם ביצעת שינוי כלשהו בקוד של הסקריפט, עליך לבצע פריסה חדשה דרך <strong>Deploy &rarr; New deployment</strong>.</p>
+                </div>
+            `;
+            const footer = `<button class="btn secondary" onclick="closeModal()">הבנתי, אסגור</button>`;
+            showModal(title, body, footer);
+        }
+
         async function apiGet(action) {
-            const res = await fetch(`${API_URL}?action=${action}`);
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-            return await res.json();
+            try {
+                const res = await fetch(`${API_URL}?action=${action}`);
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return await res.json();
+            } catch(e) {
+                if (e.message.includes("Failed to fetch")) {
+                    showApiErrorModal();
+                }
+                throw e;
+            }
         }
 
         async function apiPost(body) {
-            const res = await fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(body)
-            });
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-            return await res.json();
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(body)
+                });
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return await res.json();
+            } catch(e) {
+                if (e.message.includes("Failed to fetch")) {
+                    showApiErrorModal();
+                }
+                throw e;
+            }
         }
 
         // ========== DATE FORMATTING ==========
@@ -1212,23 +1306,59 @@
             });
         }
         
+        function filterByKpi(type) {
+            document.querySelectorAll('.kpi-card').forEach(card => card.classList.remove('active'));
+
+            if (activeKpiFilter === type) {
+                activeKpiFilter = null;
+            } else {
+                activeKpiFilter = type;
+                document.getElementById(`kpi-${type}`).classList.add('active');
+            }
+            renderFilteredData();
+        }
+
+
         function renderFilteredData() {
             const searchTerm = document.getElementById("globalSearch").value.trim().toLowerCase();
             const showClosed = document.getElementById("showClosedCheckbox").checked;
 
-            let filteredData = rawData;
+            let dataToRender = [...rawData];
 
-            if (!showClosed) {
-                filteredData = filteredData.filter(r => getStatusKey(r['סטטוס']) !== 'closed');
-            }
-
-            if (searchTerm) {
-                filteredData = filteredData.filter(r => {
-                    return Object.values(r).some(v => String(v || "").toLowerCase().includes(searchTerm));
-                });
+            // Filter 1: KPI Filter
+            if (activeKpiFilter) {
+                if (activeKpiFilter === 'open') {
+                    dataToRender = dataToRender.filter(r => getStatusKey(r['סטטוס']) !== 'closed');
+                } else if (activeKpiFilter === 'overdue') {
+                    dataToRender = dataToRender.filter(r => getStatusKey(r['סטטוס']) === 'overdue');
+                } else if (activeKpiFilter === 'active') {
+                    const activeOrders = rawData.filter(r => getStatusKey(r['סטטוס']) !== 'closed');
+                    const customerKey = headers.find(h => h.includes('שם לקוח'));
+                    if (customerKey) {
+                        const activeCustomerNames = [...new Set(activeOrders.map(o => o[customerKey]))];
+                        dataToRender = dataToRender.filter(r => activeCustomerNames.includes(r[customerKey]));
+                    }
+                }
             }
             
-            renderTable(filteredData, headers);
+            // Filter 2: Show Closed Checkbox (only if no specific KPI filter is active)
+            if (!activeKpiFilter && !showClosed) {
+                dataToRender = dataToRender.filter(r => getStatusKey(r['סטטוס']) !== 'closed');
+            }
+
+            // Filter 3: Search Term
+            if (searchTerm) {
+                dataToRender = dataToRender.filter(r => 
+                    Object.values(r).some(v => String(v || "").toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            renderTable(dataToRender, headers);
+
+            if (activeKpiFilter && activeKpiFilter !== 'total') {
+                const tbody = document.getElementById("tBody");
+                tbody.querySelectorAll('tr').forEach(tr => tr.classList.add('highlight-marker'));
+            }
         }
 
         // ========== KPI + ALERTS ==========
@@ -1288,7 +1418,7 @@
                 }
             } catch (err) {
                 statusMsg.innerText = "שגיאת רשת: " + err.message;
-                showToast("שגיאת רשת. ודא שה-API_URL נכון והשרת פועל.\n" + err.message, "error");
+                // Toast is shown by apiGet
             }
         }
         
@@ -1348,6 +1478,104 @@
             showModal(title, body, footer, true);
         }
 
+        function showOverdueManagementPage() {
+            const overdueOrders = rawData.filter(r => getStatusKey(r['סטטוס']) === 'overdue');
+            const soonOverdueOrders = rawData.filter(r => {
+                if (getStatusKey(r['סטטוס']) === 'closed' || getStatusKey(r['סטטוס']) === 'overdue') return false;
+                const endDateField = headers.find(h => String(h).includes("סיום"));
+                if (!endDateField || !r[endDateField]) return false;
+                const diff = (new Date(r[endDateField]) - new Date()) / (1000 * 60 * 60 * 24);
+                return diff >= 0 && diff <= 3; // Due in the next 3 days
+            });
+
+            const renderOverdueTable = (orders, isSoon) => {
+                if (orders.length === 0) return `<p style="color: var(--muted); text-align: center;">אין הזמנות להצגה בקטגוריה זו.</p>`;
+                let table = `<table class="table"><thead><tr><th>לקוח</th><th>מס' הזמנה</th><th>תאריך סיום</th><th>${isSoon ? 'ימים לסיום' : 'ימי חריגה'}</th><th>פעולות</th></tr></thead><tbody>`;
+                orders.forEach(order => {
+                    const idx = rawData.indexOf(order);
+                    const endDateField = headers.find(h => String(h).includes("סיום"));
+                    const endDate = new Date(order[endDateField]);
+                    const diffDays = Math.round((new Date() - endDate) / (1000 * 60 * 60 * 24));
+                    table += `<tr>
+                        <td>${order['שם לקוח'] || 'N/A'}</td>
+                        <td>${order['מספר הזמנה'] || 'N/A'}</td>
+                        <td>${formatDateTime(endDate)}</td>
+                        <td style="font-weight: 700; color: ${isSoon ? 'var(--status-delivered-text)' : 'var(--status-overdue-text)'};">${isSoon ? -diffDays : diffDays}</td>
+                        <td><button class="btn" onclick="openWhatsAppDialog(${idx})">שלח התראה</button></td>
+                    </tr>`;
+                });
+                table += `</tbody></table>`;
+                return table;
+            };
+
+            let body = `
+                <div class="overdue-management-page-grid">
+                    <div class="overdue-section">
+                        <div class="overdue-section-title">🚨 הזמנות בחריגה (${overdueOrders.length})</div>
+                        ${renderOverdueTable(overdueOrders, false)}
+                    </div>
+                    <div class="overdue-section">
+                        <div class="overdue-section-title">⏳ צפי חריגה ב-3 הימים הקרובים (${soonOverdueOrders.length})</div>
+                        ${renderOverdueTable(soonOverdueOrders, true)}
+                    </div>
+                </div>
+            `;
+            showModal('ניהול חריגות ומעקב פרואקטיבי', body, '', true);
+        }
+        
+        function openWhatsAppDialog(idx) {
+            const order = rawData[idx];
+            let options = whatsappTemplates.map((t, i) => `<option value="${i}">${t.title}</option>`).join('');
+
+            let body = `
+                <div class="form-group">
+                    <label>בחר תבנית הודעה</label>
+                    <select id="templateSelector" class="form-control" onchange="updateWhatsappText(${idx})">${options}</select>
+                </div>
+                <div class="form-group">
+                    <label>תוכן ההודעה</label>
+                    <textarea id="whatsappText" class="note-area" rows="6"></textarea>
+                </div>`;
+
+            const footer = `<button type="button" class="btn secondary" onclick="closeModal()">ביטול</button>
+                            <button type="button" class="btn" onclick="sendWhatsappFromDialog(${idx})">שלח ב-WhatsApp</button>`;
+
+            showModal(`שליחת הודעה ללקוח: ${order['שם לקוח']}`, body, footer);
+            updateWhatsappText(idx);
+        }
+
+        function updateWhatsappText(idx) {
+            const order = rawData[idx];
+            const selector = document.getElementById('templateSelector');
+            const textarea = document.getElementById('whatsappText');
+            if (!selector || !textarea || !order) return;
+            
+            const template = whatsappTemplates[selector.value];
+            const endDateField = headers.find(h => String(h).includes("סיום"));
+
+            let text = template.text;
+            text = text.replace(/{{clientName}}/g, order['שם לקוח'] || '');
+            text = text.replace(/{{orderId}}/g, order['מספר הזמנה'] || '');
+            text = text.replace(/{{endDate}}/g, formatDateTime(order[endDateField]) || '');
+            textarea.value = text;
+        }
+
+        function sendWhatsappFromDialog(idx) {
+            const order = rawData[idx];
+            const text = document.getElementById('whatsappText').value;
+            const phoneField = headers.find(h => h.includes("טלפון") || h.includes("phone"));
+            const phone = phoneField ? order[phoneField] : "";
+             if (!phone) { 
+                showToast("לא נמצא מספר טלפון עבור הזמנה זו.", "warning");
+                return;
+            }
+            const cleanPhone = String(phone).replace(/[^0-9]/g,'');
+            window.open(`https://wa.me/972${cleanPhone.substring(cleanPhone.length-9)}?text=${encodeURIComponent(text)}`, "_blank");
+            showToast('פותח WhatsApp...', 'info');
+        }
+
+
+
         function showMap(addressQuery) {
             const title = "תצוגת מפה";
             const body = `<iframe 
@@ -1375,6 +1603,7 @@
             
             try {
                 const resp = await apiPost({ action: "updateRow", index: idx, row: newRowArray });
+                if (resp && resp.apiError) return;
                 showToast(`סטטוס עודכן ל: ${newStatus}`, 'success');
                 await refresh(); 
                 closeModal();
@@ -1487,6 +1716,11 @@
 
             try {
                 const r = await apiPost(payload);
+                if (r && r.apiError) { 
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
+                    return; 
+                }
                 showToast(r.message || "הפעולה בוצעה בהצלחה", "success");
                 if (r.status === 'success' && isNew && alertSettings.newOrder) {
                     showToast('הזמנה חדשה נוצרה', 'info');
@@ -1495,7 +1729,6 @@
                 closeModal();
             } catch (e) {
                 showToast("שגיאה בשמירה: " + e.message, "error");
-            } finally {
                 submitBtn.innerHTML = originalBtnText;
                 submitBtn.disabled = false;
             }
@@ -1519,6 +1752,7 @@
 
                 try {
                     const r = await apiPost({ action: "deleteRow", index: idx });
+                    if (r && r.apiError) return;
                     showToast(r.message, "success");
                     refresh();
                 } catch (e) {
@@ -1527,21 +1761,6 @@
                     closeModal();
                 }
             };
-        }
-
-        function sendWhatsApp(idx) {
-            const row = rawData[idx];
-            const phoneField = headers.find(h => h.includes("טלפון") || h.includes("phone"));
-            const clientField = headers.find(h => h.includes("שם") || h.includes("לקוח"));
-            const phone = phoneField ? row[phoneField] : "";
-            const client = clientField ? row[clientField] : "לקוח";
-            const text = encodeURIComponent(`שלום ${client}, בדיקת סטטוס הזמנה.`);
-            if (!phone) { 
-                showToast("לא נמצא מספר טלפון עבור הזמנה זו.", "warning");
-                return;
-            }
-            const cleanPhone = String(phone).replace(/[^0-9]/g,'');
-            window.open(`https://wa.me/972${cleanPhone.substring(cleanPhone.length-9)}?text=${text}`, "_blank");
         }
 
         // Notes System
@@ -1582,16 +1801,13 @@
 
             try {
                 const resp = await apiPost({ action: "saveDevNote", note: note });
+                if (resp && resp.apiError) return; // Modal already shown
                 showToast(resp.message || "ההערה נשמרה", "success");
                 closeModal();
                 loadDevNotes(); // Refresh notes list
             } catch(e) {
                 console.error("שגיאה מלאה בשמירת הערה:", e);
-                let errorMessage = "שגיאה בשמירת הערה: " + e.message;
-                if (e.message.includes("Failed to fetch")) {
-                    errorMessage = `<strong>שגיאת רשת או הרשאות (Failed to fetch).</strong><br>יש לוודא שהסקריפט ב-Google Sheets פורסם מחדש עם הרשאת גישה ל"כל אחד".`;
-                }
-                showToast(errorMessage, "error");
+                showToast("שגיאה בשמירת הערה: " + e.message, "error");
             }
         }
 
@@ -1615,7 +1831,8 @@
                     notesTableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--muted);">אין הערות להצגה</td></tr>';
                 }
             } catch(e) {
-                showToast("שגיאה בטעינת הערות: " + e.message, "error");
+                // Toast is shown by apiGet
+                console.error("Error loading dev notes", e);
             }
         }
 
