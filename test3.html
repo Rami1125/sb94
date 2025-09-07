@@ -59,11 +59,11 @@ body{
 .kpi-number { font-size:20px; font-weight:700; }
 
 /* center - main table */
-.main { background:var(--card); padding:12px; border-radius:var(--radius); box-shadow:var(--shadow); }
+.main { background:var(--card); padding:12px; border-radius:var(--radius); box-shadow:var(--shadow); overflow-x: auto; }
 .toolbar { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
 .search { flex:1; padding:8px 12px; border-radius:8px; border:1px solid #e6eef8; background:#fbfdff; }
 .table { width:100%; border-collapse:collapse; }
-.table th, .table td { padding:8px; border-bottom:1px solid #eef5fb; text-align:center; font-size:14px; }
+.table th, .table td { padding:8px; border-bottom:1px solid #eef5fb; text-align:center; font-size:14px; white-space: nowrap;}
 .table th { background:#f8fbff; font-weight:700; color:var(--brand) }
 
 /* right panel - notifications & tools */
@@ -80,6 +80,8 @@ body{
 /* small helpers */
 .btn { background:var(--brand); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
 .btn.secondary{ background:#e6f1fb; color:var(--brand); }
+.btn.danger { background: #fbe6e6; color: #dc2626; }
+
 
 /* mobile adjustments */
 @media (max-width:600px){
@@ -151,7 +153,7 @@ body{
 
       <hr style="margin:12px 0" />
       <div style="font-weight:700">תוכנית פיתוח - הצעדים הבאים</div>
-      <ul style="margin:8px 0 0 16px">
+      <ul style="margin:8px 0 0 16px; padding-right: 20px;">
         <li>שילוב בזמן אמת (Firebase / WebSocket) להצגת שינויים מידיים.</li>
         <li>אימות משתמשים והרשאות (roles).</li>
         <li>שיפור עריכת inline + bulk actions.</li>
@@ -171,34 +173,37 @@ const API_URL = "https://script.google.com/macros/s/AKfycbydmQ1jF7rL19QS_NY84Rgv
 /* ========== Helpers: API wrappers ========== */
 async function apiGet(action) {
   const res = await fetch(`${API_URL}?action=${action}`);
+  if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
   return await res.json();
 }
 async function apiPost(body) {
   const res = await fetch(API_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    // Apps Script requires 'text/plain' for this method of deployment
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify(body)
   });
+  if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
   return await res.json();
 }
 
 /* ========== Date formatting (fix for ISO 'Z' format) ========== */
 function formatDateTime(value) {
   if (!value && value !== 0) return "";
-  // if already Date object
   let d = (value instanceof Date) ? value : new Date(value);
   if (isNaN(d.getTime())) return value; // fallback if not date
 
   // localize to Israel / Hebrew
-  const dateStr = d.toLocaleDateString("he-IL", { day: "2-digit", month: "long", year: "numeric" });
-  const timeStr = d.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
-
-  // if time is exactly 00:00 -> show only date (common for date-only fields)
-  if (d.getHours() === 0 && d.getMinutes() === 0) return dateStr;
-  return `${dateStr} ${timeStr}`;
+  try {
+    const dateStr = d.toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit", year: "numeric" });
+    const timeStr = d.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
+    if (d.getHours() === 0 && d.getMinutes() === 0 && d.getSeconds() === 0) return dateStr;
+    return `${dateStr}, ${timeStr}`;
+  } catch (e) {
+      return value; // Fallback for invalid dates
+  }
 }
 
-/* Detect likely date header names */
 function looksLikeDateHeader(h) {
   if (!h) return false;
   const s = String(h).toLowerCase();
@@ -218,33 +223,29 @@ function renderTable(data, hdrs) {
   tbody.innerHTML = "";
 
   if (!hdrs || hdrs.length === 0) {
-    thead.innerHTML = "<tr><th>אין כותרות</th></tr>";
+    thead.innerHTML = "<tr><th>אין נתונים להצגה. יש לוודא שהוגדרו כותרות בגליון 'מעקב'.</th></tr>";
     return;
   }
 
-  // build head
   thead.innerHTML = "<tr>" + hdrs.map(h => `<th>${h}</th>`).join("") + "<th>פעולות</th></tr>";
 
-  // build rows
   data.forEach((rowObj, idx) => {
     const cells = hdrs.map(h => {
       const v = rowObj[h];
-      // if header looks like date -> format
       if (looksLikeDateHeader(h)) return `<td>${formatDateTime(v)}</td>`;
-      // phone: render clickable
       if (String(h).includes("טלפון") && v) {
         return `<td><a href="tel:${v}">${v}</a></td>`;
       }
-      // address -> show button
       if (String(h).includes("כתובת") && v) {
-        return `<td><button class="btn secondary" onclick="openMap('${encodeURIComponent(v)}')">מפה</button></td>`;
+        return `<td><button class="btn secondary" style="padding: 4px 8px; font-size: 12px;" onclick="openMap('${encodeURIComponent(v)}')">מפה</button></td>`;
       }
       return `<td>${v === null || v === undefined ? "" : v}</td>`;
     }).join("");
 
-    const actionCell = `<td>
-      <button class="btn secondary" onclick="showDetail(${idx})">פרט</button>
-      <button class="btn" onclick="editRow(${idx})">ערוך</button>
+    const actionCell = `<td style="display: flex; gap: 4px;">
+      <button class="btn secondary" onclick="showDetail(${idx})">פרטים</button>
+      <button class="btn" onclick="editRowPrompt(${idx})">ערוך</button>
+      <button class="btn danger" onclick="deleteRowByIdx(${idx})">מחק</button>
       </td>`;
 
     tbody.innerHTML += `<tr>${cells}${actionCell}</tr>`;
@@ -254,131 +255,148 @@ function renderTable(data, hdrs) {
 /* ========== KPI + Alerts ========== */
 function computeKPIs(data, hdrs) {
   const total = data.length;
-  const statusField = hdrs.find(h => String(h).includes("סטטוס")) || hdrs.find(h=>String(h).toLowerCase().includes("status"));
-  const dateField = hdrs.find(h => looksLikeDateHeader(h));
+  const statusField = hdrs.find(h => String(h).includes("סטטוס")) || hdrs[hdrs.length-1];
+  const dateField = hdrs.find(h => String(h).includes("סיום"));
 
   const open = data.filter(r => {
     const s = statusField ? String(r[statusField] || "").toLowerCase() : "";
     return s !== "סגור" && s !== "closed" && s !== "סגורה";
   }).length;
-
+  
   let overdue = [];
   if (dateField) {
-    const today = new Date(); const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const today = new Date(); 
+    today.setHours(0, 0, 0, 0); // Start of today
     overdue = data.filter(r => {
       const v = r[dateField];
-      const d = v ? new Date(v) : null;
-      if (!d || isNaN(d.getTime())) return false;
-      const dStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-      return dStart < todayStart;
+      if (!v) return false;
+      const d = new Date(v);
+      if (isNaN(d.getTime())) return false;
+      d.setHours(0,0,0,0);
+      const isOpen = (String(r[statusField] || "").toLowerCase() !== "סגור");
+      return isOpen && d < today;
     });
   }
 
   document.getElementById("kTotal").innerText = total;
   document.getElementById("kOpen").innerText = open;
   document.getElementById("kOver").innerText = overdue.length;
-  document.getElementById("kContainers").innerText = "—";
 
-  // alerts
   const alerts = document.getElementById("alerts");
   alerts.innerHTML = "";
   if (overdue.length === 0) {
     alerts.innerHTML = "<div style='color:var(--muted)'>אין חריגות</div>";
   } else {
-    overdue.slice(0,6).forEach(o => {
+    overdue.slice(0, 6).forEach(o => {
       const title = (o["שם לקוח"] || o["לקוח"] || "לקוח לא ידוע");
       const end = formatDateTime(o[dateField]);
-      alerts.innerHTML += `<div class="alert"><div style="font-weight:700">${title}</div><div style="font-size:13px">תאריך סיום: ${end}</div></div>`;
+      alerts.innerHTML += `<div class="alert"><div style="font-weight:700">${title}</div><div style="font-size:13px">תאריך סיום חורג: ${end}</div></div>`;
     });
   }
 }
 
 /* ========== Actions ========== */
 async function refresh() {
-  document.getElementById("statusMsg").innerText = "טוען...";
+  const statusMsg = document.getElementById("statusMsg");
+  statusMsg.innerText = "טוען...";
   try {
     const resp = await apiGet("getData");
     if (resp.status === "success") {
       rawData = resp.data || [];
-      renderTable(rawData, resp.headers || (rawData[0] ? Object.keys(rawData[0]) : []));
-      computeKPIs(rawData, resp.headers || (rawData[0] ? Object.keys(rawData[0]) : []));
-      document.getElementById("statusMsg").innerText = `נטענו ${rawData.length} שורות`;
+      const currentHeaders = resp.headers || (rawData[0] ? Object.keys(rawData[0]) : []);
+      renderTable(rawData, currentHeaders);
+      computeKPIs(rawData, currentHeaders);
+      statusMsg.innerText = `נטענו ${rawData.length} שורות. עודכן לאחרונה: ${new Date().toLocaleTimeString('he-IL')}`;
     } else {
-      document.getElementById("statusMsg").innerText = "שגיאה: " + resp.message;
+      statusMsg.innerText = "שגיאה: " + resp.message;
+      alert("שגיאה בטעינת הנתונים: " + resp.message);
     }
   } catch (err) {
-    document.getElementById("statusMsg").innerText = "שגיאת רשת: " + err.message;
+    statusMsg.innerText = "שגיאת רשת: " + err.message;
+    alert("שגיאת רשת. ודא שה-API_URL נכון והשרת פועל.\n" + err.message);
   }
 }
 
-/* show detail panel */
 function showDetail(idx) {
   const data = rawData[idx];
   if (!data) return;
   const side = document.getElementById("sideDetail");
-  let html = `<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:700">פרטי הזמנה</div><button onclick="closeDetail()">&times;</button></div><hr/>`;
+  let html = `<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:700">פרטי הזמנה</div><button onclick="closeDetail()" style="background:none;border:none;font-size:24px;cursor:pointer;">&times;</button></div><hr/>`;
   for (const k in data) {
     const v = looksLikeDateHeader(k) ? formatDateTime(data[k]) : data[k];
     html += `<div style="margin-bottom:6px"><div style="color:var(--muted);font-size:13px">${k}</div><div style="font-weight:600">${v || ''}</div></div>`;
   }
-  html += `<div style="margin-top:8px"><button class="btn" onclick="sendWhatsApp(${idx})">שלח WhatsApp</button> <button class="btn secondary" onclick="closeDetail()">סגור</button></div>`;
+  html += `<div style="margin-top:12px;display:flex;gap:8px;"><button class="btn" onclick="sendWhatsApp(${idx})">שלח WhatsApp</button> <button class="btn secondary" onclick="closeDetail()">סגור</button></div>`;
   side.innerHTML = html;
   side.style.display = "block";
 }
 function closeDetail(){ document.getElementById("sideDetail").style.display = "none" }
 
-/* open map via query */
 function openMap(q) {
   window.open(`https://www.google.com/maps/search/?api=1&query=${q}`, "_blank");
 }
 
-/* simple edit flow (prompt) */
-function editRow(idx) {
-  const row = rawData[idx];
-  if (!row) return;
-  const headersList = Object.keys(row);
-  // build newRow via prompts (simple)
-  const newRow = headersList.map(h => {
-    const val = prompt(`ערוך שדה "${h}"`, row[h] || "");
-    return val === null ? row[h] : val;
-  });
-  // send update
-  apiPost({ action: "updateRow", index: idx+1, row: newRow }).then(r => {
+function editRowPrompt(idx) {
+  const originalRow = rawData[idx];
+  if (!originalRow) return;
+
+  const newRowData = {};
+  for(const header of headers) {
+      const val = prompt(`ערוך שדה "${header}"`, originalRow[header] || "");
+      if (val === null) return; // User cancelled
+      newRowData[header] = val;
+  }
+  
+  // Convert object back to array in the correct order
+  const newRowArray = headers.map(h => newRowData[h]);
+
+  apiPost({ action: "updateRow", index: idx, row: newRowArray }).then(r => {
     alert(r.message);
     refresh();
   }).catch(e => alert("שגיאה בעדכון: " + e.message));
 }
 function openNewOrder() {
-  const cols = (headers && headers.length) ? headers : [];
-  const row = cols.map(c => prompt(`ערוך שדה חדש: ${c}`, ""));
+  if (!headers || headers.length === 0) {
+      alert("לא ניתן להוסיף הזמנה. יש להגדיר כותרות בגליון תחילה.");
+      return;
+  }
+  const row = headers.map(c => prompt(`הזן ערך עבור: ${c}`, ""));
+  if (row.some(val => val === null)) return; // User cancelled
+
   apiPost({ action: "addRow", row: row }).then(r => { alert(r.message); refresh(); }).catch(e => alert(e.message));
 }
 
-/* delete (simple) */
 function deleteRowByIdx(idx) {
-  if (!confirm("האם למחוק?")) return;
-  apiPost({ action: "deleteRow", index: idx+1 }).then(r => { alert(r.message); refresh(); }).catch(e => alert(e.message));
+  const rowToDelete = rawData[idx];
+  const identifier = rowToDelete[headers[0]] || `שורה ${idx+1}`;
+  if (!confirm(`האם למחוק את "${identifier}"?`)) return;
+  
+  // The backend needs a 0-based index for deletion logic based on data array
+  apiPost({ action: "deleteRow", index: idx }).then(r => { 
+      alert(r.message); 
+      refresh(); 
+  }).catch(e => alert(e.message));
 }
 
-/* send WhatsApp (open) */
 function sendWhatsApp(idx) {
   const row = rawData[idx];
-  const phoneField = Object.keys(row).find(h => h.includes("טלפון") || h.includes("phone"));
-  const clientField = Object.keys(row).find(h => h.includes("שם") || h.includes("לקוח"));
+  const phoneField = headers.find(h => h.includes("טלפון") || h.includes("phone"));
+  const clientField = headers.find(h => h.includes("שם") || h.includes("לקוח"));
   const phone = phoneField ? row[phoneField] : "";
   const client = clientField ? row[clientField] : "לקוח";
   const text = encodeURIComponent(`שלום ${client}, בדיקת סטטוס הזמנה.`);
-  if (!phone) { alert("אין שדה טלפון"); return; }
-  window.open(`https://wa.me/${phone.replace(/[^0-9]/g,'')}?text=${text}`, "_blank");
+  if (!phone) { alert("לא נמצא מספר טלפון עבור הזמנה זו."); return; }
+  const cleanPhone = String(phone).replace(/[^0-9]/g,'');
+  window.open(`https://wa.me/972${cleanPhone.substring(cleanPhone.length-9)}?text=${text}`, "_blank");
 }
 
 /* Dev notes */
 async function saveDevNote(){
   const text = document.getElementById("devNote").value.trim();
-  if (!text) { alert("כתוב הערה"); return; }
+  if (!text) { alert("יש לכתוב תוכן להערה."); return; }
   const note = { author: "מנהל", text: text };
   const resp = await apiPost({ action: "saveDevNote", note: note });
-  alert(resp.message || "Saved");
+  alert(resp.message || "ההערה נשמרה");
   document.getElementById("devNote").value = "";
 }
 async function loadDevNotes(){
@@ -388,22 +406,25 @@ async function loadDevNotes(){
     document.getElementById("devNote").value = latest;
   } else {
     document.getElementById("devNote").value = "";
-    alert("אין הערות");
+    alert("לא נמצאו הערות קודמות.");
   }
 }
 
 /* search filter */
 function applyFilter(){
-  const q = document.getElementById("globalSearch").value.trim();
-  if (!q) { renderTable(rawData, headers); return; }
+  const q = document.getElementById("globalSearch").value.trim().toLowerCase();
+  if (!q) { 
+      renderTable(rawData, headers); 
+      return; 
+  }
   const filtered = rawData.filter(r => {
-    return Object.values(r).some(v => String(v || "").toLowerCase().includes(q.toLowerCase()));
+    return Object.values(r).some(v => String(v || "").toLowerCase().includes(q));
   });
   renderTable(filtered, headers);
 }
 
-/* refresh on load */
-refresh();
+/* initial load */
+document.addEventListener('DOMContentLoaded', refresh);
 </script>
 </body>
 </html>
