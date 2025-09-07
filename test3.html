@@ -1,155 +1,409 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>מערכת מעקב</title>
-  <style>
-    body {
-      font-family: "Segoe UI", Tahoma, sans-serif;
-      background: #f9fbfd;
-      margin: 0;
-      padding: 20px;
-      direction: rtl;
-      text-align: right;
-    }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-    button {
-      background: #0078d7;
-      color: white;
-      border: none;
-      padding: 10px 16px;
-      margin: 5px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    button:hover {
-      background: #005a9e;
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-top: 20px;
-      background: white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: center;
-    }
-    th {
-      background: #0078d7;
-      color: white;
-    }
-    tr:nth-child(even) {
-      background: #f2f2f2;
-    }
-    .controls {
-      margin-bottom: 20px;
-      text-align: center;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>לוח בקרה - מעקב</title>
+<style>
+/* =============================================================================
+   GEMINI-COMMAND (read this comment):
+   - צור/הדבק את הקבצים הבאים:
+     1) Code.gs (כפי שסופק) בפרויקט Apps Script שמחובר ל-SHEET ID הנתון.
+     2) index.html (הקובץ הזה) כעמוד סטטי (github.io) או הכן לארח בתוך Apps Script.
+   - וודא לפרוס Web App כ-"Anyone" ולקחת את ה-DEPLOY URL.
+   - עדכן את הערך API_URL ב-JS למטה עם הכתובת.
+   - ה-CSS למטה כולל הוראות עיצוב; שינויים ב-CSS כאן יושמו ישירות על ה־UI.
+   =============================================================================*/
+
+/* :root - ערכי צבעים וגדלים שניתן לשנות */
+:root{
+  --brand:#0b72b9;
+  --accent:#ff9f1c;
+  --bg:#f4f7fb;
+  --card:#ffffff;
+  --muted:#6b7280;
+  --radius:10px;
+  --shadow: 0 6px 18px rgba(10,25,47,0.08);
+  --rtl: 1;
+  font-size: 16px;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; padding:18px; font-family: "Heebo", "Alef", Arial, sans-serif;
+  background:var(--bg); color:#0b1721; direction:rtl;
+}
+
+/* Header */
+.header{
+  display:flex; gap:12px; align-items:center; justify-content:space-between;
+  margin-bottom:16px;
+}
+.brand { display:flex; gap:12px; align-items:center; }
+.logo{
+  width:56px; height:56px; background:linear-gradient(135deg,var(--brand),#0369a1);
+  border-radius:12px; box-shadow:var(--shadow); color:white; display:flex;
+  align-items:center; justify-content:center; font-weight:700;
+}
+.controls { display:flex; gap:8px; align-items:center; }
+
+/* layout */
+.container { display:grid; grid-template-columns: 320px 1fr 380px; gap:16px; align-items:start; }
+@media (max-width:1000px){ .container { grid-template-columns: 1fr; } .right, .left { order:99 } }
+
+/* left panel (filters) */
+.left { background:var(--card); padding:12px; border-radius:var(--radius); box-shadow:var(--shadow); }
+.kpi { display:flex; gap:8px; flex-direction:column; }
+.kpi-row { display:flex; gap:8px; justify-content:space-between; }
+.kpi-card { flex:1; background:linear-gradient(180deg,#fff,var(--card)); padding:12px; border-radius:8px; box-shadow:0 4px 10px rgba(12,28,52,0.04); text-align:center; }
+.kpi-number { font-size:20px; font-weight:700; }
+
+/* center - main table */
+.main { background:var(--card); padding:12px; border-radius:var(--radius); box-shadow:var(--shadow); }
+.toolbar { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
+.search { flex:1; padding:8px 12px; border-radius:8px; border:1px solid #e6eef8; background:#fbfdff; }
+.table { width:100%; border-collapse:collapse; }
+.table th, .table td { padding:8px; border-bottom:1px solid #eef5fb; text-align:center; font-size:14px; }
+.table th { background:#f8fbff; font-weight:700; color:var(--brand) }
+
+/* right panel - notifications & tools */
+.right { background:var(--card); padding:12px; border-radius:var(--radius); box-shadow:var(--shadow); }
+.alert { background:#fff4f0; border-left:4px solid #ff8a4b; padding:8px; border-radius:6px; margin-bottom:8px; }
+.note-area { width:100%; min-height:120px; padding:8px; border-radius:8px; border:1px solid #e6eef8; margin-top:8px; }
+
+/* side-detail overlay */
+.side-detail {
+  position:fixed; top:80px; right:20px; width:420px; background:var(--card); padding:14px; border-radius:12px; box-shadow:var(--shadow);
+  max-height:70vh; overflow:auto; z-index:60;
+}
+
+/* small helpers */
+.btn { background:var(--brand); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
+.btn.secondary{ background:#e6f1fb; color:var(--brand); }
+
+/* mobile adjustments */
+@media (max-width:600px){
+  .header { flex-direction:column; align-items:stretch; gap:10px; }
+  .container { grid-template-columns: 1fr; }
+  .side-detail { position:fixed; left:8px; right:8px; top:70px; width:auto; }
+}
+</style>
 </head>
 <body>
-  <h1>📊 מערכת מעקב</h1>
+  <div class="header">
+    <div class="brand">
+      <div class="logo">ח.סבן</div>
+      <div>
+        <div style="font-weight:700;font-size:18px">לוח בקרה - מעקב מכולות</div>
+        <div style="color:var(--muted);font-size:13px">חיבור לגליון: מעקב</div>
+      </div>
+    </div>
 
-  <div class="controls">
-    <button onclick="loadData()">רענן נתונים</button>
-    <button onclick="addDemoRow()">➕ הוסף שורה לדוגמה</button>
-    <button onclick="updateDemoRow()">✏️ עדכן שורה ראשונה</button>
-    <button onclick="deleteDemoRow()">🗑️ מחק שורה שנייה</button>
+    <div class="controls">
+      <input id="globalSearch" class="search" placeholder="חפש (מספר הזמנה, לקוח, כתובת...)" oninput="applyFilter()" />
+      <button class="btn" onclick="refresh()">רענן</button>
+      <button class="btn secondary" onclick="openNewOrder()">הזמנה חדשה</button>
+    </div>
   </div>
 
-  <table id="dataTable">
-    <thead id="tableHead"></thead>
-    <tbody id="tableBody"></tbody>
-  </table>
+  <div class="container">
+    <div class="left">
+      <div style="font-weight:700;margin-bottom:8px">KPIs</div>
+      <div class="kpi">
+        <div class="kpi-row">
+          <div class="kpi-card"><div style="color:var(--muted)">סה״כ הזמנות</div><div id="kTotal" class="kpi-number">—</div></div>
+          <div class="kpi-card"><div style="color:var(--muted)">פתוחות</div><div id="kOpen" class="kpi-number">—</div></div>
+        </div>
+        <div class="kpi-row" style="margin-top:8px">
+          <div class="kpi-card"><div style="color:var(--muted)">חורגות</div><div id="kOver" class="kpi-number">—</div></div>
+          <div class="kpi-card"><div style="color:var(--muted)">מכולות בשימוש</div><div id="kContainers" class="kpi-number">—</div></div>
+        </div>
+      </div>
 
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwWjTgRU07yxH7XolsWB7A1dhhePiaOVgIaM9OzTRLWzOi1QMbLTrRsgZeS6cUbzOjr/exec";
+      <hr style="margin:12px 0" />
+      <div style="font-weight:700;margin-bottom:6px">כלים לפיתוח</div>
+      <div style="font-size:13px;color:var(--muted)">
+        כאן תוכל לכתוב רעיונות, משימות או טיקט מהיר לצוות הפיתוח — לשמור ישירות בגליון כתזכורת.
+      </div>
+      <textarea id="devNote" class="note-area" placeholder="כתוב הערה/רשימת משימות..."></textarea>
+      <div style="margin-top:8px; display:flex; gap:8px">
+        <button class="btn" onclick="saveDevNote()">שמור הערה</button>
+        <button class="btn secondary" onclick="loadDevNotes()">טען הערות</button>
+      </div>
+    </div>
 
-    async function loadData() {
-      try {
-        const res = await fetch(API_URL + "?action=getData");
-        const json = await res.json();
+    <div class="main">
+      <div class="toolbar">
+        <div style="font-weight:700">טבלת הזמנות</div>
+        <div style="flex:1"></div>
+        <div id="statusMsg" style="color:var(--muted);font-size:13px"></div>
+      </div>
 
-        if (json.status === "success") {
-          renderTable(json.data);
-        } else {
-          alert("שגיאה בשליפת נתונים: " + json.message);
-        }
-      } catch (err) {
-        alert("שגיאת רשת: " + err.message);
+      <table class="table" id="ordersTable">
+        <thead id="tHead"></thead>
+        <tbody id="tBody"></tbody>
+      </table>
+    </div>
+
+    <div class="right">
+      <div style="font-weight:700;margin-bottom:8px">התראות</div>
+      <div id="alerts"></div>
+
+      <hr style="margin:12px 0" />
+      <div style="font-weight:700">תוכנית פיתוח - הצעדים הבאים</div>
+      <ul style="margin:8px 0 0 16px">
+        <li>שילוב בזמן אמת (Firebase / WebSocket) להצגת שינויים מידיים.</li>
+        <li>אימות משתמשים והרשאות (roles).</li>
+        <li>שיפור עריכת inline + bulk actions.</li>
+        <li>יצוא PDF מעוצב + חתימה דיגיטלית.</li>
+        <li>אינטגרציה מפות (Google Maps + geocoding) + ניווט.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- side detail -->
+  <div id="sideDetail" class="side-detail" style="display:none"></div>
+
+<script>
+/* ========== CONFIG ========== */
+const API_URL = "https://script.google.com/macros/s/AKfycbyDj4xc2qeyX_g68ZY5RS81azER-XNKJxmEMg4Gu-qfeCHMByYtOaHntkNizx1KX_fB/exec"; // <-- החלף כאן בכתובת ה־WebApp שלך
+
+/* ========== Helpers: API wrappers ========== */
+async function apiGet(action) {
+  const res = await fetch(`${API_URL}?action=${action}`);
+  return await res.json();
+}
+async function apiPost(body) {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  return await res.json();
+}
+
+/* ========== Date formatting (fix for ISO 'Z' format) ========== */
+function formatDateTime(value) {
+  if (!value && value !== 0) return "";
+  // if already Date object
+  let d = (value instanceof Date) ? value : new Date(value);
+  if (isNaN(d.getTime())) return value; // fallback if not date
+
+  // localize to Israel / Hebrew
+  const dateStr = d.toLocaleDateString("he-IL", { day: "2-digit", month: "long", year: "numeric" });
+  const timeStr = d.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
+
+  // if time is exactly 00:00 -> show only date (common for date-only fields)
+  if (d.getHours() === 0 && d.getMinutes() === 0) return dateStr;
+  return `${dateStr} ${timeStr}`;
+}
+
+/* Detect likely date header names */
+function looksLikeDateHeader(h) {
+  if (!h) return false;
+  const s = String(h).toLowerCase();
+  return s.includes("תאריך") || s.includes("date") || s.includes("סיום");
+}
+
+/* ========== State ========== */
+let rawData = [];
+let headers = [];
+
+/* ========== UI renderers ========== */
+function renderTable(data, hdrs) {
+  headers = hdrs;
+  const thead = document.getElementById("tHead");
+  const tbody = document.getElementById("tBody");
+  thead.innerHTML = "";
+  tbody.innerHTML = "";
+
+  if (!hdrs || hdrs.length === 0) {
+    thead.innerHTML = "<tr><th>אין כותרות</th></tr>";
+    return;
+  }
+
+  // build head
+  thead.innerHTML = "<tr>" + hdrs.map(h => `<th>${h}</th>`).join("") + "<th>פעולות</th></tr>";
+
+  // build rows
+  data.forEach((rowObj, idx) => {
+    const cells = hdrs.map(h => {
+      const v = rowObj[h];
+      // if header looks like date -> format
+      if (looksLikeDateHeader(h)) return `<td>${formatDateTime(v)}</td>`;
+      // phone: render clickable
+      if (String(h).includes("טלפון") && v) {
+        return `<td><a href="tel:${v}">${v}</a></td>`;
       }
-    }
-
-    function renderTable(data) {
-      const head = document.getElementById("tableHead");
-      const body = document.getElementById("tableBody");
-      head.innerHTML = "";
-      body.innerHTML = "";
-
-      if (!data || data.length === 0) {
-        body.innerHTML = "<tr><td colspan='5'>אין נתונים</td></tr>";
-        return;
+      // address -> show button
+      if (String(h).includes("כתובת") && v) {
+        return `<td><button class="btn secondary" onclick="openMap('${encodeURIComponent(v)}')">מפה</button></td>`;
       }
+      return `<td>${v === null || v === undefined ? "" : v}</td>`;
+    }).join("");
 
-      // כותרות
-      const headers = Object.keys(data[0]);
-      head.innerHTML = "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
+    const actionCell = `<td>
+      <button class="btn secondary" onclick="showDetail(${idx})">פרט</button>
+      <button class="btn" onclick="editRow(${idx})">ערוך</button>
+      </td>`;
 
-      // שורות
-      data.forEach(row => {
-        body.innerHTML += "<tr>" + headers.map(h => `<td>${row[h]}</td>`).join("") + "</tr>";
-      });
+    tbody.innerHTML += `<tr>${cells}${actionCell}</tr>`;
+  });
+}
+
+/* ========== KPI + Alerts ========== */
+function computeKPIs(data, hdrs) {
+  const total = data.length;
+  const statusField = hdrs.find(h => String(h).includes("סטטוס")) || hdrs.find(h=>String(h).toLowerCase().includes("status"));
+  const dateField = hdrs.find(h => looksLikeDateHeader(h));
+
+  const open = data.filter(r => {
+    const s = statusField ? String(r[statusField] || "").toLowerCase() : "";
+    return s !== "סגור" && s !== "closed" && s !== "סגורה";
+  }).length;
+
+  let overdue = [];
+  if (dateField) {
+    const today = new Date(); const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    overdue = data.filter(r => {
+      const v = r[dateField];
+      const d = v ? new Date(v) : null;
+      if (!d || isNaN(d.getTime())) return false;
+      const dStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      return dStart < todayStart;
+    });
+  }
+
+  document.getElementById("kTotal").innerText = total;
+  document.getElementById("kOpen").innerText = open;
+  document.getElementById("kOver").innerText = overdue.length;
+  document.getElementById("kContainers").innerText = "—";
+
+  // alerts
+  const alerts = document.getElementById("alerts");
+  alerts.innerHTML = "";
+  if (overdue.length === 0) {
+    alerts.innerHTML = "<div style='color:var(--muted)'>אין חריגות</div>";
+  } else {
+    overdue.slice(0,6).forEach(o => {
+      const title = (o["שם לקוח"] || o["לקוח"] || "לקוח לא ידוע");
+      const end = formatDateTime(o[dateField]);
+      alerts.innerHTML += `<div class="alert"><div style="font-weight:700">${title}</div><div style="font-size:13px">תאריך סיום: ${end}</div></div>`;
+    });
+  }
+}
+
+/* ========== Actions ========== */
+async function refresh() {
+  document.getElementById("statusMsg").innerText = "טוען...";
+  try {
+    const resp = await apiGet("getData");
+    if (resp.status === "success") {
+      rawData = resp.data || [];
+      renderTable(rawData, resp.headers || (rawData[0] ? Object.keys(rawData[0]) : []));
+      computeKPIs(rawData, resp.headers || (rawData[0] ? Object.keys(rawData[0]) : []));
+      document.getElementById("statusMsg").innerText = `נטענו ${rawData.length} שורות`;
+    } else {
+      document.getElementById("statusMsg").innerText = "שגיאה: " + resp.message;
     }
+  } catch (err) {
+    document.getElementById("statusMsg").innerText = "שגיאת רשת: " + err.message;
+  }
+}
 
-    async function addDemoRow() {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "addRow",
-          row: ["123", "לקוח חדש", "כתובת תל אביב", "הערה אוטומטית"]
-        })
-      });
-      const json = await res.json();
-      alert(json.message);
-      loadData();
-    }
+/* show detail panel */
+function showDetail(idx) {
+  const data = rawData[idx];
+  if (!data) return;
+  const side = document.getElementById("sideDetail");
+  let html = `<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:700">פרטי הזמנה</div><button onclick="closeDetail()">&times;</button></div><hr/>`;
+  for (const k in data) {
+    const v = looksLikeDateHeader(k) ? formatDateTime(data[k]) : data[k];
+    html += `<div style="margin-bottom:6px"><div style="color:var(--muted);font-size:13px">${k}</div><div style="font-weight:600">${v || ''}</div></div>`;
+  }
+  html += `<div style="margin-top:8px"><button class="btn" onclick="sendWhatsApp(${idx})">שלח WhatsApp</button> <button class="btn secondary" onclick="closeDetail()">סגור</button></div>`;
+  side.innerHTML = html;
+  side.style.display = "block";
+}
+function closeDetail(){ document.getElementById("sideDetail").style.display = "none" }
 
-    async function updateDemoRow() {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "updateRow",
-          index: 1, // שורה ראשונה אחרי הכותרות
-          row: ["999", "עודכן לקוח", "ירושלים", "שורה עודכנה"]
-        })
-      });
-      const json = await res.json();
-      alert(json.message);
-      loadData();
-    }
+/* open map via query */
+function openMap(q) {
+  window.open(`https://www.google.com/maps/search/?api=1&query=${q}`, "_blank");
+}
 
-    async function deleteDemoRow() {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "deleteRow", index: 2 }) // שורה שנייה
-      });
-      const json = await res.json();
-      alert(json.message);
-      loadData();
-    }
+/* simple edit flow (prompt) */
+function editRow(idx) {
+  const row = rawData[idx];
+  if (!row) return;
+  const headersList = Object.keys(row);
+  // build newRow via prompts (simple)
+  const newRow = headersList.map(h => {
+    const val = prompt(`ערוך שדה "${h}"`, row[h] || "");
+    return val === null ? row[h] : val;
+  });
+  // send update
+  apiPost({ action: "updateRow", index: idx+1, row: newRow }).then(r => {
+    alert(r.message);
+    refresh();
+  }).catch(e => alert("שגיאה בעדכון: " + e.message));
+}
+function openNewOrder() {
+  const cols = (headers && headers.length) ? headers : [];
+  const row = cols.map(c => prompt(`ערוך שדה חדש: ${c}`, ""));
+  apiPost({ action: "addRow", row: row }).then(r => { alert(r.message); refresh(); }).catch(e => alert(e.message));
+}
 
-    // טען נתונים בהתחלה
-    loadData();
-  </script>
+/* delete (simple) */
+function deleteRowByIdx(idx) {
+  if (!confirm("האם למחוק?")) return;
+  apiPost({ action: "deleteRow", index: idx+1 }).then(r => { alert(r.message); refresh(); }).catch(e => alert(e.message));
+}
+
+/* send WhatsApp (open) */
+function sendWhatsApp(idx) {
+  const row = rawData[idx];
+  const phoneField = Object.keys(row).find(h => h.includes("טלפון") || h.includes("phone"));
+  const clientField = Object.keys(row).find(h => h.includes("שם") || h.includes("לקוח"));
+  const phone = phoneField ? row[phoneField] : "";
+  const client = clientField ? row[clientField] : "לקוח";
+  const text = encodeURIComponent(`שלום ${client}, בדיקת סטטוס הזמנה.`);
+  if (!phone) { alert("אין שדה טלפון"); return; }
+  window.open(`https://wa.me/${phone.replace(/[^0-9]/g,'')}?text=${text}`, "_blank");
+}
+
+/* Dev notes */
+async function saveDevNote(){
+  const text = document.getElementById("devNote").value.trim();
+  if (!text) { alert("כתוב הערה"); return; }
+  const note = { author: "מנהל", text: text };
+  const resp = await apiPost({ action: "saveDevNote", note: note });
+  alert(resp.message || "Saved");
+  document.getElementById("devNote").value = "";
+}
+async function loadDevNotes(){
+  const resp = await apiGet("getDevNotes");
+  if (resp.status === "success" && resp.notes && resp.notes.length) {
+    const latest = resp.notes.slice(-5).reverse().map(n => `${formatDateTime(n.timestamp)} — ${n.author}: ${n.note}`).join("\n\n");
+    document.getElementById("devNote").value = latest;
+  } else {
+    document.getElementById("devNote").value = "";
+    alert("אין הערות");
+  }
+}
+
+/* search filter */
+function applyFilter(){
+  const q = document.getElementById("globalSearch").value.trim();
+  if (!q) { renderTable(rawData, headers); return; }
+  const filtered = rawData.filter(r => {
+    return Object.values(r).some(v => String(v || "").toLowerCase().includes(q.toLowerCase()));
+  });
+  renderTable(filtered, headers);
+}
+
+/* refresh on load */
+refresh();
+</script>
 </body>
 </html>
