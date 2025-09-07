@@ -83,6 +83,45 @@ body{
 .btn.danger { background: #fbe6e6; color: #dc2626; }
 
 
+/* Roadmap Styles */
+.roadmap-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  border-bottom: 1px solid #f0f3f7;
+}
+.roadmap-item:last-child {
+  border-bottom: none;
+}
+.roadmap-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #eef5fb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand);
+}
+.roadmap-content {
+  flex-grow: 1;
+}
+.roadmap-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+.roadmap-status {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 99px;
+  background-color: #eef2ff;
+  color: #4f46e5;
+}
+
+
 /* mobile adjustments */
 @media (max-width:600px){
   .header { flex-direction:column; align-items:stretch; gap:10px; }
@@ -152,14 +191,54 @@ body{
       <div id="alerts"></div>
 
       <hr style="margin:12px 0" />
-      <div style="font-weight:700">תוכנית פיתוח - הצעדים הבאים</div>
-      <ul style="margin:8px 0 0 16px; padding-right: 20px;">
-        <li>שילוב בזמן אמת (Firebase / WebSocket) להצגת שינויים מידיים.</li>
-        <li>אימות משתמשים והרשאות (roles).</li>
-        <li>שיפור עריכת inline + bulk actions.</li>
-        <li>יצוא PDF מעוצב + חתימה דיגיטלית.</li>
-        <li>אינטגרציה מפות (Google Maps + geocoding) + ניווט.</li>
-      </ul>
+      <div style="font-weight:700; margin-bottom: 8px;">תוכנית פיתוח - הצעדים הבאים</div>
+      <div id="roadmap">
+        <div class="roadmap-item">
+          <div class="roadmap-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><path d="M10.6 13.4c-.9-.9-.9-2.3 0-3.2"/><path d="M13.4 10.6c.9.9.9 2.3 0 3.2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+          </div>
+          <div class="roadmap-content">
+            <div class="roadmap-title">שילוב בזמן אמת</div>
+          </div>
+          <div class="roadmap-status">Next Up</div>
+        </div>
+        <div class="roadmap-item">
+          <div class="roadmap-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          </div>
+          <div class="roadmap-content">
+            <div class="roadmap-title">אימות והרשאות</div>
+          </div>
+          <div class="roadmap-status">Future</div>
+        </div>
+        <div class="roadmap-item">
+          <div class="roadmap-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="14 2 18 6 7 17 3 17 3 13 14 2"></polygon><line x1="3" y1="22" x2="21" y2="22"></line></svg>
+          </div>
+          <div class="roadmap-content">
+            <div class="roadmap-title">שיפורי UI/UX</div>
+          </div>
+           <div class="roadmap-status">Future</div>
+        </div>
+        <div class="roadmap-item">
+          <div class="roadmap-icon">
+             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          </div>
+          <div class="roadmap-content">
+            <div class="roadmap-title">יצוא PDF וחתימה</div>
+          </div>
+           <div class="roadmap-status">Future</div>
+        </div>
+        <div class="roadmap-item">
+           <div class="roadmap-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          </div>
+          <div class="roadmap-content">
+            <div class="roadmap-title">שילוב מפות וניווט</div>
+          </div>
+           <div class="roadmap-status">Future</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -428,3 +507,4 @@ document.addEventListener('DOMContentLoaded', refresh);
 </script>
 </body>
 </html>
+
