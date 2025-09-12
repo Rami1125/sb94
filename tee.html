@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>אזור אישי - ח.סבן</title>
+    <meta name="theme-color" content="#ffffff"/>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/2SbDgD1B/1.png">
+    <link rel="icon" href="https://i.postimg.cc/2SbDgD1B/1.png">
+
+    <!-- Fonts and Libraries -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <style>
+        :root {
+            --brand: #0b72b9; --accent: #ff9f1c; --bg: #f0f2f5; --card: #ffffff;
+            --text-dark: #1a202c; --text-light: #4a5568; --text-muted: #718096;
+            --border: #e2e8f0; --success: #38a169; --warning: #dd6b20; --danger: #e53e3e;
+            --radius: 16px; --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --page-transition-duration: 0.4s;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes logoPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        @keyframes subtle-pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(11, 114, 185, 0.3); } 70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(11, 114, 185, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(11, 114, 185, 0); } }
+        @keyframes overdue-pulse { 0% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.4); } 70% { box-shadow: 0 0 0 12px rgba(229, 62, 62, 0); } 100% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0); } }
+        
+        /* ... existing styles ... */
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; overflow: hidden; background-color: var(--bg); }
+        body { font-family: 'Assistant', sans-serif; color: var(--text-dark); display: flex; flex-direction: column; overscroll-behavior-y: contain; visibility: hidden; }
+        body.loaded { visibility: visible; }
+
+        .app-shell { display: flex; flex-direction: column; height: 100%; }
+        .app-header { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background-color: var(--card); border-bottom: 1px solid var(--border); position: relative; z-index: 10; }
+        .app-container { flex-grow: 1; overflow: hidden; position: relative; }
+        .bottom-nav { flex-shrink: 0; position: fixed; bottom: 0; left: 0; right: 0; height: 80px; background-color: var(--card); display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
+        .page { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow-y: auto; padding: 20px 15px 120px 15px; background-color: var(--bg); visibility: hidden; opacity: 0; transition: transform var(--page-transition-duration) ease, opacity var(--page-transition-duration) ease; }
+        .page.active { visibility: visible; opacity: 1; transform: translateX(0); z-index: 5;}
+        .page.exit-to-left { transform: translateX(-30px); opacity: 0; }
+        .page.exit-to-right { transform: translateX(30px); opacity: 0; }
+        .page.enter-from-left { transform: translateX(-30px); }
+        .page.enter-from-right { transform: translateX(30px); }
+    </style>
+</head>
+<body>
+    <div class="app-shell" style="display: none;">
+        <!-- ... existing app-shell HTML ... -->
+        <header class="app-header">
+             <div id="profile-container" class="profile-container" data-action="toggle-profile">
+                <img id="profile-avatar" src="" alt="Profile" class="profile-avatar">
+                <div class="logout-popup">
+                    <button data-action="logout" class="logout-btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/><path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/></svg>
+                        <span>התנתק</span>
+                    </button>
+                </div>
+            </div>
+            <div style="text-align: center; font-weight: 600;">
+                <div id="clock"></div>
+                <div id="date" style="font-size: 12px; color: var(--text-muted);"></div>
+            </div>
+            <h1 id="client-name-header" style="font-weight: 700; font-size: 16px;">...</h1>
+        </header>
+        <main class="app-container" id="app-container">
+            <!-- ... existing pages ... -->
+        </main>
+        <nav class="bottom-nav">
+            <!-- ... existing nav buttons ... -->
+        </nav>
+    </div>
+
+    <!-- ... existing help modal, splash screen etc. ... -->
+    <div id="splash-screen"><div id="splash-logo"><img src="https://i.postimg.cc/2SbDgD1B/1.png" alt="לוגו ח.סבן" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"></div><div class="splash-loader"></div></div>
+    <div id="toast-container"></div>
+    <div id="modal-container" class="modal-overlay"></div>
+
+    <!-- START: Firebase SDK Scripts -->
+    <!-- Make sure to use the latest compatible version -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
+    <!-- END: Firebase SDK Scripts -->
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const API_URL = "https://script.google.com/macros/s/AKfycbz5zkASUR1Ye1ZzYvPDvq4VhZegvZHzG5vdczLEaahcw_NDO2D9vb_4sGVYFrjrHzc/exec";
+        let clientState = { id: null, name: null, avatar: null, orders: [], addresses: new Set() };
+        let currentPageId = 'page-home';
+        let mapInstances = {};
+        const dom = {};
+        
+        // START: Firebase Configuration
+        // <<<<< יש למלא כאן את פרטי פרויקט ה-Firebase שלכם! >>>>>
+        // ניתן למצוא אותם במסוף Firebase > הגדרות פרויקט > האפליקציות שלי > אפליקציית אינטרנט
+        const firebaseConfig = {
+            apiKey: "AIzaSy...",
+            authDomain: "hsaban94-cc777.firebaseapp.com",
+            projectId: "hsaban94-cc777",
+            storageBucket: "hsaban94-cc777.appspot.com",
+            messagingSenderId: "...",
+            appId: "1:..."
+        };
+        // END: Firebase Configuration
+
+        function initApp() {
+            document.body.classList.add('loaded');
+            cacheDomElements();
+            
+            // Initialize Firebase
+            if (firebase.apps.length === 0) {
+                firebase.initializeApp(firebaseConfig);
+            }
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./firebase-messaging-sw.js')
+                    .then(registration => {
+                        console.log('Firebase Service Worker registered successfully.');
+                    }).catch(err => console.error('Service Worker registration failed:', err));
+            }
+            
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            const storedClientId = localStorage.getItem('saban_client_id');
+            if (storedClientId) {
+                dom.splashScreen.classList.add('loading');
+                loadClientData(storedClientId);
+            } else {
+                promptForClientId();
+            }
+        }
+
+        async function loadClientData(clientId, isRefresh = false) {
+            try {
+                // ... existing loadClientData logic ...
+                const data = await apiPost({ action: 'getClientData', identifier: clientId });
+                if (data.status === 'error' || !data.clientName) throw new Error(data.message || "Client not found");
+                
+                clientState = { ...clientState, id: data.clientId, name: data.clientName, avatar: data.avatarUrl, orders: data.orders || [], addresses: new Set(data.orders.map(o => o['כתובת']).filter(Boolean)) };
+                localStorage.setItem('saban_client_id', data.clientId);
+                
+                // After successful login, setup notifications
+                setupFirebaseMessaging();
+
+                if (!isRefresh) {
+                    await playSplashScreenAnimation();
+                    dom.appShell.style.display = 'flex';
+                    setupEventListeners();
+                    navigateTo('page-home', true);
+                    renderAllPages();
+                    dom.helpFab.style.display = 'block';
+                } else {
+                    renderHeaderAndGreeting();
+                    renderHomePage();
+                    renderContainersPage();
+                }
+
+            } catch (error) {
+                // ... existing error handling ...
+                console.error("Failed to load client data:", error);
+                localStorage.removeItem('saban_client_id');
+                dom.splashScreen.classList.remove('loading');
+                dom.splashScreen.style.display = 'none';
+                promptForClientId();
+                showToast("שגיאה בטעינת נתונים. אנא נסה שוב.", 'error');
+            }
+        }
+        
+        // START: Firebase Messaging Functions
+        function setupFirebaseMessaging() {
+            if (!firebase.messaging.isSupported()) {
+               console.warn("Firebase Messaging is not supported in this browser.");
+               return;
+            }
+            const messaging = firebase.messaging();
+
+            Notification.requestPermission().then((permission) => {
+                if (permission === 'granted') {
+                    console.log('Notification permission granted.');
+                    messaging.getToken()
+                        .then((currentToken) => {
+                            if (currentToken) {
+                                sendTokenToServer(currentToken);
+                            } else {
+                                console.log('No registration token available.');
+                            }
+                        }).catch((err) => {
+                            console.error('An error occurred while retrieving token.', err);
+                        });
+                } else {
+                    console.log('Unable to get permission to notify.');
+                }
+            });
+
+            messaging.onMessage((payload) => {
+                console.log('Message received while app is in foreground.', payload);
+                showToast(`🔔 ${payload.notification.title}`, payload.notification.body);
+            });
+        }
+
+        async function sendTokenToServer(token) {
+            const sentToken = localStorage.getItem('fcm_token');
+            if (sentToken === token) {
+                console.log("Token already sent to server.");
+                return;
+            }
+            
+            try {
+                await apiPost({
+                    action: 'saveFCMToken',
+                    clientId: clientState.id,
+                    token: token
+                });
+                console.log('Token successfully sent to server.');
+                localStorage.setItem('fcm_token', token);
+            } catch (error) {
+                console.error('Error sending token to server: ', error);
+            }
+        }
+        // END: Firebase Messaging Functions
+
+        // ... all other existing functions (apiPost, promptForClientId, rendering functions, etc.) ...
+        function cacheDomElements(){
+             dom.body = document.body;
+             dom.appShell = document.querySelector('.app-shell');
+             dom.splashScreen = document.getElementById('splash-screen');
+             dom.pages = document.querySelectorAll('.page');
+             dom.navButtons = document.querySelectorAll('.nav-btn');
+             dom.modalContainer = document.getElementById('modal-container');
+             dom.toastContainer = document.getElementById('toast-container');
+             dom.activeOrdersContainer = document.getElementById('active-orders-container');
+             dom.containersList = document.getElementById('containers-list');
+             dom.etaCardContainer = document.getElementById('eta-card-container');
+             dom.greeting = document.getElementById('greeting');
+             dom.clientNameHeader = document.getElementById('client-name-header');
+             dom.profileContainer = document.getElementById('profile-container');
+             dom.profileAvatar = document.getElementById('profile-avatar');
+             dom.clock = document.getElementById('clock');
+             dom.date = document.getElementById('date');
+             dom.helpFab = document.querySelector('.help-fab');
+             dom.helpModal = document.getElementById('help-modal');
+             dom.historyContent = document.getElementById('history-content');
+             dom.chatContent = document.getElementById('chat-content');
+        }
+
+        async function apiPost(body) {
+            // ... implementation ...
+        }
+
+        function promptForClientId() {
+            // ... implementation ...
+        }
+
+        function updateClock() {
+            // ... implementation ...
+        }
+        
+        async function playSplashScreenAnimation() {
+            // ... implementation ...
+        }
+        
+        function navigateTo(pageId, isInitial = false) {
+            // ... implementation ...
+        }
+
+        function renderAllPages() {
+            // ... implementation ...
+        }
+
+        function showToast(message, icon = 'ℹ️') {
+            const toast = document.createElement('div');
+            toast.className = `toast`;
+            // If icon is a full message (the body of the notification), display it.
+            if (icon.length > 5) { // Simple check for a longer string
+                 toast.innerHTML = `<div style="display: flex; flex-direction: column; align-items: flex-start;"><span>${message}</span><small style="margin-top: 4px;">${icon}</small></div>`;
+            } else {
+                 toast.innerHTML = `<span class="toast-icon">${icon}</span> <span>${message}</span>`;
+            }
+            dom.toastContainer.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, 5000); // Increased duration for notifications
+        }
+        
+        function setupEventListeners() {
+            // ... implementation ...
+        }
+
+        initApp();
+    });
+    </script>
+</body>
+</html>
